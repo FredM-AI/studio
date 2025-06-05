@@ -6,10 +6,9 @@
     "buyIn": 20,
     "rebuyAllowed": true,
     "rebuyPrice": 20,
-    "maxPlayers": 18,
     "status": "completed",
     "prizePool": {
-      "total": 40,
+      "total": 340,
       "distributionType": "automatic",
       "distribution": []
     },
@@ -30,19 +29,19 @@
       {
         "playerId": "d33fe6bd-5270-4d14-ab19-05af4da1845a",
         "position": 1,
-        "prize": 0,
+        "prize": 170,
         "rebuys": 0
       },
       {
         "playerId": "6ed96fc2-0159-4a0a-a12b-e1f631f03c7a",
         "position": 2,
-        "prize": 0,
+        "prize": 102,
         "rebuys": 1
       },
       {
         "playerId": "6b5aa2e0-01f3-4b3b-b089-2380cb70c2aa",
         "position": 3,
-        "prize": 0,
+        "prize": 68,
         "rebuys": 0
       },
       {
@@ -77,7 +76,7 @@
       }
     ],
     "createdAt": "2025-06-05T13:52:12.681Z",
-    "updatedAt": "2025-06-05T14:46:29.039Z"
+    "updatedAt": "2025-06-05T17:43:56.084Z"
   },
   {
     "id": "e9ea9bcd-c941-47a4-9d3f-c39ebf249d0d",
@@ -87,7 +86,7 @@
     "rebuyPrice": 20,
     "status": "draft",
     "prizePool": {
-      "total": 480,
+      "total": 300,
       "distributionType": "automatic",
       "distribution": []
     },
@@ -107,8 +106,15 @@
       "af93d90d-517e-4fd7-8093-86a43cddcccb",
       "13950276-2e55-4bdf-9c12-040a9dce3f8b"
     ],
-    "results": [],
+    "results": [
+      {
+        "playerId": "6ed96fc2-0159-4a0a-a12b-e1f631f03c7a",
+        "position": 1,
+        "prize": 140,
+        "rebuys": 0
+      }
+    ],
     "createdAt": "2025-06-05T14:58:42.267Z",
-    "updatedAt": "2025-06-05T14:58:42.267Z"
+    "updatedAt": "2025-06-05T17:43:05.727Z"
   }
 ]

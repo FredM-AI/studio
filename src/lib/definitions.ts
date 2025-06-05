@@ -74,6 +74,8 @@ export type Season = {
   endDate?: string; // ISO Date string
   isActive: boolean;
   leaderboard: SeasonLeaderboardEntry[];
+  createdAt: string; // ISO Date string
+  updatedAt: string; // ISO Date string
 };
 
 export type AppSettings = {
@@ -114,3 +116,26 @@ export type EventResultInput = {
 // Type for EventForm to use in useActionState
 export type ServerEventFormState = EventFormState;
 
+
+export type PlayerFormState = {
+  errors?: {
+    firstName?: string[];
+    lastName?: string[];
+    email?: string[];
+    phone?: string[];
+    avatar?: string[];
+    _form?: string[]; // For general form errors
+  };
+  message?: string | null;
+};
+
+export type SeasonFormState = {
+  errors?: {
+    name?: string[];
+    startDate?: string[];
+    endDate?: string[];
+    isActive?: string[];
+    _form?: string[];
+  };
+  message?: string | null;
+};
