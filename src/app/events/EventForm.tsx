@@ -12,7 +12,7 @@ import { DatePicker } from '@/components/ui/date-picker';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Trophy, PlusCircle, MinusCircle, Users, DollarSign, CalendarDays, Settings, Info } from 'lucide-react';
+import { Trophy, PlusCircle, MinusCircle, Users, DollarSign, CalendarDays, Settings, Info, Repeat } from 'lucide-react';
 import Link from 'next/link';
 import { eventStatuses } from '@/lib/definitions';
 
@@ -29,8 +29,13 @@ type PositionalResultEntry = {
   position: number;
   playerId: string | null;
   prize: string;
-  rebuys: string;
+  // rebuys: string; // Rebuys will be sourced from enrichedParticipants
 };
+
+interface EnrichedParticipant {
+  player: Player;
+  rebuys: string;
+}
 
 const NO_PLAYER_SELECTED_VALUE = "_internal_no_player_selected_";
 
@@ -46,18 +51,15 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
   const [rebuyPrice, setRebuyPrice] = React.useState<string>(event?.rebuyPrice?.toString() || '');
   const [totalPrizePoolValue, setTotalPrizePoolValue] = React.useState<string>(event?.prizePool.total?.toString() || '0');
 
-
   const [availablePlayers, setAvailablePlayers] = React.useState<Player[]>([]);
-  const [currentParticipants, setCurrentParticipants] = React.useState<Player[]>([]);
+  const [enrichedParticipants, setEnrichedParticipants] = React.useState<EnrichedParticipant[]>([]);
 
   const [positionalResults, setPositionalResults] = React.useState<PositionalResultEntry[]>([]);
 
   const [searchTerm, setSearchTerm] = React.useState('');
 
   React.useEffect(() => {
-    // Initialize to undefined to prevent hydration mismatch
     setSelectedDate(undefined);
-    // Then, set the actual date on the client side after hydration
     if (event?.date) {
       const parsedDate = new Date(event.date);
       if (!isNaN(parsedDate.getTime())) {
@@ -67,19 +69,31 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
   }, [event?.date, event?.id]);
 
   React.useEffect(() => {
-    const initialParticipantIds = event?.participants || [];
-    const initialParticipants = allPlayers.filter(p => initialParticipantIds.includes(p.id));
-    const initialAvailable = allPlayers.filter(p => !initialParticipantIds.includes(p.id));
+    const initialParticipantIds = new Set(event?.participants || []);
+    const initialEnriched: EnrichedParticipant[] = allPlayers
+      .filter(p => initialParticipantIds.has(p.id))
+      .map(p => {
+        const resultForPlayer = event?.results.find(r => r.playerId === p.id);
+        return {
+          player: p,
+          rebuys: resultForPlayer?.rebuys?.toString() || '0',
+        };
+      })
+      .sort((a, b) => a.player.firstName.localeCompare(b.player.firstName));
 
-    setCurrentParticipants(initialParticipants.sort((a,b) => a.firstName.localeCompare(b.firstName)));
-    setAvailablePlayers(initialAvailable.sort((a,b) => a.firstName.localeCompare(b.firstName)));
+    const initialAvailable = allPlayers
+      .filter(p => !initialParticipantIds.has(p.id))
+      .sort((a, b) => a.firstName.localeCompare(b.firstName));
 
-  }, [allPlayers, event?.participants]);
+    setEnrichedParticipants(initialEnriched);
+    setAvailablePlayers(initialAvailable);
+
+  }, [allPlayers, event?.participants, event?.results, event?.id]);
 
 
   React.useEffect(() => {
-    const numPositions = currentParticipants.length;
-    const participantIdsSet = new Set(currentParticipants.map(p => p.id));
+    const numPositions = enrichedParticipants.length;
+    const participantIdsSet = new Set(enrichedParticipants.map(p => p.player.id));
 
     setPositionalResults(prevPositionalResults => {
       const newTableData: PositionalResultEntry[] = [];
@@ -88,8 +102,7 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
         const savedResultFromEventProp = event?.results.find(r => r.position === i);
 
         let playerIdToSet: string | null = null;
-        let prizeToSet = '0'; // Default to '0'
-        let rebuysToSet = '0';
+        let prizeToSet = '0';
 
         if (existingRowInPrevState) {
           if (existingRowInPrevState.playerId && participantIdsSet.has(existingRowInPrevState.playerId)) {
@@ -98,38 +111,31 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
             playerIdToSet = null;
           }
           prizeToSet = existingRowInPrevState.prize || '0';
-          rebuysToSet = existingRowInPrevState.rebuys || '0';
-        }
-        else if (savedResultFromEventProp) {
+        } else if (savedResultFromEventProp) {
           if (participantIdsSet.has(savedResultFromEventProp.playerId)) {
             playerIdToSet = savedResultFromEventProp.playerId;
             prizeToSet = savedResultFromEventProp.prize?.toString() || '0';
-            rebuysToSet = savedResultFromEventProp.rebuys?.toString() || '0';
           }
         }
-
+        
         if (playerIdToSet && !participantIdsSet.has(playerIdToSet)) {
             playerIdToSet = null;
         }
         
-        // Ensure prize is always a string, default to '0' if it becomes undefined/null
         if (playerIdToSet === null) prizeToSet = '0';
-
 
         newTableData.push({
           position: i,
           playerId: playerIdToSet,
           prize: prizeToSet,
-          rebuys: rebuysToSet,
         });
       }
       return newTableData;
     });
-  }, [currentParticipants, event?.results, event?.id]);
+  }, [enrichedParticipants, event?.results, event?.id]);
 
-  // Calculate Prize Pool
   React.useEffect(() => {
-    const numParticipants = currentParticipants.length;
+    const numParticipants = enrichedParticipants.length;
     const currentBuyInNum = parseFloat(buyInValue);
     const currentRebuyPriceNum = parseFloat(rebuyPrice);
   
@@ -140,25 +146,22 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
     }
   
     if (!isNaN(currentRebuyPriceNum) && currentRebuyPriceNum > 0) {
-      positionalResults.forEach(result => {
-        if (result.playerId && result.playerId !== NO_PLAYER_SELECTED_VALUE) {
-          const rebuys = parseInt(result.rebuys);
-          if (!isNaN(rebuys) && rebuys > 0) {
-            calculatedTotal += rebuys * currentRebuyPriceNum;
-          }
+      enrichedParticipants.forEach(participant => {
+        const rebuys = parseInt(participant.rebuys);
+        if (!isNaN(rebuys) && rebuys > 0) {
+          calculatedTotal += rebuys * currentRebuyPriceNum;
         }
       });
     }
   
     setTotalPrizePoolValue(calculatedTotal.toFixed(2));
   
-  }, [currentParticipants.length, buyInValue, rebuyPrice, positionalResults]);
+  }, [enrichedParticipants, buyInValue, rebuyPrice]);
 
-  // Auto-distribute prizes
   React.useEffect(() => {
     const prizePoolNum = parseFloat(totalPrizePoolValue);
     const buyInNum = parseFloat(buyInValue);
-    const numParticipants = currentParticipants.length;
+    const numParticipants = enrichedParticipants.length;
 
     setPositionalResults(prevResults => {
       const newDistributedResults = prevResults.map(pr => ({ ...pr, prize: '0.00' }));
@@ -176,7 +179,7 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
         if (numParticipants >= 1) firstPrize = prizePoolNum * 0.50;
         if (numParticipants >= 2) secondPrize = prizePoolNum * 0.30;
         if (numParticipants >= 3) thirdPrize = prizePoolNum * 0.20;
-      } else { // numParticipants >= 14
+      } else {
         if (!isNaN(buyInNum) && buyInNum > 0) {
           if (prizePoolNum >= buyInNum) {
             fourthPrize = buyInNum;
@@ -186,10 +189,10 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
               secondPrize = remainingPool * 0.30;
               thirdPrize = remainingPool * 0.20;
             }
-          } else { // prizePoolNum < buyInNum
-            fourthPrize = prizePoolNum; // 4th takes the entire (small) pool
+          } else {
+            fourthPrize = prizePoolNum;
           }
-        } else { // buyIn is invalid or zero, revert to <14 distribution for 1st-3rd using full pool
+        } else {
           if (numParticipants >= 1) firstPrize = prizePoolNum * 0.50;
           if (numParticipants >= 2) secondPrize = prizePoolNum * 0.30;
           if (numParticipants >= 3) thirdPrize = prizePoolNum * 0.20;
@@ -210,25 +213,32 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
       if (numParticipants >= 3) assignPrize(3, thirdPrize); else assignPrize(3,0);
       if (numParticipants >= 4 && fourthPrize > 0) assignPrize(4, fourthPrize); else assignPrize(4,0);
 
-      // Ensure any positions beyond the distributed ones have prize '0.00'
-      // This is already handled by the initial map: const newDistributedResults = prevResults.map(pr => ({ ...pr, prize: '0.00' }));
-
       return newDistributedResults;
     });
-  }, [totalPrizePoolValue, currentParticipants.length, buyInValue]);
+  }, [totalPrizePoolValue, enrichedParticipants.length, buyInValue]);
 
 
   const handleAddPlayer = (player: Player) => {
-    setCurrentParticipants(prev => [...prev, player].sort((a,b) => a.firstName.localeCompare(b.firstName)));
+    setEnrichedParticipants(prev => [...prev, { player, rebuys: '0' }].sort((a,b) => a.player.firstName.localeCompare(b.player.firstName)));
     setAvailablePlayers(prev => prev.filter(p => p.id !== player.id));
   };
 
-  const handleRemovePlayer = (player: Player) => {
-    setAvailablePlayers(prev => [...prev, player].sort((a, b) => a.firstName.localeCompare(b.firstName)));
-    setCurrentParticipants(prev => prev.filter(p => p.id !== player.id));
+  const handleRemovePlayer = (participantToRemove: EnrichedParticipant) => {
+    setAvailablePlayers(prev => [...prev, participantToRemove.player].sort((a, b) => a.firstName.localeCompare(b.firstName)));
+    setEnrichedParticipants(prev => prev.filter(p => p.player.id !== participantToRemove.player.id));
+    // Also remove from positional results if they were assigned a position
+    setPositionalResults(prev => prev.map(pr => pr.playerId === participantToRemove.player.id ? {...pr, playerId: null, prize: '0'} : pr ));
+  };
+  
+  const handleParticipantRebuyChange = (playerId: string, rebuyValue: string) => {
+    setEnrichedParticipants(prev => 
+      prev.map(ep => 
+        ep.player.id === playerId ? { ...ep, rebuys: rebuyValue } : ep
+      )
+    );
   };
 
-  const handlePositionalResultChange = (position: number, field: 'playerId' | 'prize' | 'rebuys', value: string | null) => {
+  const handlePositionalResultChange = (position: number, field: 'playerId' | 'prize', value: string | null) => {
     setPositionalResults(prev =>
       prev.map(row =>
         row.position === position ? { ...row, [field]: value === NO_PLAYER_SELECTED_VALUE ? null : value } : row
@@ -240,16 +250,20 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
     `${player.firstName} ${player.lastName} ${player.nickname || ''}`.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const hiddenParticipantIds = currentParticipants.map(p => p.id).join(',');
+  const hiddenParticipantIds = enrichedParticipants.map(ep => ep.player.id).join(',');
 
   const finalResultsForJson = positionalResults
     .filter(row => row.playerId && row.playerId !== NO_PLAYER_SELECTED_VALUE)
-    .map(row => ({
-      playerId: row.playerId!,
-      position: row.position,
-      prize: parseFloat(row.prize) || 0,
-      rebuys: parseInt(row.rebuys) || 0,
-    }));
+    .map(row => {
+      const participant = enrichedParticipants.find(p => p.player.id === row.playerId);
+      const rebuysCount = participant ? parseInt(participant.rebuys) || 0 : 0;
+      return {
+        playerId: row.playerId!,
+        position: row.position,
+        prize: parseFloat(row.prize) || 0,
+        rebuys: rebuysCount,
+      };
+    });
   const resultsJson = JSON.stringify(finalResultsForJson);
 
 
@@ -347,7 +361,7 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
           </div>
 
           <div className="space-y-4 p-4 border rounded-lg shadow-sm">
-            <h3 className="font-headline text-lg flex items-center"><Users className="mr-2 h-5 w-5 text-primary" />Participants ({currentParticipants.length})</h3>
+            <h3 className="font-headline text-lg flex items-center"><Users className="mr-2 h-5 w-5 text-primary" />Participants ({enrichedParticipants.length})</h3>
              {state.errors?.participantIds && <p className="text-sm text-destructive mt-1">{state.errors.participantIds.join(', ')}</p>}
             <input type="hidden" name="participantIds" value={hiddenParticipantIds} />
             
@@ -364,13 +378,13 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label>Available Players</Label>
+                <Label>Available Players ({availablePlayers.length})</Label>
                 <ScrollArea className="h-72 w-full rounded-md border p-2">
                   {filteredAvailablePlayers.length > 0 ? filteredAvailablePlayers.map(player => (
                     <div key={player.id} className="flex items-center justify-between p-1.5 hover:bg-muted/50 rounded-md">
                       <span>{player.firstName} {player.lastName} {player.nickname ? `(${player.nickname})` : ''}</span>
                       <Button type="button" variant="outline" size="sm" onClick={() => handleAddPlayer(player)} title="Add player"
-                        disabled={currentParticipants.some(p => p.id === player.id)}>
+                        disabled={enrichedParticipants.some(ep => ep.player.id === player.id)}>
                         <PlusCircle className="h-4 w-4" />
                       </Button>
                     </div>
@@ -378,12 +392,27 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
                 </ScrollArea>
               </div>
               <div>
-                <Label>Selected Participants</Label>
+                <Label>Selected Participants ({enrichedParticipants.length})</Label>
                 <ScrollArea className="h-72 w-full rounded-md border p-2">
-                  {currentParticipants.length > 0 ? currentParticipants.map(player => (
-                    <div key={player.id} className="flex items-center justify-between p-1.5 hover:bg-muted/50 rounded-md">
-                      <span>{player.firstName} {player.lastName} {player.nickname ? `(${player.nickname})` : ''}</span>
-                      <Button type="button" variant="outline" size="sm" onClick={() => handleRemovePlayer(player)} title="Remove player">
+                  {enrichedParticipants.length > 0 ? enrichedParticipants.map(ep => (
+                    <div key={ep.player.id} className="flex items-center justify-between p-1.5 hover:bg-muted/50 rounded-md gap-2">
+                      <span className="flex-grow">{ep.player.firstName} {ep.player.lastName} {ep.player.nickname ? `(${ep.player.nickname})` : ''}</span>
+                       <div className="flex items-center gap-1 w-28">
+                         <Label htmlFor={`rebuy-${ep.player.id}`} className="sr-only">Rebuys</Label>
+                         <Input
+                            type="number"
+                            id={`rebuy-${ep.player.id}`}
+                            name={`rebuy-${ep.player.id}`}
+                            min="0"
+                            value={ep.rebuys}
+                            onChange={(e) => handleParticipantRebuyChange(ep.player.id, e.target.value)}
+                            className="h-8 w-16 text-center"
+                            placeholder="Rebuys"
+                            disabled={!(parseFloat(rebuyPrice) > 0)}
+                         />
+                         <Repeat className="h-3 w-3 text-muted-foreground" />
+                       </div>
+                      <Button type="button" variant="outline" size="sm" onClick={() => handleRemovePlayer(ep)} title="Remove player">
                         <MinusCircle className="h-4 w-4" />
                       </Button>
                     </div>
@@ -393,7 +422,7 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
             </div>
           </div>
 
-          {currentParticipants.length > 0 && (
+          {enrichedParticipants.length > 0 && (
             <div className="space-y-4 p-4 border rounded-lg shadow-sm">
               <h3 className="font-headline text-lg flex items-center"><Trophy className="mr-2 h-5 w-5 text-primary" />Event Results</h3>
               {state.errors?.results && <p className="text-sm text-destructive mt-1">{state.errors.results.join(', ')}</p>}
@@ -402,9 +431,8 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="w-[10%] text-center">Position</TableHead>
-                      <TableHead className="w-[40%]">Player</TableHead>
-                      <TableHead className="w-[20%] text-center">Rebuys</TableHead>
+                      <TableHead className="w-[15%] text-center">Position</TableHead>
+                      <TableHead className="w-[55%]">Player</TableHead>
                       <TableHead className="w-[30%] text-right">Prize ($)</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -422,25 +450,13 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
                             </SelectTrigger>
                             <SelectContent>
                               <SelectItem value={NO_PLAYER_SELECTED_VALUE}>-- None --</SelectItem>
-                              {currentParticipants.map(p => (
-                                <SelectItem key={p.id} value={p.id}>
-                                  {p.firstName} {p.lastName} {p.nickname ? `(${p.nickname})` : ''}
+                              {enrichedParticipants.map(ep => (
+                                <SelectItem key={ep.player.id} value={ep.player.id}>
+                                  {ep.player.firstName} {ep.player.lastName} {ep.player.nickname ? `(${ep.player.nickname})` : ''}
                                 </SelectItem>
                               ))}
                             </SelectContent>
                           </Select>
-                        </TableCell>
-                        <TableCell className="py-1">
-                          <Input
-                            id={`rebuys-pos-${row.position}`}
-                            type="number"
-                            min="0"
-                            placeholder="e.g., 0"
-                            value={row.rebuys}
-                            onChange={(e) => handlePositionalResultChange(row.position, 'rebuys', e.target.value)}
-                            className="text-center h-9"
-                            disabled={!row.playerId || row.playerId === NO_PLAYER_SELECTED_VALUE || !(parseFloat(rebuyPrice) > 0)}
-                          />
                         </TableCell>
                         <TableCell className="py-1">
                           <Input
@@ -449,7 +465,7 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
                             step="0.01"
                             min="0"
                             placeholder="e.g., 100.00"
-                            value={row.prize} // This will now be auto-calculated primarily
+                            value={row.prize}
                             onChange={(e) => handlePositionalResultChange(row.position, 'prize', e.target.value)}
                             className="text-right h-9"
                             disabled={!row.playerId || row.playerId === NO_PLAYER_SELECTED_VALUE}
@@ -477,4 +493,3 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
     </Card>
   );
 }
-
