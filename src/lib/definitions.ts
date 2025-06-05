@@ -33,7 +33,7 @@ export type EventResult = {
   playerId: string;
   position: number;
   prize: number;
-  rebuys?: number; // Added for tracking rebuys per player in an event
+  rebuys?: number;
   eliminatedBy?: string; // Player ID or null
 };
 
@@ -46,9 +46,8 @@ export type Event = {
   name: string;
   date: string; // ISO Date string
   buyIn: number;
-  rebuyAllowed: boolean;
   rebuyPrice?: number;
-  maxPlayers: number;
+  maxPlayers?: number; // Made optional
   status: EventStatus;
   seasonId?: string;
   prizePool: {
@@ -91,9 +90,8 @@ export type EventFormState = {
     name?: string[];
     date?: string[];
     buyIn?: string[];
-    rebuyAllowed?: string[];
     rebuyPrice?: string[];
-    maxPlayers?: string[];
+    maxPlayers?: string[]; // Kept for potential future use if field is re-added
     prizePoolTotal?: string[];
     participantIds?: string[];
     status?: string[];

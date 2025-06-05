@@ -10,7 +10,7 @@ import type { EventFormState } from '@/lib/definitions';
 
 const EventResultInputSchema = z.object({
   playerId: z.string().min(1),
-  position: z.coerce.number().int().min(1, { message: "Position must be 1 or greater." }), // Position now min 1
+  position: z.coerce.number().int().min(1, { message: "Position must be 1 or greater." }),
   prize: z.coerce.number().min(0, { message: "Prize must be 0 or greater." }),
   rebuys: z.coerce.number().int().min(0, {message: "Rebuys must be 0 or greater."}).optional().default(0),
 });
@@ -20,9 +20,8 @@ const EventFormSchema = z.object({
   name: z.string().min(3, { message: 'Event name must be at least 3 characters.' }),
   date: z.string().min(1, { message: 'Date is required.' }),
   buyIn: z.coerce.number().positive({ message: 'Buy-in must be a positive number.' }),
-  rebuyAllowed: z.preprocess((val) => val === 'on' || val === true, z.boolean()).default(false),
-  rebuyPrice: z.coerce.number().optional(),
-  maxPlayers: z.coerce.number().int().positive({ message: 'Max players must be a positive integer.' }),
+  rebuyPrice: z.coerce.number().nonnegative({ message: 'Rebuy price cannot be negative.' }).optional(),
+  maxPlayers: z.coerce.number().int().positive({ message: 'Max players must be a positive integer.' }).optional(),
   prizePoolTotal: z.coerce.number().nonnegative({ message: 'Prize pool total cannot be negative.' }),
   participantIds: z.preprocess(
     (val) => (typeof val === 'string' && val ? val.split(',').filter(id => id.trim() !== '') : Array.isArray(val) ? val : []),
@@ -60,22 +59,16 @@ const EventFormSchema = z.object({
       return z.NEVER;
     }
   }).pipe(z.array(EventResultInputSchema.extend({ eliminatedBy: z.string().optional() })).optional().default([])),
-}).refine(data => !data.rebuyAllowed || (data.rebuyAllowed && data.rebuyPrice !== undefined && data.rebuyPrice > 0), {
-  message: "Rebuy price must be set if rebuys are allowed.",
-  path: ["rebuyPrice"],
-})
-.refine(data => { // Validate results based on participants and status
+}).refine(data => { 
   if (data.status === 'completed' && data.participantIds.length > 0 && (!data.resultsJson || data.resultsJson.length === 0)) {
-    // If completed and has participants, results are expected (though might not be for all if some didn't get a rank)
-    // This rule might need to be more flexible depending on requirements
-    // For now, we assume if completed and participants exist, some results should be there.
+    // This validation might need adjustment based on exact requirements
   }
   return true; 
 }, {
   message: "Results should be provided for completed events with participants.",
   path: ["resultsJson"],
 })
-.refine(data => { // All players in results must be participants
+.refine(data => { 
   if (!data.resultsJson || !data.participantIds) return true;
   const participantIdSet = new Set(data.participantIds);
   return data.resultsJson.every(result => participantIdSet.has(result.playerId));
@@ -83,7 +76,7 @@ const EventFormSchema = z.object({
   message: "All players in results must be participants in the event.",
   path: ["resultsJson"],
 })
-.refine(data => { // Player IDs in results must be unique
+.refine(data => { 
   if (!data.resultsJson) return true;
   const playerIdsInResults = data.resultsJson.map(r => r.playerId);
   return new Set(playerIdsInResults).size === playerIdsInResults.length;
@@ -91,7 +84,7 @@ const EventFormSchema = z.object({
   message: "A player cannot be assigned to multiple positions in the results.",
   path: ["resultsJson"],
 })
-.refine(data => { // Positions in results must be unique
+.refine(data => { 
   if (!data.resultsJson) return true;
   const positionsInResults = data.resultsJson.map(r => r.position);
   return new Set(positionsInResults).size === positionsInResults.length;
@@ -103,10 +96,8 @@ const EventFormSchema = z.object({
 
 export async function createEvent(prevState: EventFormState, formData: FormData): Promise<EventFormState> {
   const rawFormData = Object.fromEntries(formData.entries());
-  // Ensure participantIds is an array even if it's a single string from a hidden input
   const participantIdsValue = rawFormData.participantIds;
   rawFormData.participantIds = typeof participantIdsValue === 'string' && participantIdsValue ? participantIdsValue.split(',') : (Array.isArray(participantIdsValue) ? participantIdsValue : []);
-
 
   const validatedFields = EventFormSchema.safeParse(rawFormData);
 
@@ -119,21 +110,13 @@ export async function createEvent(prevState: EventFormState, formData: FormData)
 
   const data = validatedFields.data;
 
-  if (data.participantIds.length > data.maxPlayers) {
-    return {
-        errors: { participantIds: ['Number of participants cannot exceed max players.'] },
-        message: 'Validation failed: Too many participants.',
-    };
-  }
-
   const newEvent: Event = {
     id: crypto.randomUUID(),
     name: data.name,
     date: new Date(data.date).toISOString(),
     buyIn: data.buyIn,
-    rebuyAllowed: data.rebuyAllowed,
-    rebuyPrice: data.rebuyAllowed ? data.rebuyPrice : undefined,
-    maxPlayers: data.maxPlayers,
+    rebuyPrice: data.rebuyPrice,
+    maxPlayers: data.maxPlayers, 
     status: data.status as EventStatus,
     prizePool: {
       total: data.prizePoolTotal,
@@ -185,12 +168,6 @@ export async function updateEvent(prevState: EventFormState, formData: FormData)
     return { message: "Event ID is missing for update." };
   }
   
-  if (data.participantIds.length > data.maxPlayers) {
-    return {
-        errors: { participantIds: ['Number of participants cannot exceed max players.'] },
-        message: 'Validation failed: Too many participants.',
-    };
-  }
 
   try {
     const events = await getEvents();
@@ -205,9 +182,8 @@ export async function updateEvent(prevState: EventFormState, formData: FormData)
       name: data.name,
       date: new Date(data.date).toISOString(),
       buyIn: data.buyIn,
-      rebuyAllowed: data.rebuyAllowed,
-      rebuyPrice: data.rebuyAllowed ? data.rebuyPrice : undefined,
-      maxPlayers: data.maxPlayers,
+      rebuyPrice: data.rebuyPrice,
+      maxPlayers: data.maxPlayers, // Will be undefined if not in form, effectively removing/clearing it
       status: data.status as EventStatus,
       prizePool: {
         ...events[eventIndex].prizePool, 
@@ -219,7 +195,7 @@ export async function updateEvent(prevState: EventFormState, formData: FormData)
         position: r.position,
         prize: r.prize,
         rebuys: r.rebuys,
-        eliminatedBy: undefined, // Keep existing eliminatedBy if it was ever implemented
+        eliminatedBy: undefined, 
       })) || [],
       updatedAt: new Date().toISOString(),
     };

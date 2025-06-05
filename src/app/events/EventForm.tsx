@@ -1,15 +1,13 @@
 
 'use client';
 
-import type { Event, Player, EventStatus } from '@/lib/definitions';
-import type { ServerEventFormState } from '@/lib/definitions';
+import type { Event, Player, EventStatus, ServerEventFormState } from '@/lib/definitions';
 import * as React from 'react';
 import { useActionState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Switch } from '@/components/ui/switch';
 import { DatePicker } from '@/components/ui/date-picker';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -27,10 +25,9 @@ interface EventFormProps {
   submitButtonText: string;
 }
 
-// Type for the internal state of the results table
 type PositionalResultEntry = {
   position: number;
-  playerId: string | null; // Can be null if no player assigned to this position
+  playerId: string | null; 
   prize: string;
   rebuys: string;
 };
@@ -43,13 +40,13 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
   const [state, dispatch] = useActionState(action, initialState);
 
   const [selectedDate, setSelectedDate] = React.useState<Date | undefined>(undefined);
-  const [rebuyAllowed, setRebuyAllowed] = React.useState<boolean>(event?.rebuyAllowed || false);
   const [currentStatus, setCurrentStatus] = React.useState<EventStatus>(event?.status || 'draft');
+  const [rebuyPrice, setRebuyPrice] = React.useState<string>(event?.rebuyPrice?.toString() || '');
+
 
   const [availablePlayers, setAvailablePlayers] = React.useState<Player[]>([]);
   const [currentParticipants, setCurrentParticipants] = React.useState<Player[]>([]);
   
-  // State for the results table: array of objects, one per position
   const [positionalResults, setPositionalResults] = React.useState<PositionalResultEntry[]>([]);
   
   const [searchTerm, setSearchTerm] = React.useState('');
@@ -63,7 +60,7 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
     } else {
       setSelectedDate(undefined);
     }
-  }, [event?.date, event?.id]); // Added event.id to dependency array
+  }, [event?.date, event?.id]);
 
   React.useEffect(() => {
     const initialParticipantIds = event?.participants || [];
@@ -77,13 +74,11 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
 
 
   React.useEffect(() => {
-    // Determine the number of positions based on the current number of participants.
     const numPositions = currentParticipants.length;
     const participantIdsSet = new Set(currentParticipants.map(p => p.id));
 
     setPositionalResults(prevPositionalResults => {
       const newTableData: PositionalResultEntry[] = [];
-      // Create a row for each position, from 1 to the number of participants.
       for (let i = 1; i <= numPositions; i++) {
         const existingRowInPrevState = prevPositionalResults.find(row => row.position === i);
         const savedResultFromEventProp = event?.results.find(r => r.position === i);
@@ -92,17 +87,15 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
         let prizeToSet = '';
         let rebuysToSet = '0';
 
-        // Prioritize data already in form state if participant list changes, and player is still valid
         if (existingRowInPrevState) {
           if (existingRowInPrevState.playerId && participantIdsSet.has(existingRowInPrevState.playerId)) {
             playerIdToSet = existingRowInPrevState.playerId;
           } else {
-            playerIdToSet = null; // Player became invalid or was null
+            playerIdToSet = null; 
           }
-          prizeToSet = existingRowInPrevState.prize; // Keep edits
-          rebuysToSet = existingRowInPrevState.rebuys; // Keep edits
+          prizeToSet = existingRowInPrevState.prize; 
+          rebuysToSet = existingRowInPrevState.rebuys; 
         } 
-        // Fallback to event prop for initial load if no form state or player was invalid
         else if (savedResultFromEventProp) {
           if (participantIdsSet.has(savedResultFromEventProp.playerId)) {
             playerIdToSet = savedResultFromEventProp.playerId;
@@ -111,25 +104,20 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
           }
         }
         
-        // Final check: if playerIdToSet is somehow invalid after these checks, ensure it's null
         if (playerIdToSet && !participantIdsSet.has(playerIdToSet)) {
             playerIdToSet = null;
-            // If player becomes invalid, we might want to clear their prize/rebuys or let user adjust
-            // prizeToSet = ''; 
-            // rebuysToSet = '0';
         }
 
         newTableData.push({
-          position: i, // Assigns the current position number
+          position: i, 
           playerId: playerIdToSet,
           prize: prizeToSet,
           rebuys: rebuysToSet,
         });
       }
-      // The newTableData will always have 'numPositions' (i.e., currentParticipants.length) entries.
       return newTableData;
     });
-  }, [currentParticipants, event?.results, event?.id]); // Dependencies that trigger recalculation
+  }, [currentParticipants, event?.results, event?.id]); 
 
 
   const handleAddPlayer = (player: Player) => {
@@ -140,8 +128,6 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
   const handleRemovePlayer = (player: Player) => {
     setAvailablePlayers(prev => [...prev, player].sort((a, b) => a.firstName.localeCompare(b.firstName)));
     setCurrentParticipants(prev => prev.filter(p => p.id !== player.id));
-    // When a player is removed from participants, their assignment in positionalResults might become invalid.
-    // The useEffect for positionalResults should handle cleaning this up by setting playerId to null if invalid.
   };
 
   const handlePositionalResultChange = (position: number, field: 'playerId' | 'prize' | 'rebuys', value: string | null) => {
@@ -159,9 +145,9 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
   const hiddenParticipantIds = currentParticipants.map(p => p.id).join(',');
   
   const finalResultsForJson = positionalResults
-    .filter(row => row.playerId && row.playerId !== NO_PLAYER_SELECTED_VALUE) // Only include rows where a player is assigned
+    .filter(row => row.playerId && row.playerId !== NO_PLAYER_SELECTED_VALUE) 
     .map(row => ({
-      playerId: row.playerId!, // playerID is confirmed to be non-null by filter
+      playerId: row.playerId!, 
       position: row.position,
       prize: parseFloat(row.prize) || 0,
       rebuys: parseInt(row.rebuys) || 0,
@@ -220,9 +206,18 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
                 {state.errors?.buyIn && <p id="buyIn-error" className="text-sm text-destructive mt-1">{state.errors.buyIn.join(', ')}</p>}
               </div>
               <div>
-                <Label htmlFor="maxPlayers">Max Players</Label>
-                <Input id="maxPlayers" name="maxPlayers" type="number" defaultValue={event?.maxPlayers} required aria-describedby="maxPlayers-error"/>
-                {state.errors?.maxPlayers && <p id="maxPlayers-error" className="text-sm text-destructive mt-1">{state.errors.maxPlayers.join(', ')}</p>}
+                <Label htmlFor="rebuyPrice">Rebuy Price ($)</Label>
+                <Input 
+                    id="rebuyPrice" 
+                    name="rebuyPrice" 
+                    type="number" 
+                    step="0.01" 
+                    placeholder="e.g. 20.00"
+                    value={rebuyPrice}
+                    onChange={(e) => setRebuyPrice(e.target.value)}
+                    aria-describedby="rebuyPrice-error"
+                />
+                {state.errors?.rebuyPrice && <p id="rebuyPrice-error" className="text-sm text-destructive mt-1">{state.errors.rebuyPrice.join(', ')}</p>}
               </div>
               <div>
                 <Label htmlFor="prizePoolTotal">Total Prize Pool ($)</Label>
@@ -230,24 +225,10 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
                 {state.errors?.prizePoolTotal && <p id="prizePoolTotal-error" className="text-sm text-destructive mt-1">{state.errors.prizePoolTotal.join(', ')}</p>}
               </div>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-end pt-4"> {/* pt-4 for spacing */}
-                <div className="flex items-center space-x-2"> {/* Removed pt-4 from here */}
-                    <Switch id="rebuyAllowed" name="rebuyAllowed" checked={rebuyAllowed} onCheckedChange={setRebuyAllowed} />
-                    <Label htmlFor="rebuyAllowed">Rebuys Allowed</Label>
-                </div>
-                {rebuyAllowed && (
-                <div>
-                    <Label htmlFor="rebuyPrice">Rebuy Price ($)</Label>
-                    <Input id="rebuyPrice" name="rebuyPrice" type="number" step="0.01" defaultValue={event?.rebuyPrice} aria-describedby="rebuyPrice-error"/>
-                    {state.errors?.rebuyPrice && <p id="rebuyPrice-error" className="text-sm text-destructive mt-1">{state.errors.rebuyPrice.join(', ')}</p>}
-                </div>
-                )}
-            </div>
-             {state.errors?.rebuyAllowed && <p className="text-sm text-destructive mt-1">{state.errors.rebuyAllowed.join(', ')}</p>}
           </div>
           
           <div className="space-y-4 p-6 border rounded-lg shadow-sm">
-            <h3 className="font-headline text-lg flex items-center"><Users className="mr-2 h-5 w-5 text-primary" />Participants ({currentParticipants.length} / {event?.maxPlayers || 'N/A'})</h3>
+            <h3 className="font-headline text-lg flex items-center"><Users className="mr-2 h-5 w-5 text-primary" />Participants ({currentParticipants.length})</h3>
              {state.errors?.participantIds && <p className="text-sm text-destructive mt-1">{state.errors.participantIds.join(', ')}</p>}
             <input type="hidden" name="participantIds" value={hiddenParticipantIds} />
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -265,7 +246,7 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
                     <div key={player.id} className="flex items-center justify-between p-2 hover:bg-muted/50 rounded-md">
                       <span>{player.firstName} {player.lastName} {player.nickname ? `(${player.nickname})` : ''}</span>
                       <Button type="button" variant="outline" size="sm" onClick={() => handleAddPlayer(player)} title="Add player" 
-                        disabled={(event?.maxPlayers !== undefined && typeof event.maxPlayers === 'number' && currentParticipants.length >= event.maxPlayers) || currentParticipants.some(p => p.id === player.id)}>
+                        disabled={currentParticipants.some(p => p.id === player.id)}>
                         <PlusCircle className="h-4 w-4" />
                       </Button>
                     </div>
@@ -334,7 +315,7 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
                             value={row.rebuys}
                             onChange={(e) => handlePositionalResultChange(row.position, 'rebuys', e.target.value)}
                             className="text-center"
-                            disabled={!rebuyAllowed || !row.playerId || row.playerId === NO_PLAYER_SELECTED_VALUE} 
+                            disabled={!row.playerId || row.playerId === NO_PLAYER_SELECTED_VALUE || !(parseFloat(rebuyPrice) > 0)} 
                           />
                         </TableCell>
                         <TableCell className="py-2">
@@ -372,5 +353,3 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
     </Card>
   );
 }
-
-    

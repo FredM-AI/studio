@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { getEvents } from "@/lib/data-service";
 import type { Event } from "@/lib/definitions";
-import { PlusCircle, CalendarDays, Users, DollarSign, Edit, Trash2, Eye } from "lucide-react";
+import { PlusCircle, CalendarDays, Users, DollarSign, Edit, Eye } from "lucide-react";
 import Link from "next/link";
 
 // Placeholder EventCard component
@@ -20,7 +20,7 @@ const EventCardPlaceholder = ({ event }: { event: Event }) => (
       </div>
       <div className="flex items-center text-sm text-muted-foreground">
         <Users className="mr-2 h-4 w-4" />
-        Participants: {event.participants.length} / {event.maxPlayers}
+        Participants: {event.participants.length}
       </div>
        <div className="flex items-center text-sm">
         <span className={`px-2 py-1 text-xs rounded-full ${

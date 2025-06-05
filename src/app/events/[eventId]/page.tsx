@@ -5,8 +5,8 @@ import { getEvents, getPlayers } from "@/lib/data-service";
 import type { Event, Player } from "@/lib/definitions";
 import { ArrowLeft, Edit, Users, DollarSign, CalendarDays, Trophy, Info, Tag, CheckCircle, XCircle } from "lucide-react";
 import Link from "next/link";
-import { Badge } from "@/components/ui/badge"; // Added for status display
-import { ScrollArea } from "@/components/ui/scroll-area"; // Added import for ScrollArea
+import { Badge } from "@/components/ui/badge";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 async function getEventDetails(id: string): Promise<{ event: Event | undefined, players: Player[] }> {
   const events = await getEvents();
@@ -49,6 +49,7 @@ export default async function EventDetailsPage({ params }: { params: { eventId: 
   };
   
   const sortedResults = event.results.sort((a, b) => a.position - b.position);
+  const rebuysActive = event.rebuyPrice !== undefined && event.rebuyPrice > 0;
 
   return (
     <div className="space-y-6">
@@ -80,16 +81,18 @@ export default async function EventDetailsPage({ params }: { params: { eventId: 
               <span className="text-muted-foreground flex items-center"><DollarSign className="mr-2 h-4 w-4"/>Buy-in:</span>
               <span className="font-medium">${event.buyIn.toFixed(2)}</span>
             </div>
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground flex items-center"><Tag className="mr-2 h-4 w-4"/>Max Players:</span>
-              <span className="font-medium">{event.maxPlayers}</span>
-            </div>
+            {event.maxPlayers && (
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground flex items-center"><Tag className="mr-2 h-4 w-4"/>Max Players:</span>
+                <span className="font-medium">{event.maxPlayers}</span>
+              </div>
+            )}
              <div className="flex items-center justify-between text-sm">
               <span className="text-muted-foreground flex items-center">
-                {event.rebuyAllowed ? <CheckCircle className="mr-2 h-4 w-4 text-green-500"/> : <XCircle className="mr-2 h-4 w-4 text-red-500"/>}
-                Rebuys Allowed:
+                {rebuysActive ? <CheckCircle className="mr-2 h-4 w-4 text-green-500"/> : <XCircle className="mr-2 h-4 w-4 text-red-500"/>}
+                Rebuys:
               </span>
-              <span className="font-medium">{event.rebuyAllowed ? `Yes (Price: $${event.rebuyPrice?.toFixed(2) || 'N/A'})` : 'No'}</span>
+              <span className="font-medium">{rebuysActive ? `Yes (Price: $${event.rebuyPrice?.toFixed(2)})` : 'No'}</span>
             </div>
             <div className="flex items-center justify-between text-sm">
               <span className="text-muted-foreground flex items-center"><DollarSign className="mr-2 h-4 w-4"/>Total Prize Pool:</span>
@@ -100,7 +103,7 @@ export default async function EventDetailsPage({ params }: { params: { eventId: 
               <Badge 
                 variant={
                   event.status === 'completed' ? 'default' : 
-                  event.status === 'active' ? 'secondary' : // Consider a success variant or specific color
+                  event.status === 'active' ? 'secondary' :
                   event.status === 'cancelled' ? 'destructive' : 
                   'outline'
                 }
@@ -141,6 +144,7 @@ export default async function EventDetailsPage({ params }: { params: { eventId: 
                     <tr>
                       <th className="p-2 text-left font-semibold">Position</th>
                       <th className="p-2 text-left font-semibold">Player</th>
+                       <th className="p-2 text-center font-semibold">Rebuys</th>
                       <th className="p-2 text-right font-semibold">Prize</th>
                     </tr>
                   </thead>
@@ -153,6 +157,7 @@ export default async function EventDetailsPage({ params }: { params: { eventId: 
                             {getPlayerName(result.playerId)}
                            </Link>
                         </td>
+                        <td className="p-2 text-center">{result.rebuys ?? 0}</td>
                         <td className="p-2 text-right">${result.prize.toFixed(2)}</td>
                       </tr>
                     ))}
@@ -179,4 +184,3 @@ export default async function EventDetailsPage({ params }: { params: { eventId: 
     </div>
   );
 }
-
