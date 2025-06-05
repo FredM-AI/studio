@@ -7,7 +7,7 @@ const Logo = () => {
     <Link href="/" className="flex items-center gap-2 text-primary hover:text-primary/90 transition-colors">
       <Coins className="h-8 w-8" />
       <Image
-        src="https://placehold.co/64x64.png" // Remplacez par le chemin de votre logo, ex: /bull-logo.png
+        src="/bulls_logo.png" // Remplacez par le chemin de votre logo, ex: /bull-logo.png
         alt="Poker Club Bulls Logo"
         width={32}
         height={32}
