@@ -1,7 +1,7 @@
 
 'use client';
 
-import type { Event, Player, EventStatus, eventStatuses, EventResultInput as FormEventResultInput } from '@/lib/definitions';
+import type { Event, Player, EventStatus, eventStatuses as EventStatusesType, EventResultInput as FormEventResultInput } from '@/lib/definitions'; // Corrected type import
 import type { EventFormState as ServerEventFormState } from '@/lib/definitions';
 import * as React from 'react';
 import { useActionState } from 'react';
@@ -15,6 +15,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Trophy, PlusCircle, MinusCircle, Users, DollarSign, CalendarDays, Settings, ListChecks, Info } from 'lucide-react';
 import Link from 'next/link';
+import { eventStatuses } from '@/lib/definitions'; // Added import for eventStatuses array
 
 interface EventFormProps {
   event?: Event;
@@ -217,7 +218,7 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
                   {filteredAvailablePlayers.length > 0 ? filteredAvailablePlayers.map(player => (
                     <div key={player.id} className="flex items-center justify-between p-2 hover:bg-muted/50 rounded-md">
                       <span>{player.firstName} {player.lastName} {player.nickname ? `(${player.nickname})` : ''}</span>
-                      <Button type="button" variant="outline" size="sm" onClick={() => handleAddPlayer(player)} title="Add player" disabled={currentParticipants.length >= (event?.maxPlayers || Infinity)}>
+                      <Button type="button" variant="outline" size="sm" onClick={() => handleAddPlayer(player)} title="Add player" disabled={event && currentParticipants.length >= (event.maxPlayers || Infinity) && !event.id /* Disable add if editing and max players reached. For new events, maxPlayers might not be set in the event object yet. */}>
                         <PlusCircle className="h-4 w-4" />
                       </Button>
                     </div>
@@ -297,3 +298,6 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
     </Card>
   );
 }
+
+
+    
