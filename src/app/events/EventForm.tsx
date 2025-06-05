@@ -52,13 +52,14 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
   const [searchTerm, setSearchTerm] = React.useState('');
 
   React.useEffect(() => {
+    // Initialize to undefined to prevent hydration mismatch
+    setSelectedDate(undefined);
+    // Then, set the actual date on the client side after hydration
     if (event?.date) {
       const parsedDate = new Date(event.date);
       if (!isNaN(parsedDate.getTime())) {
         setSelectedDate(parsedDate);
       }
-    } else {
-      setSelectedDate(undefined);
     }
   }, [event?.date, event?.id]);
 
@@ -280,7 +281,7 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
               <h3 className="font-headline text-lg flex items-center"><Trophy className="mr-2 h-5 w-5 text-primary" />Event Results</h3>
               {state.errors?.results && <p className="text-sm text-destructive mt-1">{state.errors.results.join(', ')}</p>}
               {state.errors?.resultsJson && <p className="text-sm text-destructive mt-1">{typeof state.errors.resultsJson === 'string' ? state.errors.resultsJson : state.errors.resultsJson.join(', ')}</p>}
-              <ScrollArea className="max-h-[640px] w-full rounded-md border">
+              <ScrollArea className="h-[640px] w-full rounded-md border">
                 <Table>
                   <TableHeader>
                     <TableRow>
