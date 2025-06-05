@@ -40,9 +40,7 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
   const initialState: ServerEventFormState = { message: null, errors: {} };
   const [state, dispatch] = useActionState(action, initialState);
 
-  const [selectedDate, setSelectedDate] = React.useState<Date | undefined>(
-    event ? new Date(event.date) : undefined
-  );
+  const [selectedDate, setSelectedDate] = React.useState<Date | undefined>(undefined);
   const [rebuyAllowed, setRebuyAllowed] = React.useState<boolean>(event?.rebuyAllowed || false);
   const [currentStatus, setCurrentStatus] = React.useState<EventStatus>(event?.status || 'draft');
 
@@ -53,6 +51,17 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
   const [positionalResults, setPositionalResults] = React.useState<PositionalResultEntry[]>([]);
   
   const [searchTerm, setSearchTerm] = React.useState('');
+
+  React.useEffect(() => {
+    if (event?.date) {
+      const parsedDate = new Date(event.date);
+      if (!isNaN(parsedDate.getTime())) {
+        setSelectedDate(parsedDate);
+      }
+    } else {
+      setSelectedDate(undefined);
+    }
+  }, [event?.date]);
 
   React.useEffect(() => {
     const initialParticipantIds = event?.participants || [];
