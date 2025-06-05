@@ -1,5 +1,6 @@
+
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { getEvents } from "@/lib/data-service";
 import type { Event } from "@/lib/definitions";
 import { PlusCircle, CalendarDays, Users, DollarSign, Edit, Trash2, Eye } from "lucide-react";
