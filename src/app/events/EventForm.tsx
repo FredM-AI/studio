@@ -168,22 +168,22 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
 
           <div className="space-y-4 p-4 border rounded-lg shadow-sm">
             <h3 className="font-headline text-lg flex items-center"><Info className="mr-2 h-5 w-5 text-primary" />Event Details</h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <Label htmlFor="name">Event Name</Label>
-                <Input id="name" name="name" defaultValue={event?.name} required aria-describedby="name-error"/>
+                <Input id="name" name="name" defaultValue={event?.name} required aria-describedby="name-error" className="h-9"/>
                 {state.errors?.name && <p id="name-error" className="text-sm text-destructive mt-1">{state.errors.name.join(', ')}</p>}
               </div>
               <div>
                 <Label htmlFor="date">Date</Label>
-                <DatePicker date={selectedDate} setDate={setSelectedDate} className="w-full" />
+                <DatePicker date={selectedDate} setDate={setSelectedDate} className="w-full h-9" />
                 <input type="hidden" name="date" value={selectedDate ? selectedDate.toISOString() : ''} aria-describedby="date-error" />
                 {state.errors?.date && <p id="date-error" className="text-sm text-destructive mt-1">{state.errors.date.join(', ')}</p>}
               </div>
               <div>
                 <Label htmlFor="status">Event Status</Label>
                 <Select name="status" value={currentStatus} onValueChange={(value) => setCurrentStatus(value as EventStatus)}>
-                  <SelectTrigger id="status" aria-describedby="status-error">
+                  <SelectTrigger id="status" aria-describedby="status-error" className="h-9">
                     <SelectValue placeholder="Select status" />
                   </SelectTrigger>
                   <SelectContent>
@@ -199,10 +199,10 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
 
           <div className="space-y-4 p-4 border rounded-lg shadow-sm">
              <h3 className="font-headline text-lg flex items-center"><Settings className="mr-2 h-5 w-5 text-primary" />Event Configuration</h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <Label htmlFor="buyIn">Buy-in ($)</Label>
-                <Input id="buyIn" name="buyIn" type="number" step="0.01" defaultValue={event?.buyIn} required aria-describedby="buyIn-error"/>
+                <Input id="buyIn" name="buyIn" type="number" step="0.01" defaultValue={event?.buyIn} required aria-describedby="buyIn-error" className="h-9"/>
                 {state.errors?.buyIn && <p id="buyIn-error" className="text-sm text-destructive mt-1">{state.errors.buyIn.join(', ')}</p>}
               </div>
               <div>
@@ -216,12 +216,13 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
                     value={rebuyPrice}
                     onChange={(e) => setRebuyPrice(e.target.value)}
                     aria-describedby="rebuyPrice-error"
+                    className="h-9"
                 />
                 {state.errors?.rebuyPrice && <p id="rebuyPrice-error" className="text-sm text-destructive mt-1">{state.errors.rebuyPrice.join(', ')}</p>}
               </div>
               <div>
                 <Label htmlFor="prizePoolTotal">Total Prize Pool ($)</Label>
-                <Input id="prizePoolTotal" name="prizePoolTotal" type="number" step="0.01" defaultValue={event?.prizePool.total} required aria-describedby="prizePoolTotal-error"/>
+                <Input id="prizePoolTotal" name="prizePoolTotal" type="number" step="0.01" defaultValue={event?.prizePool.total} required aria-describedby="prizePoolTotal-error" className="h-9"/>
                 {state.errors?.prizePoolTotal && <p id="prizePoolTotal-error" className="text-sm text-destructive mt-1">{state.errors.prizePoolTotal.join(', ')}</p>}
               </div>
             </div>
@@ -232,14 +233,14 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
              {state.errors?.participantIds && <p className="text-sm text-destructive mt-1">{state.errors.participantIds.join(', ')}</p>}
             <input type="hidden" name="participantIds" value={hiddenParticipantIds} />
             
-            <div className="mb-4">
+            <div className="mb-3">
               <Label htmlFor="searchPlayers">Search Available Players</Label>
               <Input
                   id="searchPlayers"
                   placeholder="Search by name or nickname..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full"
+                  className="w-full h-9"
               />
             </div>
 
@@ -248,7 +249,7 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
                 <Label>Available Players</Label>
                 <ScrollArea className="h-72 w-full rounded-md border p-2">
                   {filteredAvailablePlayers.length > 0 ? filteredAvailablePlayers.map(player => (
-                    <div key={player.id} className="flex items-center justify-between p-2 hover:bg-muted/50 rounded-md">
+                    <div key={player.id} className="flex items-center justify-between p-1.5 hover:bg-muted/50 rounded-md">
                       <span>{player.firstName} {player.lastName} {player.nickname ? `(${player.nickname})` : ''}</span>
                       <Button type="button" variant="outline" size="sm" onClick={() => handleAddPlayer(player)} title="Add player"
                         disabled={currentParticipants.some(p => p.id === player.id)}>
@@ -262,7 +263,7 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
                 <Label>Selected Participants</Label>
                 <ScrollArea className="h-72 w-full rounded-md border p-2">
                   {currentParticipants.length > 0 ? currentParticipants.map(player => (
-                    <div key={player.id} className="flex items-center justify-between p-2 hover:bg-muted/50 rounded-md">
+                    <div key={player.id} className="flex items-center justify-between p-1.5 hover:bg-muted/50 rounded-md">
                       <span>{player.firstName} {player.lastName} {player.nickname ? `(${player.nickname})` : ''}</span>
                       <Button type="button" variant="outline" size="sm" onClick={() => handleRemovePlayer(player)} title="Remove player">
                         <MinusCircle className="h-4 w-4" />
@@ -358,3 +359,5 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
     </Card>
   );
 }
+
+    
