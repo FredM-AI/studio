@@ -29,7 +29,6 @@ type PositionalResultEntry = {
   position: number;
   playerId: string | null;
   prize: string;
-  // rebuys: string; // Rebuys will be sourced from enrichedParticipants
 };
 
 interface EnrichedParticipant {
@@ -190,9 +189,10 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
               thirdPrize = remainingPool * 0.20;
             }
           } else {
-            fourthPrize = prizePoolNum;
+            // if prize pool not enough for buyIn, 4th gets all
+            fourthPrize = prizePoolNum; 
           }
-        } else {
+        } else { // No buy-in specified, default to 3 positions
           if (numParticipants >= 1) firstPrize = prizePoolNum * 0.50;
           if (numParticipants >= 2) secondPrize = prizePoolNum * 0.30;
           if (numParticipants >= 3) thirdPrize = prizePoolNum * 0.20;
@@ -226,7 +226,6 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
   const handleRemovePlayer = (participantToRemove: EnrichedParticipant) => {
     setAvailablePlayers(prev => [...prev, participantToRemove.player].sort((a, b) => a.firstName.localeCompare(b.firstName)));
     setEnrichedParticipants(prev => prev.filter(p => p.player.id !== participantToRemove.player.id));
-    // Also remove from positional results if they were assigned a position
     setPositionalResults(prev => prev.map(pr => pr.playerId === participantToRemove.player.id ? {...pr, playerId: null, prize: '0'} : pr ));
   };
   
@@ -376,10 +375,10 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
               />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+              <div className="md:col-span-2">
                 <Label>Available Players ({availablePlayers.length})</Label>
-                <ScrollArea className="h-72 w-full rounded-md border p-2">
+                <ScrollArea className="h-72 w-full rounded-md border p-1.5">
                   {filteredAvailablePlayers.length > 0 ? filteredAvailablePlayers.map(player => (
                     <div key={player.id} className="flex items-center justify-between p-1.5 hover:bg-muted/50 rounded-md">
                       <span>{player.firstName} {player.lastName} {player.nickname ? `(${player.nickname})` : ''}</span>
@@ -391,9 +390,9 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
                   )) : <p className="text-muted-foreground p-2">No players available or matching search.</p>}
                 </ScrollArea>
               </div>
-              <div>
+              <div className="md:col-span-3">
                 <Label>Selected Participants ({enrichedParticipants.length})</Label>
-                <ScrollArea className="h-72 w-full rounded-md border p-2">
+                <ScrollArea className="h-72 w-full rounded-md border p-1.5">
                   {enrichedParticipants.length > 0 ? enrichedParticipants.map(ep => (
                     <div key={ep.player.id} className="flex items-center justify-between p-1.5 hover:bg-muted/50 rounded-md gap-2">
                       <span className="flex-grow">{ep.player.firstName} {ep.player.lastName} {ep.player.nickname ? `(${ep.player.nickname})` : ''}</span>
@@ -493,3 +492,4 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
     </Card>
   );
 }
+
