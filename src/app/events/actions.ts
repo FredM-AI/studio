@@ -2,22 +2,21 @@
 'use server';
 
 import { z } from 'zod';
-import { getEvents, saveEvents, getPlayers } from '@/lib/data-service';
+import { getEvents, saveEvents } from '@/lib/data-service';
 import type { Event, EventStatus } from '@/lib/definitions';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
-import type { EventFormState } from '@/lib/definitions'; // Import from definitions
+import type { EventFormState } from '@/lib/definitions'; 
 
 const EventResultInputSchema = z.object({
   playerId: z.string().min(1),
-  position: z.coerce.number().int().min(0, { message: "Position must be 0 or greater." }),
+  position: z.coerce.number().int().min(1, { message: "Position must be 1 or greater." }), // Position now min 1
   prize: z.coerce.number().min(0, { message: "Prize must be 0 or greater." }),
   rebuys: z.coerce.number().int().min(0, {message: "Rebuys must be 0 or greater."}).optional().default(0),
-  // eliminatedBy is not handled in this form
 });
 
 const EventFormSchema = z.object({
-  id: z.string().optional(), // For updates
+  id: z.string().optional(), 
   name: z.string().min(3, { message: 'Event name must be at least 3 characters.' }),
   date: z.string().min(1, { message: 'Date is required.' }),
   buyIn: z.coerce.number().positive({ message: 'Buy-in must be a positive number.' }),
@@ -51,7 +50,7 @@ const EventFormSchema = z.object({
         });
         return z.NEVER;
       }
-      return validatedResults.data.map(r => ({ ...r, eliminatedBy: undefined })); // Ensure EventResult structure
+      return validatedResults.data.map(r => ({ ...r, eliminatedBy: undefined })); 
     } catch (e) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
@@ -64,39 +63,49 @@ const EventFormSchema = z.object({
 }).refine(data => !data.rebuyAllowed || (data.rebuyAllowed && data.rebuyPrice !== undefined && data.rebuyPrice > 0), {
   message: "Rebuy price must be set if rebuys are allowed.",
   path: ["rebuyPrice"],
-}).refine(data => {
-  if (data.status === 'completed' && (!data.resultsJson || data.resultsJson.length === 0) && data.participantIds.length > 0) {
-    return false; 
+})
+.refine(data => { // Validate results based on participants and status
+  if (data.status === 'completed' && data.participantIds.length > 0 && (!data.resultsJson || data.resultsJson.length === 0)) {
+    // If completed and has participants, results are expected (though might not be for all if some didn't get a rank)
+    // This rule might need to be more flexible depending on requirements
+    // For now, we assume if completed and participants exist, some results should be there.
   }
-  return true;
+  return true; 
 }, {
-  message: "Results must be provided for completed events with participants.",
+  message: "Results should be provided for completed events with participants.",
   path: ["resultsJson"],
-}).refine(data => {
-  const participantIdsInResults = new Set(data.resultsJson?.map(r => r.playerId));
-  for (const participantId of data.participantIds) {
-    if (!participantIdsInResults.has(participantId) && data.status === 'completed') {
-      // This validation can be adjusted based on strictness.
-      // For now, if an event is completed, we expect results for all participants.
-      // Or, if results are provided, they must be for actual participants.
-    }
-  }
-  for (const result of data.resultsJson || []) {
-    if (!data.participantIds.includes(result.playerId)) {
-      return false; 
-    }
-  }
-  return true;
+})
+.refine(data => { // All players in results must be participants
+  if (!data.resultsJson || !data.participantIds) return true;
+  const participantIdSet = new Set(data.participantIds);
+  return data.resultsJson.every(result => participantIdSet.has(result.playerId));
 }, {
-  message: "All players in results must be participants in the event, or results submitted for non-participants.",
+  message: "All players in results must be participants in the event.",
+  path: ["resultsJson"],
+})
+.refine(data => { // Player IDs in results must be unique
+  if (!data.resultsJson) return true;
+  const playerIdsInResults = data.resultsJson.map(r => r.playerId);
+  return new Set(playerIdsInResults).size === playerIdsInResults.length;
+}, {
+  message: "A player cannot be assigned to multiple positions in the results.",
+  path: ["resultsJson"],
+})
+.refine(data => { // Positions in results must be unique
+  if (!data.resultsJson) return true;
+  const positionsInResults = data.resultsJson.map(r => r.position);
+  return new Set(positionsInResults).size === positionsInResults.length;
+}, {
+  message: "Each position can only appear once in the results.",
   path: ["resultsJson"],
 });
 
 
 export async function createEvent(prevState: EventFormState, formData: FormData): Promise<EventFormState> {
   const rawFormData = Object.fromEntries(formData.entries());
-  const participantIdsData = formData.getAll('participantIds');
-  rawFormData.participantIds = participantIdsData.length === 1 && typeof participantIdsData[0] === 'string' ? participantIdsData[0].split(',') : participantIdsData;
+  // Ensure participantIds is an array even if it's a single string from a hidden input
+  const participantIdsValue = rawFormData.participantIds;
+  rawFormData.participantIds = typeof participantIdsValue === 'string' && participantIdsValue ? participantIdsValue.split(',') : (Array.isArray(participantIdsValue) ? participantIdsValue : []);
 
 
   const validatedFields = EventFormSchema.safeParse(rawFormData);
@@ -113,7 +122,7 @@ export async function createEvent(prevState: EventFormState, formData: FormData)
   if (data.participantIds.length > data.maxPlayers) {
     return {
         errors: { participantIds: ['Number of participants cannot exceed max players.'] },
-        message: 'Validation failed.',
+        message: 'Validation failed: Too many participants.',
     };
   }
 
@@ -131,12 +140,12 @@ export async function createEvent(prevState: EventFormState, formData: FormData)
       distributionType: 'automatic', 
       distribution: [],
     },
-    participants: data.participantIds.filter(id => id.trim() !== ''), // Clean empty strings
+    participants: data.participantIds.filter(id => id.trim() !== ''), 
     results: data.resultsJson?.map(r => ({
         playerId: r.playerId,
         position: r.position,
         prize: r.prize,
-        rebuys: r.rebuys, // Added rebuys
+        rebuys: r.rebuys, 
         eliminatedBy: undefined, 
     })) || [],
     createdAt: new Date().toISOString(),
@@ -157,12 +166,13 @@ export async function createEvent(prevState: EventFormState, formData: FormData)
 
 export async function updateEvent(prevState: EventFormState, formData: FormData): Promise<EventFormState> {
   const rawFormData = Object.fromEntries(formData.entries());
-  const participantIdsData = formData.getAll('participantIds');
-  rawFormData.participantIds = participantIdsData.length === 1 && typeof participantIdsData[0] === 'string' ? participantIdsData[0].split(',') : participantIdsData;
+  const participantIdsValue = rawFormData.participantIds;
+  rawFormData.participantIds = typeof participantIdsValue === 'string' && participantIdsValue ? participantIdsValue.split(',') : (Array.isArray(participantIdsValue) ? participantIdsValue : []);
   
   const validatedFields = EventFormSchema.safeParse(rawFormData);
 
   if (!validatedFields.success) {
+    console.log("Validation errors:", validatedFields.error.flatten().fieldErrors);
     return {
       errors: validatedFields.error.flatten().fieldErrors,
       message: 'Validation failed. Please check the fields for errors.',
@@ -178,7 +188,7 @@ export async function updateEvent(prevState: EventFormState, formData: FormData)
   if (data.participantIds.length > data.maxPlayers) {
     return {
         errors: { participantIds: ['Number of participants cannot exceed max players.'] },
-        message: 'Validation failed.',
+        message: 'Validation failed: Too many participants.',
     };
   }
 
@@ -208,8 +218,8 @@ export async function updateEvent(prevState: EventFormState, formData: FormData)
         playerId: r.playerId,
         position: r.position,
         prize: r.prize,
-        rebuys: r.rebuys, // Added rebuys
-        eliminatedBy: undefined,
+        rebuys: r.rebuys,
+        eliminatedBy: undefined, // Keep existing eliminatedBy if it was ever implemented
       })) || [],
       updatedAt: new Date().toISOString(),
     };
@@ -227,4 +237,3 @@ export async function updateEvent(prevState: EventFormState, formData: FormData)
   revalidatePath(`/events/${data.id}/edit`);
   redirect(`/events/${data.id}`); 
 }
-

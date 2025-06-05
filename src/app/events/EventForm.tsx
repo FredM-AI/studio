@@ -1,7 +1,7 @@
 
 'use client';
 
-import type { Event, Player, EventStatus, EventResultInput as FormEventResultInput } from '@/lib/definitions';
+import type { Event, Player, EventStatus } from '@/lib/definitions';
 import type { ServerEventFormState } from '@/lib/definitions';
 import * as React from 'react';
 import { useActionState } from 'react';
@@ -14,7 +14,7 @@ import { DatePicker } from '@/components/ui/date-picker';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Trophy, PlusCircle, MinusCircle, Users, DollarSign, CalendarDays, Settings, Info, Repeat } from 'lucide-react';
+import { Trophy, PlusCircle, MinusCircle, Users, DollarSign, CalendarDays, Settings, Info } from 'lucide-react';
 import Link from 'next/link';
 import { eventStatuses } from '@/lib/definitions';
 
@@ -26,6 +26,15 @@ interface EventFormProps {
   formDescription: string;
   submitButtonText: string;
 }
+
+// Type for the internal state of the results table
+type PositionalResultEntry = {
+  position: number;
+  playerId: string | null; // Can be null if no player assigned to this position
+  prize: string;
+  rebuys: string;
+};
+
 
 export default function EventForm({ event, allPlayers, action, formTitle, formDescription, submitButtonText }: EventFormProps) {
   const initialState: ServerEventFormState = { message: null, errors: {} };
@@ -39,7 +48,9 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
 
   const [availablePlayers, setAvailablePlayers] = React.useState<Player[]>([]);
   const [currentParticipants, setCurrentParticipants] = React.useState<Player[]>([]);
-  const [eventResultsInput, setEventResultsInput] = React.useState<FormEventResultInput[]>([]);
+  
+  // State for the results table: array of objects, one per position
+  const [positionalResults, setPositionalResults] = React.useState<PositionalResultEntry[]>([]);
   
   const [searchTerm, setSearchTerm] = React.useState('');
 
@@ -51,46 +62,60 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
     setCurrentParticipants(initialParticipants.sort((a,b) => a.firstName.localeCompare(b.firstName)));
     setAvailablePlayers(initialAvailable.sort((a,b) => a.firstName.localeCompare(b.firstName)));
 
-    if (event?.results) {
-      const resultsWithNames = event.results.map(result => {
-        const player = allPlayers.find(p => p.id === result.playerId);
-        return {
-          playerId: result.playerId,
-          playerName: player ? `${player.firstName} ${player.lastName}` : 'Unknown Player',
-          position: result.position.toString(),
-          prize: result.prize.toString(),
-          rebuys: result.rebuys?.toString() || '0', // Default to '0'
-        };
-      });
-      setEventResultsInput(resultsWithNames);
-    } else {
-      const emptyResults = initialParticipants.map(p => ({
-        playerId: p.id,
-        playerName: `${p.firstName} ${p.lastName}`,
-        position: '',
-        prize: '',
-        rebuys: '0', // Default to '0'
-      }));
-      setEventResultsInput(emptyResults);
-    }
-  }, [allPlayers, event]);
+  }, [allPlayers, event?.participants]);
+
 
   React.useEffect(() => {
-    setEventResultsInput(prevResults => {
-      const newResults: FormEventResultInput[] = currentParticipants.map(participant => {
-        const existingResult = prevResults.find(r => r.playerId === participant.id);
-        return existingResult || {
-          playerId: participant.id,
-          playerName: `${participant.firstName} ${participant.lastName}`,
-          position: '',
-          prize: '',
-          rebuys: '0', // Default to '0' for new participants added to form
-        };
-      });
-      // Sort by player name for consistent order in the results table
-      return newResults.sort((a,b) => a.playerName.localeCompare(b.playerName));
+    const numPositions = currentParticipants.length;
+    const participantIdsSet = new Set(currentParticipants.map(p => p.id));
+
+    setPositionalResults(prevPositionalResults => {
+      const newTableData: PositionalResultEntry[] = [];
+      for (let i = 1; i <= numPositions; i++) {
+        const existingRowInPrevState = prevPositionalResults.find(row => row.position === i);
+        const savedResultFromEventProp = event?.results.find(r => r.position === i);
+
+        let playerIdToSet: string | null = null;
+        let prizeToSet = '';
+        let rebuysToSet = '0';
+
+        // Prioritize data already in form state if participant list changes, and player is still valid
+        if (existingRowInPrevState) {
+          if (existingRowInPrevState.playerId && participantIdsSet.has(existingRowInPrevState.playerId)) {
+            playerIdToSet = existingRowInPrevState.playerId;
+          } else {
+            playerIdToSet = null; // Player became invalid or was null
+          }
+          prizeToSet = existingRowInPrevState.prize; // Keep edits
+          rebuysToSet = existingRowInPrevState.rebuys; // Keep edits
+        } 
+        // Fallback to event prop for initial load if no form state or player was invalid
+        else if (savedResultFromEventProp) {
+          if (participantIdsSet.has(savedResultFromEventProp.playerId)) {
+            playerIdToSet = savedResultFromEventProp.playerId;
+            prizeToSet = savedResultFromEventProp.prize.toString();
+            rebuysToSet = savedResultFromEventProp.rebuys?.toString() || '0';
+          }
+        }
+        
+        // Final check: if playerIdToSet is somehow invalid after these checks, ensure it's null
+        if (playerIdToSet && !participantIdsSet.has(playerIdToSet)) {
+            playerIdToSet = null;
+            // If player becomes invalid, we might want to clear their prize/rebuys or let user adjust
+            // prizeToSet = ''; 
+            // rebuysToSet = '0';
+        }
+
+        newTableData.push({
+          position: i,
+          playerId: playerIdToSet,
+          prize: prizeToSet,
+          rebuys: rebuysToSet,
+        });
+      }
+      return newTableData;
     });
-  }, [currentParticipants]);
+  }, [currentParticipants, event?.results, event?.id]);
 
 
   const handleAddPlayer = (player: Player) => {
@@ -101,14 +126,14 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
   const handleRemovePlayer = (player: Player) => {
     setAvailablePlayers(prev => [...prev, player].sort((a, b) => a.firstName.localeCompare(b.firstName)));
     setCurrentParticipants(prev => prev.filter(p => p.id !== player.id));
-    // Also remove their result entry if they are removed from participants
-    setEventResultsInput(prev => prev.filter(r => r.playerId !== player.id));
+    // When a player is removed from participants, their assignment in positionalResults might become invalid.
+    // The useEffect for positionalResults should handle cleaning this up by setting playerId to null if invalid.
   };
 
-  const handleResultChange = (playerId: string, field: 'position' | 'prize' | 'rebuys', value: string) => {
-    setEventResultsInput(prev => 
-      prev.map(result => 
-        result.playerId === playerId ? { ...result, [field]: value } : result
+  const handlePositionalResultChange = (position: number, field: 'playerId' | 'prize' | 'rebuys', value: string | null) => {
+    setPositionalResults(prev => 
+      prev.map(row => 
+        row.position === position ? { ...row, [field]: value } : row
       )
     );
   };
@@ -118,16 +143,17 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
   );
   
   const hiddenParticipantIds = currentParticipants.map(p => p.id).join(',');
-  const resultsJson = JSON.stringify(
-    eventResultsInput
-      .filter(r => currentParticipants.some(p => p.id === r.playerId)) 
-      .map(r => ({
-        playerId: r.playerId,
-        position: parseInt(r.position) || 0, 
-        prize: parseFloat(r.prize) || 0,
-        rebuys: parseInt(r.rebuys) || 0, // Added rebuys
-      }))
-  );
+  
+  const finalResultsForJson = positionalResults
+    .filter(row => row.playerId) // Only include rows where a player is assigned
+    .map(row => ({
+      playerId: row.playerId!, // playerID is confirmed to be non-null by filter
+      position: row.position,
+      prize: parseFloat(row.prize) || 0,
+      rebuys: parseInt(row.rebuys) || 0,
+    }));
+  const resultsJson = JSON.stringify(finalResultsForJson);
+
 
   return (
     <Card className="max-w-4xl mx-auto">
@@ -225,7 +251,7 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
                     <div key={player.id} className="flex items-center justify-between p-2 hover:bg-muted/50 rounded-md">
                       <span>{player.firstName} {player.lastName} {player.nickname ? `(${player.nickname})` : ''}</span>
                       <Button type="button" variant="outline" size="sm" onClick={() => handleAddPlayer(player)} title="Add player" 
-                        disabled={(event?.maxPlayers !== undefined && currentParticipants.length >= event.maxPlayers)}>
+                        disabled={(event?.maxPlayers !== undefined && currentParticipants.length >= event.maxPlayers) || currentParticipants.some(p => p.id === player.id)}>
                         <PlusCircle className="h-4 w-4" />
                       </Button>
                     </div>
@@ -257,56 +283,64 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
                 <Table>
                   <TableHeader>
                     <TableRow>
+                      <TableHead className="w-[10%] text-center">Position</TableHead>
                       <TableHead className="w-[40%]">Player</TableHead>
-                      <TableHead className="w-[20%] text-center">Position</TableHead>
                       <TableHead className="w-[20%] text-center">Rebuys</TableHead>
-                      <TableHead className="w-[20%] text-right">Prize ($)</TableHead>
+                      <TableHead className="w-[30%] text-right">Prize ($)</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {eventResultsInput.map((resultItem) => (
-                      <TableRow key={resultItem.playerId}>
-                        <TableCell className="font-medium py-3">{resultItem.playerName}</TableCell>
+                    {positionalResults.map((row) => (
+                      <TableRow key={row.position}>
+                        <TableCell className="font-medium py-3 text-center">{row.position}</TableCell>
                         <TableCell className="py-2">
-                          <Input
-                            id={`position-${resultItem.playerId}`}
-                            type="number"
-                            min="0"
-                            placeholder="e.g., 1"
-                            value={resultItem.position}
-                            onChange={(e) => handleResultChange(resultItem.playerId, 'position', e.target.value)}
-                            className="text-center"
-                          />
+                          <Select
+                            value={row.playerId || ""}
+                            onValueChange={(value) => handlePositionalResultChange(row.position, 'playerId', value === "" ? null : value)}
+                          >
+                            <SelectTrigger className="w-full">
+                              <SelectValue placeholder="-- Select Player --" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="">-- None --</SelectItem>
+                              {currentParticipants.map(p => (
+                                <SelectItem key={p.id} value={p.id}>
+                                  {p.firstName} {p.lastName} {p.nickname ? `(${p.nickname})` : ''}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
                         </TableCell>
                         <TableCell className="py-2">
                           <Input
-                            id={`rebuys-${resultItem.playerId}`}
+                            id={`rebuys-pos-${row.position}`}
                             type="number"
                             min="0"
                             placeholder="e.g., 0"
-                            value={resultItem.rebuys}
-                            onChange={(e) => handleResultChange(resultItem.playerId, 'rebuys', e.target.value)}
+                            value={row.rebuys}
+                            onChange={(e) => handlePositionalResultChange(row.position, 'rebuys', e.target.value)}
                             className="text-center"
-                            disabled={!rebuyAllowed} // Disable if rebuys not allowed for the event
+                            disabled={!rebuyAllowed || !row.playerId} 
                           />
                         </TableCell>
                         <TableCell className="py-2">
                           <Input
-                            id={`prize-${resultItem.playerId}`}
+                            id={`prize-pos-${row.position}`}
                             type="number"
                             step="0.01"
                             min="0"
                             placeholder="e.g., 100.00"
-                            value={resultItem.prize}
-                            onChange={(e) => handleResultChange(resultItem.playerId, 'prize', e.target.value)}
+                            value={row.prize}
+                            onChange={(e) => handlePositionalResultChange(row.position, 'prize', e.target.value)}
                             className="text-right"
+                            disabled={!row.playerId}
                           />
                         </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
                 </Table>
-                {eventResultsInput.length === 0 && <p className="text-muted-foreground p-4 text-center">Add participants to enter results.</p>}
+                {positionalResults.length === 0 && <p className="text-muted-foreground p-4 text-center">Add participants to enable result entry.</p>}
               </ScrollArea>
             </div>
           )}
