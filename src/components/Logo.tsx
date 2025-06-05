@@ -14,7 +14,7 @@ const Logo = () => {
         className="h-8 w-8 object-contain"
         data-ai-hint="bull logo"
       />
-      <span className="font-headline text-2xl font-semibold">PokerManager</span>
+      <span className="font-headline text-2xl font-semibold">Poker Bulls Championship</span>
     </Link>
   );
 };
