@@ -18,7 +18,7 @@ async function getPlayerWithStats(id: string): Promise<{ player?: Player; calcul
   }
 
   const allEvents = await getEvents();
-  const calculatedStats = calculatePlayerOverallStats(player.id, allEvents, players);
+  const calculatedStats = await calculatePlayerOverallStats(player.id, allEvents, players);
   return { player, calculatedStats };
 }
 
@@ -43,7 +43,9 @@ export default async function PlayerDetailPage({ params }: { params: { playerId:
     return `${firstName[0] || ''}${lastName[0] || ''}`.toUpperCase();
   };
 
-  const netProfitOrLoss = calculatedStats.totalWinnings - calculatedStats.totalBuyIns;
+  const totalWinningsSafe = calculatedStats.totalWinnings ?? 0;
+  const totalBuyInsSafe = calculatedStats.totalBuyIns ?? 0;
+  const netProfitOrLoss = totalWinningsSafe - totalBuyInsSafe;
 
   return (
     <div className="space-y-6">
@@ -116,11 +118,11 @@ export default async function PlayerDetailPage({ params }: { params: { playerId:
               </li>
               <li className="flex items-center justify-between">
                 <span className="text-muted-foreground">Total Winnings:</span>
-                <span className="font-medium text-green-600 dark:text-green-500">${calculatedStats.totalWinnings.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+                <span className="font-medium text-green-600 dark:text-green-500">${totalWinningsSafe.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
               </li>
                <li className="flex items-center justify-between">
                 <span className="text-muted-foreground">Total Buy-Ins & Rebuys:</span>
-                <span className="font-medium text-red-600 dark:text-red-500">${calculatedStats.totalBuyIns.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+                <span className="font-medium text-red-600 dark:text-red-500">${totalBuyInsSafe.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
               </li>
               <li className="flex items-center justify-between border-t pt-2 mt-1">
                 <span className="text-muted-foreground font-semibold">Net Profit/Loss:</span>
