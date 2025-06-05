@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { Event } from '@/lib/definitions';
@@ -56,15 +57,16 @@ export default function SeasonDetailsCalendar({ events }: SeasonDetailsCalendarP
     return (
       <Popover>
         <PopoverTrigger asChild>
-          <button 
-            className="w-full h-full flex items-center justify-center relative focus:outline-none focus:ring-2 focus:ring-ring rounded-sm"
+          {/* Changed from button to div to avoid nesting buttons */}
+          <div 
+            className="w-full h-full flex items-center justify-center relative focus:outline-none focus:ring-2 focus:ring-ring rounded-sm cursor-pointer"
             aria-label={`Events on ${format(date, 'PPP')}`}
           >
             {format(date, 'd')}
             <Badge variant="destructive" className="absolute -top-1 -right-1 h-3.5 w-3.5 p-0 flex items-center justify-center text-[9px] leading-none">
               {dayEvents.length}
             </Badge>
-          </button>
+          </div>
         </PopoverTrigger>
         <PopoverContent className="w-80 z-10">
           <div className="grid gap-4">
