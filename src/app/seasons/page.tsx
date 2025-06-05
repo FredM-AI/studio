@@ -1,13 +1,13 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { getSeasons } from "@/lib/data-service";
-import type { Season } from "@/lib/definitions";
+import { getSeasons, getEvents } from "@/lib/data-service"; // Import getEvents
+import type { Season, Event as EventType } from "@/lib/definitions"; // Import Event type
 import { BarChart3, PlusCircle, CalendarRange, Edit, Eye, CheckCircle, XCircle } from "lucide-react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 
-const SeasonCard = ({ season }: { season: Season }) => (
+const SeasonCard = ({ season, eventCount }: { season: Season, eventCount: number }) => (
   <Card className="hover:shadow-lg transition-shadow duration-300 flex flex-col">
     <CardHeader>
       <CardTitle className="font-headline text-xl">{season.name}</CardTitle>
@@ -24,6 +24,9 @@ const SeasonCard = ({ season }: { season: Season }) => (
         </Badge>
       </div>
        <div className="text-sm text-muted-foreground">
+        Associated Events: {eventCount}
+      </div>
+       <div className="text-sm text-muted-foreground">
         Leaderboard Entries: {season.leaderboard.length}
       </div>
     </CardContent>
@@ -33,7 +36,7 @@ const SeasonCard = ({ season }: { season: Season }) => (
           <Eye className="mr-1 h-4 w-4" /> View
         </Link>
       </Button>
-      <Button variant="outline" size="sm" asChild title="Edit Season (Coming Soon)" disabled>
+      <Button variant="outline" size="sm" asChild title="Edit Season">
         <Link href={`/seasons/${season.id}/edit`}>
           <Edit className="mr-1 h-4 w-4" /> Edit
         </Link>
@@ -44,6 +47,7 @@ const SeasonCard = ({ season }: { season: Season }) => (
 
 export default async function SeasonsPage() {
   const seasons = await getSeasons();
+  const allEvents = await getEvents(); // Fetch all events
   const sortedSeasons = seasons.sort((a,b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime());
 
   return (
@@ -76,9 +80,11 @@ export default async function SeasonsPage() {
         </Card>
       ) : (
          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {sortedSeasons.map((season) => (
-            <SeasonCard key={season.id} season={season} />
-          ))}
+          {sortedSeasons.map((season) => {
+            // Count events associated with this season
+            const eventCount = allEvents.filter(event => event.seasonId === season.id).length;
+            return <SeasonCard key={season.id} season={season} eventCount={eventCount} />;
+          })}
         </div>
       )}
     </div>
