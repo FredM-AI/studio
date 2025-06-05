@@ -2,8 +2,8 @@
 'use client';
 
 import type { Event, Player, EventFormState as ServerEventFormState } from '@/lib/definitions';
-import { useFormState } from 'react-dom';
 import * as React from 'react';
+import { useActionState } from 'react'; // Updated import
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
@@ -25,7 +25,7 @@ interface EventFormProps {
 
 export default function EventForm({ event, allPlayers, action, formTitle, formDescription, submitButtonText }: EventFormProps) {
   const initialState: ServerEventFormState = { message: null, errors: {} };
-  const [state, dispatch] = useFormState(action, initialState);
+  const [state, dispatch] = useActionState(action, initialState); // Renamed to useActionState
 
   const [selectedDate, setSelectedDate] = React.useState<Date | undefined>(
     event ? new Date(event.date) : undefined

@@ -1,1 +1,23 @@
-[]
+[
+  {
+    "id": "8fed2e69-48e3-448a-9733-5e83f51d39e1",
+    "name": "Last One",
+    "date": "2025-06-12T22:00:00.000Z",
+    "buyIn": 20,
+    "rebuyAllowed": true,
+    "rebuyPrice": 20,
+    "maxPlayers": 18,
+    "status": "draft",
+    "prizePool": {
+      "total": 40,
+      "distributionType": "automatic",
+      "distribution": []
+    },
+    "participants": [
+      "d33fe6bd-5270-4d14-ab19-05af4da1845a,cf3fd736-a65d-4f35-ab29-bed54a22f16e"
+    ],
+    "results": [],
+    "createdAt": "2025-06-05T13:52:12.681Z",
+    "updatedAt": "2025-06-05T13:52:12.681Z"
+  }
+]
