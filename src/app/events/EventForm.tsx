@@ -231,16 +231,21 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
             <h3 className="font-headline text-lg flex items-center"><Users className="mr-2 h-5 w-5 text-primary" />Participants ({currentParticipants.length})</h3>
              {state.errors?.participantIds && <p className="text-sm text-destructive mt-1">{state.errors.participantIds.join(', ')}</p>}
             <input type="hidden" name="participantIds" value={hiddenParticipantIds} />
+            
+            <div className="mb-4">
+              <Label htmlFor="searchPlayers">Search Available Players</Label>
+              <Input
+                  id="searchPlayers"
+                  placeholder="Search by name or nickname..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full"
+              />
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="searchPlayers">Search Available Players</Label>
-                 <Input
-                    id="searchPlayers"
-                    placeholder="Search by name or nickname..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="mb-2"
-                />
+                <Label>Available Players</Label>
                 <ScrollArea className="h-72 w-full rounded-md border p-2">
                   {filteredAvailablePlayers.length > 0 ? filteredAvailablePlayers.map(player => (
                     <div key={player.id} className="flex items-center justify-between p-2 hover:bg-muted/50 rounded-md">
