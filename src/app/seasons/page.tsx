@@ -1,8 +1,8 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { getSeasons, getEvents } from "@/lib/data-service"; // Import getEvents
-import type { Season, Event as EventType } from "@/lib/definitions"; // Import Event type
+import { getSeasons, getEvents } from "@/lib/data-service"; 
+import type { Season, Event as EventType } from "@/lib/definitions"; 
 import { BarChart3, PlusCircle, CalendarRange, Edit, Eye, CheckCircle, XCircle } from "lucide-react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
@@ -18,7 +18,7 @@ const SeasonCard = ({ season, eventCount }: { season: Season, eventCount: number
     </CardHeader>
     <CardContent className="flex-grow space-y-3">
       <div className="flex items-center">
-        <Badge variant={season.isActive ? "default" : "outline"} className={season.isActive ? "bg-green-500 text-white" : "border-red-500 text-red-500"}>
+        <Badge variant={season.isActive ? "default" : "outline"} className={season.isActive ? "bg-green-500 hover:bg-green-600 text-primary-foreground" : "border-destructive text-destructive"}>
           {season.isActive ? <CheckCircle className="mr-1 h-3 w-3"/> : <XCircle className="mr-1 h-3 w-3"/>}
           {season.isActive ? "Active" : "Inactive"}
         </Badge>
@@ -27,11 +27,11 @@ const SeasonCard = ({ season, eventCount }: { season: Season, eventCount: number
         Associated Events: {eventCount}
       </div>
        <div className="text-sm text-muted-foreground">
-        Leaderboard Entries: {season.leaderboard.length}
+        Leaderboard Entries: {season.leaderboard.length} 
       </div>
     </CardContent>
     <CardFooter className="flex justify-end gap-2 border-t pt-4 mt-auto">
-      <Button variant="outline" size="sm" asChild title="View Season (Coming Soon)" disabled>
+      <Button variant="default" size="sm" asChild title="View Season Details">
         <Link href={`/seasons/${season.id}`}>
           <Eye className="mr-1 h-4 w-4" /> View
         </Link>
@@ -47,7 +47,7 @@ const SeasonCard = ({ season, eventCount }: { season: Season, eventCount: number
 
 export default async function SeasonsPage() {
   const seasons = await getSeasons();
-  const allEvents = await getEvents(); // Fetch all events
+  const allEvents = await getEvents(); 
   const sortedSeasons = seasons.sort((a,b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime());
 
   return (
@@ -81,7 +81,6 @@ export default async function SeasonsPage() {
       ) : (
          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {sortedSeasons.map((season) => {
-            // Count events associated with this season
             const eventCount = allEvents.filter(event => event.seasonId === season.id).length;
             return <SeasonCard key={season.id} season={season} eventCount={eventCount} />;
           })}

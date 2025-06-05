@@ -116,5 +116,116 @@
     ],
     "createdAt": "2025-06-05T14:58:42.267Z",
     "updatedAt": "2025-06-05T17:43:05.727Z"
+  },
+  {
+    "id": "e5a397aa-5db8-4ae3-a3d2-bf2daf094fac",
+    "name": "La première",
+    "date": "2025-09-11T22:00:00.000Z",
+    "buyIn": 20,
+    "rebuyPrice": 20,
+    "status": "completed",
+    "prizePool": {
+      "total": 360,
+      "distributionType": "automatic",
+      "distribution": []
+    },
+    "participants": [
+      "3f6a3c82-6b86-4931-9e4c-7bfa88fced94",
+      "0f99c71d-c7a7-4e4c-94fb-cfca7c6e9df3",
+      "6b5aa2e0-01f3-4b3b-b089-2380cb70c2aa",
+      "58fda83d-5746-47aa-9a8b-b0d382b1e6ec",
+      "cf3fd736-a65d-4f35-ab29-bed54a22f16e",
+      "d12fc15d-34b3-44c2-96ff-ef7ad49ad72b",
+      "d33fe6bd-5270-4d14-ab19-05af4da1845a",
+      "71c0248f-c1a3-4063-9a1a-c6f69e1d1c82",
+      "6ed96fc2-0159-4a0a-a12b-e1f631f03c7a",
+      "e1915c6d-1a34-4096-a594-3dc5d0902c6b",
+      "ce14e5ac-e302-4294-970d-5b1a541e9b5e",
+      "849d37aa-659e-4553-8bc3-7b1d24bb6883",
+      "af93d90d-517e-4fd7-8093-86a43cddcccb"
+    ],
+    "results": [
+      {
+        "playerId": "6ed96fc2-0159-4a0a-a12b-e1f631f03c7a",
+        "position": 1,
+        "prize": 180,
+        "rebuys": 0
+      },
+      {
+        "playerId": "58fda83d-5746-47aa-9a8b-b0d382b1e6ec",
+        "position": 2,
+        "prize": 108,
+        "rebuys": 1
+      },
+      {
+        "playerId": "d33fe6bd-5270-4d14-ab19-05af4da1845a",
+        "position": 3,
+        "prize": 72,
+        "rebuys": 0
+      },
+      {
+        "playerId": "cf3fd736-a65d-4f35-ab29-bed54a22f16e",
+        "position": 4,
+        "prize": 0,
+        "rebuys": 0
+      },
+      {
+        "playerId": "0f99c71d-c7a7-4e4c-94fb-cfca7c6e9df3",
+        "position": 5,
+        "prize": 0,
+        "rebuys": 0
+      },
+      {
+        "playerId": "d12fc15d-34b3-44c2-96ff-ef7ad49ad72b",
+        "position": 6,
+        "prize": 0,
+        "rebuys": 0
+      },
+      {
+        "playerId": "e1915c6d-1a34-4096-a594-3dc5d0902c6b",
+        "position": 7,
+        "prize": 0,
+        "rebuys": 1
+      },
+      {
+        "playerId": "6b5aa2e0-01f3-4b3b-b089-2380cb70c2aa",
+        "position": 8,
+        "prize": 0,
+        "rebuys": 0
+      },
+      {
+        "playerId": "3f6a3c82-6b86-4931-9e4c-7bfa88fced94",
+        "position": 9,
+        "prize": 0,
+        "rebuys": 2
+      },
+      {
+        "playerId": "71c0248f-c1a3-4063-9a1a-c6f69e1d1c82",
+        "position": 10,
+        "prize": 0,
+        "rebuys": 1
+      },
+      {
+        "playerId": "849d37aa-659e-4553-8bc3-7b1d24bb6883",
+        "position": 11,
+        "prize": 0,
+        "rebuys": 0
+      },
+      {
+        "playerId": "ce14e5ac-e302-4294-970d-5b1a541e9b5e",
+        "position": 12,
+        "prize": 0,
+        "rebuys": 0
+      },
+      {
+        "playerId": "af93d90d-517e-4fd7-8093-86a43cddcccb",
+        "position": 13,
+        "prize": 0,
+        "rebuys": 0
+      }
+    ],
+    "createdAt": "2025-06-05T20:22:37.576Z",
+    "updatedAt": "2025-06-05T20:22:53.777Z",
+    "seasonId": "0b6e1799-f10c-4f4e-a4b9-04c45ac39e19"
   }
 ]
