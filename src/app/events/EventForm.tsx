@@ -265,7 +265,7 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
                     <div key={player.id} className="flex items-center justify-between p-2 hover:bg-muted/50 rounded-md">
                       <span>{player.firstName} {player.lastName} {player.nickname ? `(${player.nickname})` : ''}</span>
                       <Button type="button" variant="outline" size="sm" onClick={() => handleAddPlayer(player)} title="Add player" 
-                        disabled={(event?.maxPlayers !== undefined && currentParticipants.length >= event.maxPlayers) || currentParticipants.some(p => p.id === player.id)}>
+                        disabled={(event?.maxPlayers !== undefined && typeof event.maxPlayers === 'number' && currentParticipants.length >= event.maxPlayers) || currentParticipants.some(p => p.id === player.id)}>
                         <PlusCircle className="h-4 w-4" />
                       </Button>
                     </div>
@@ -372,3 +372,5 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
     </Card>
   );
 }
+
+    
