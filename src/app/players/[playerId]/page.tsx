@@ -1,21 +1,31 @@
-import { getPlayers } from "@/lib/data-service";
-import type { Player } from "@/lib/definitions";
+
+import { getPlayers, getEvents } from "@/lib/data-service";
+import type { Player, PlayerStats, Event as EventType } from "@/lib/definitions";
+import { calculatePlayerOverallStats } from "@/lib/stats-service";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { ArrowLeft, Edit, UserCircle, Mail, Phone, BarChartHorizontalBig, CheckCircle, XCircle } from "lucide-react";
+import { ArrowLeft, Edit, Mail, Phone, CheckCircle, XCircle, TrendingUp, TrendingDown, Minus } from "lucide-react";
 import Image from "next/image";
 
-async function getPlayer(id: string): Promise<Player | undefined> {
+async function getPlayerWithStats(id: string): Promise<{ player?: Player; calculatedStats?: PlayerStats }> {
   const players = await getPlayers();
-  return players.find(p => p.id === id);
+  const player = players.find(p => p.id === id);
+
+  if (!player) {
+    return { player: undefined, calculatedStats: undefined };
+  }
+
+  const allEvents = await getEvents();
+  const calculatedStats = calculatePlayerOverallStats(player.id, allEvents, players);
+  return { player, calculatedStats };
 }
 
 export default async function PlayerDetailPage({ params }: { params: { playerId: string } }) {
-  const player = await getPlayer(params.playerId);
+  const { player, calculatedStats } = await getPlayerWithStats(params.playerId);
 
-  if (!player) {
+  if (!player || !calculatedStats) {
     return (
       <div className="text-center py-10">
         <h1 className="font-headline text-2xl text-destructive">Player Not Found</h1>
@@ -33,6 +43,8 @@ export default async function PlayerDetailPage({ params }: { params: { playerId:
     return `${firstName[0] || ''}${lastName[0] || ''}`.toUpperCase();
   };
 
+  const netProfitOrLoss = calculatedStats.totalWinnings - calculatedStats.totalBuyIns;
+
   return (
     <div className="space-y-6">
        <Button variant="outline" asChild className="mb-6">
@@ -41,13 +53,13 @@ export default async function PlayerDetailPage({ params }: { params: { playerId:
          </Link>
        </Button>
 
-      <Card className="overflow-hidden">
+      <Card className="overflow-hidden shadow-lg">
         <CardHeader className="bg-muted/50 p-6 flex flex-col md:flex-row items-start md:items-center gap-6">
           <Avatar className="h-24 w-24 border-4 border-background shadow-md">
             {player.avatar ? (
                 <AvatarImage src={player.avatar} alt={`${player.firstName} ${player.lastName}`} data-ai-hint="person avatar"/>
             ) : (
-                <AvatarImage src={`https://placehold.co/100x100.png`} alt="Placeholder Avatar" data-ai-hint="person avatar"/>
+                <AvatarImage src={`https://placehold.co/100x100.png?text=${getInitials(player.firstName, player.lastName)}`} alt="Placeholder Avatar" data-ai-hint="person avatar"/>
             )}
             <AvatarFallback className="text-3xl font-semibold bg-primary text-primary-foreground">
               {getInitials(player.firstName, player.lastName)}
@@ -71,10 +83,10 @@ export default async function PlayerDetailPage({ params }: { params: { playerId:
             </Link>
           </Button>
         </CardHeader>
-        <CardContent className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+        <CardContent className="p-6 grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
           <div>
-            <h3 className="font-headline text-xl mb-3 text-primary">Contact Information</h3>
-            <ul className="space-y-2">
+            <h3 className="font-headline text-xl mb-4 text-primary">Contact Information</h3>
+            <ul className="space-y-3 text-sm">
               <li className="flex items-center gap-3">
                 <Mail className="h-5 w-5 text-muted-foreground" />
                 <span>{player.email}</span>
@@ -88,35 +100,44 @@ export default async function PlayerDetailPage({ params }: { params: { playerId:
             </ul>
           </div>
           <div>
-            <h3 className="font-headline text-xl mb-3 text-primary">Player Statistics</h3>
-            <ul className="space-y-2">
+            <h3 className="font-headline text-xl mb-4 text-primary">Overall Statistics</h3>
+            <ul className="space-y-2 text-sm">
               <li className="flex items-center justify-between">
                 <span className="text-muted-foreground">Games Played:</span>
-                <span className="font-medium">{player.stats.gamesPlayed}</span>
+                <span className="font-medium">{calculatedStats.gamesPlayed}</span>
               </li>
               <li className="flex items-center justify-between">
                 <span className="text-muted-foreground">Wins:</span>
-                <span className="font-medium">{player.stats.wins}</span>
+                <span className="font-medium">{calculatedStats.wins}</span>
               </li>
               <li className="flex items-center justify-between">
                 <span className="text-muted-foreground">Final Tables:</span>
-                <span className="font-medium">{player.stats.finalTables}</span>
+                <span className="font-medium">{calculatedStats.finalTables}</span>
               </li>
               <li className="flex items-center justify-between">
                 <span className="text-muted-foreground">Total Winnings:</span>
-                <span className="font-medium">${player.stats.totalWinnings.toLocaleString()}</span>
+                <span className="font-medium text-green-600 dark:text-green-500">${calculatedStats.totalWinnings.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
               </li>
                <li className="flex items-center justify-between">
-                <span className="text-muted-foreground">Total Buy-Ins:</span>
-                <span className="font-medium">${player.stats.totalBuyIns.toLocaleString()}</span>
+                <span className="text-muted-foreground">Total Buy-Ins & Rebuys:</span>
+                <span className="font-medium text-red-600 dark:text-red-500">${calculatedStats.totalBuyIns.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
               </li>
-              <li className="flex items-center justify-between">
+              <li className="flex items-center justify-between border-t pt-2 mt-1">
+                <span className="text-muted-foreground font-semibold">Net Profit/Loss:</span>
+                <span className={`font-bold flex items-center ${netProfitOrLoss >= 0 ? 'text-green-600 dark:text-green-500' : 'text-red-600 dark:text-red-500'}`}>
+                  {netProfitOrLoss > 0 && <TrendingUp className="mr-1 h-4 w-4" />}
+                  {netProfitOrLoss < 0 && <TrendingDown className="mr-1 h-4 w-4" />}
+                  {netProfitOrLoss === 0 && <Minus className="mr-1 h-4 w-4" />}
+                  ${netProfitOrLoss.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+                </span>
+              </li>
+              <li className="flex items-center justify-between mt-2">
                 <span className="text-muted-foreground">Best Position:</span>
-                <span className="font-medium">{player.stats.bestPosition ?? 'N/A'}</span>
+                <span className="font-medium">{calculatedStats.bestPosition ?? 'N/A'}</span>
               </li>
                <li className="flex items-center justify-between">
                 <span className="text-muted-foreground">Average Position:</span>
-                <span className="font-medium">{player.stats.averagePosition?.toFixed(2) ?? 'N/A'}</span>
+                <span className="font-medium">{calculatedStats.averagePosition?.toFixed(2) ?? 'N/A'}</span>
               </li>
             </ul>
           </div>
