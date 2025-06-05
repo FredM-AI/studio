@@ -41,7 +41,10 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
 
   const [selectedDate, setSelectedDate] = React.useState<Date | undefined>(undefined);
   const [currentStatus, setCurrentStatus] = React.useState<EventStatus>(event?.status || 'draft');
+  
+  const [buyInValue, setBuyInValue] = React.useState<string>(event?.buyIn?.toString() || '');
   const [rebuyPrice, setRebuyPrice] = React.useState<string>(event?.rebuyPrice?.toString() || '');
+  const [totalPrizePoolValue, setTotalPrizePoolValue] = React.useState<string>(event?.prizePool.total?.toString() || '0');
 
 
   const [availablePlayers, setAvailablePlayers] = React.useState<Player[]>([]);
@@ -119,6 +122,33 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
       return newTableData;
     });
   }, [currentParticipants, event?.results, event?.id]);
+
+  // Calculate Prize Pool
+  React.useEffect(() => {
+    const numParticipants = currentParticipants.length;
+    const currentBuyInNum = parseFloat(buyInValue);
+    const currentRebuyPriceNum = parseFloat(rebuyPrice);
+  
+    let calculatedTotal = 0;
+  
+    if (!isNaN(currentBuyInNum) && currentBuyInNum > 0) {
+      calculatedTotal += numParticipants * currentBuyInNum;
+    }
+  
+    if (!isNaN(currentRebuyPriceNum) && currentRebuyPriceNum > 0) {
+      positionalResults.forEach(result => {
+        if (result.playerId && result.playerId !== NO_PLAYER_SELECTED_VALUE) {
+          const rebuys = parseInt(result.rebuys);
+          if (!isNaN(rebuys) && rebuys > 0) {
+            calculatedTotal += rebuys * currentRebuyPriceNum;
+          }
+        }
+      });
+    }
+  
+    setTotalPrizePoolValue(calculatedTotal.toFixed(2));
+  
+  }, [currentParticipants.length, buyInValue, rebuyPrice, positionalResults]);
 
 
   const handleAddPlayer = (player: Player) => {
@@ -203,7 +233,17 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <Label htmlFor="buyIn">Buy-in ($)</Label>
-                <Input id="buyIn" name="buyIn" type="number" step="0.01" defaultValue={event?.buyIn} required aria-describedby="buyIn-error" className="h-9"/>
+                <Input 
+                  id="buyIn" 
+                  name="buyIn" 
+                  type="number" 
+                  step="0.01" 
+                  value={buyInValue}
+                  onChange={(e) => setBuyInValue(e.target.value)}
+                  required 
+                  aria-describedby="buyIn-error" 
+                  className="h-9"
+                />
                 {state.errors?.buyIn && <p id="buyIn-error" className="text-sm text-destructive mt-1">{state.errors.buyIn.join(', ')}</p>}
               </div>
               <div>
@@ -223,7 +263,17 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
               </div>
               <div>
                 <Label htmlFor="prizePoolTotal">Total Prize Pool ($)</Label>
-                <Input id="prizePoolTotal" name="prizePoolTotal" type="number" step="0.01" defaultValue={event?.prizePool.total} required aria-describedby="prizePoolTotal-error" className="h-9"/>
+                <Input 
+                  id="prizePoolTotal" 
+                  name="prizePoolTotal" 
+                  type="number" 
+                  step="0.01" 
+                  value={totalPrizePoolValue}
+                  onChange={(e) => setTotalPrizePoolValue(e.target.value)}
+                  required 
+                  aria-describedby="prizePoolTotal-error" 
+                  className="h-9"
+                />
                 {state.errors?.prizePoolTotal && <p id="prizePoolTotal-error" className="text-sm text-destructive mt-1">{state.errors.prizePoolTotal.join(', ')}</p>}
               </div>
             </div>
@@ -281,7 +331,7 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
               <h3 className="font-headline text-lg flex items-center"><Trophy className="mr-2 h-5 w-5 text-primary" />Event Results</h3>
               {state.errors?.results && <p className="text-sm text-destructive mt-1">{state.errors.results.join(', ')}</p>}
               {state.errors?.resultsJson && <p className="text-sm text-destructive mt-1">{typeof state.errors.resultsJson === 'string' ? state.errors.resultsJson : state.errors.resultsJson.join(', ')}</p>}
-              <ScrollArea className="max-h-56 w-full rounded-md border">
+              <ScrollArea className="max-h-56 w-full rounded-md border overflow-y-auto">
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -360,4 +410,3 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
     </Card>
   );
 }
-
