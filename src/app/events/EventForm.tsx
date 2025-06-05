@@ -63,7 +63,7 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
     } else {
       setSelectedDate(undefined);
     }
-  }, [event?.date]);
+  }, [event?.date, event?.id]); // Added event.id to dependency array
 
   React.useEffect(() => {
     const initialParticipantIds = event?.participants || [];
@@ -147,7 +147,7 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
   const handlePositionalResultChange = (position: number, field: 'playerId' | 'prize' | 'rebuys', value: string | null) => {
     setPositionalResults(prev => 
       prev.map(row => 
-        row.position === position ? { ...row, [field]: value } : row
+        row.position === position ? { ...row, [field]: value === NO_PLAYER_SELECTED_VALUE ? null : value } : row
       )
     );
   };
@@ -213,7 +213,7 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
 
           <div className="space-y-6 p-6 border rounded-lg shadow-sm">
              <h3 className="font-headline text-lg flex items-center"><Settings className="mr-2 h-5 w-5 text-primary" />Event Configuration</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div>
                 <Label htmlFor="buyIn">Buy-in ($)</Label>
                 <Input id="buyIn" name="buyIn" type="number" step="0.01" defaultValue={event?.buyIn} required aria-describedby="buyIn-error"/>
@@ -230,8 +230,8 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
                 {state.errors?.prizePoolTotal && <p id="prizePoolTotal-error" className="text-sm text-destructive mt-1">{state.errors.prizePoolTotal.join(', ')}</p>}
               </div>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-end">
-                <div className="flex items-center space-x-2 pt-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-end pt-4"> {/* pt-4 for spacing */}
+                <div className="flex items-center space-x-2"> {/* Removed pt-4 from here */}
                     <Switch id="rebuyAllowed" name="rebuyAllowed" checked={rebuyAllowed} onCheckedChange={setRebuyAllowed} />
                     <Label htmlFor="rebuyAllowed">Rebuys Allowed</Label>
                 </div>
@@ -310,7 +310,7 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
                         <TableCell className="py-2">
                           <Select
                             value={row.playerId || NO_PLAYER_SELECTED_VALUE}
-                            onValueChange={(value) => handlePositionalResultChange(row.position, 'playerId', value === NO_PLAYER_SELECTED_VALUE ? null : value)}
+                            onValueChange={(value) => handlePositionalResultChange(row.position, 'playerId', value)}
                           >
                             <SelectTrigger className="w-full">
                               <SelectValue placeholder="-- Select Player --" />
@@ -372,7 +372,5 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
     </Card>
   );
 }
-
-    
 
     
