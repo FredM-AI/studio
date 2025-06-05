@@ -162,11 +162,11 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
         <CardDescription>{formDescription}</CardDescription>
       </CardHeader>
       <form action={dispatch}>
-        <CardContent className="space-y-8">
+        <CardContent className="space-y-6">
           {event?.id && <input type="hidden" name="id" defaultValue={event.id} />}
           <input type="hidden" name="resultsJson" value={resultsJson} />
 
-          <div className="space-y-6 p-6 border rounded-lg shadow-sm">
+          <div className="space-y-4 p-4 border rounded-lg shadow-sm">
             <h3 className="font-headline text-lg flex items-center"><Info className="mr-2 h-5 w-5 text-primary" />Event Details</h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div>
@@ -197,7 +197,7 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
             </div>
           </div>
 
-          <div className="space-y-6 p-6 border rounded-lg shadow-sm">
+          <div className="space-y-4 p-4 border rounded-lg shadow-sm">
              <h3 className="font-headline text-lg flex items-center"><Settings className="mr-2 h-5 w-5 text-primary" />Event Configuration</h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div>
@@ -227,7 +227,7 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
             </div>
           </div>
 
-          <div className="space-y-4 p-6 border rounded-lg shadow-sm">
+          <div className="space-y-4 p-4 border rounded-lg shadow-sm">
             <h3 className="font-headline text-lg flex items-center"><Users className="mr-2 h-5 w-5 text-primary" />Participants ({currentParticipants.length})</h3>
              {state.errors?.participantIds && <p className="text-sm text-destructive mt-1">{state.errors.participantIds.join(', ')}</p>}
             <input type="hidden" name="participantIds" value={hiddenParticipantIds} />
@@ -275,11 +275,11 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
           </div>
 
           {currentParticipants.length > 0 && (
-            <div className="space-y-6 p-6 border rounded-lg shadow-sm">
+            <div className="space-y-4 p-4 border rounded-lg shadow-sm">
               <h3 className="font-headline text-lg flex items-center"><Trophy className="mr-2 h-5 w-5 text-primary" />Event Results</h3>
               {state.errors?.results && <p className="text-sm text-destructive mt-1">{state.errors.results.join(', ')}</p>}
               {state.errors?.resultsJson && <p className="text-sm text-destructive mt-1">{typeof state.errors.resultsJson === 'string' ? state.errors.resultsJson : state.errors.resultsJson.join(', ')}</p>}
-              <ScrollArea className="max-h-[500px] w-full rounded-md border">
+              <ScrollArea className="max-h-[640px] w-full rounded-md border">
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -292,13 +292,13 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
                   <TableBody>
                     {positionalResults.map((row) => (
                       <TableRow key={row.position}>
-                        <TableCell className="font-medium py-3 text-center">{row.position}</TableCell>
-                        <TableCell className="py-2">
+                        <TableCell className="font-medium py-1 text-center">{row.position}</TableCell>
+                        <TableCell className="py-1">
                           <Select
                             value={row.playerId || NO_PLAYER_SELECTED_VALUE}
                             onValueChange={(value) => handlePositionalResultChange(row.position, 'playerId', value)}
                           >
-                            <SelectTrigger className="w-full">
+                            <SelectTrigger className="w-full h-9">
                               <SelectValue placeholder="-- Select Player --" />
                             </SelectTrigger>
                             <SelectContent>
@@ -311,7 +311,7 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
                             </SelectContent>
                           </Select>
                         </TableCell>
-                        <TableCell className="py-2">
+                        <TableCell className="py-1">
                           <Input
                             id={`rebuys-pos-${row.position}`}
                             type="number"
@@ -319,11 +319,11 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
                             placeholder="e.g., 0"
                             value={row.rebuys}
                             onChange={(e) => handlePositionalResultChange(row.position, 'rebuys', e.target.value)}
-                            className="text-center"
+                            className="text-center h-9"
                             disabled={!row.playerId || row.playerId === NO_PLAYER_SELECTED_VALUE || !(parseFloat(rebuyPrice) > 0)}
                           />
                         </TableCell>
-                        <TableCell className="py-2">
+                        <TableCell className="py-1">
                           <Input
                             id={`prize-pos-${row.position}`}
                             type="number"
@@ -332,7 +332,7 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
                             placeholder="e.g., 100.00"
                             value={row.prize}
                             onChange={(e) => handlePositionalResultChange(row.position, 'prize', e.target.value)}
-                            className="text-right"
+                            className="text-right h-9"
                             disabled={!row.playerId || row.playerId === NO_PLAYER_SELECTED_VALUE}
                           />
                         </TableCell>
@@ -358,5 +358,3 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
     </Card>
   );
 }
-
-    
