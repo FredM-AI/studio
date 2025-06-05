@@ -1,27 +1,63 @@
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Edit } from "lucide-react";
-import Link from "next/link";
 
-export default function EditEventPage({ params }: { params: { eventId: string } }) {
+import EventForm from '@/app/events/EventForm';
+import { updateEvent } from '@/app/events/actions';
+import { getEvents, getPlayers } from '@/lib/data-service';
+import type { Event, Player } from '@/lib/definitions';
+import { Button } from '@/components/ui/button';
+import Link from 'next/link';
+import { ArrowLeft, Edit } from 'lucide-react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+
+
+async function getEvent(id: string): Promise<Event | undefined> {
+  const events = await getEvents();
+  return events.find(e => e.id === id);
+}
+
+export default async function EditEventPage({ params }: { params: { eventId: string } }) {
+  const event = await getEvent(params.eventId);
+  const allPlayers: Player[] = await getPlayers();
+
+  if (!event) {
+    return (
+      <div className="space-y-6 text-center">
+         <Button variant="outline" asChild className="mb-6 mr-auto">
+          <Link href="/events">
+            <ArrowLeft className="mr-2 h-4 w-4" /> Back to Events List
+          </Link>
+        </Button>
+        <Card className="max-w-md mx-auto">
+          <CardHeader>
+            <CardTitle className="font-headline text-destructive">Event Not Found</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-muted-foreground">The event you are trying to edit does not exist.</p>
+             <Button asChild className="mt-6">
+                <Link href="/events">
+                    <ArrowLeft className="mr-2 h-4 w-4" /> Go to Events
+                </Link>
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+  
   return (
     <div className="space-y-6">
       <Button variant="outline" asChild>
-        <Link href={`/events/${params.eventId}`}>
+        <Link href={`/events/${event.id}`}>
           <ArrowLeft className="mr-2 h-4 w-4" /> Back to Event Details
         </Link>
       </Button>
-      <Card className="max-w-3xl mx-auto">
-        <CardHeader>
-          <CardTitle className="font-headline text-2xl">Edit Event (ID: {params.eventId})</CardTitle>
-          <CardDescription>Modify the details for this poker event.</CardDescription>
-        </CardHeader>
-        <CardContent className="text-center py-20">
-          <Edit className="mx-auto h-16 w-16 text-muted-foreground mb-4" />
-          <p className="text-muted-foreground text-xl">Event Editing Form Coming Soon!</p>
-          <p className="mt-2">This form will allow you to update the selected event.</p>
-        </CardContent>
-      </Card>
+      <EventForm
+        event={event}
+        allPlayers={allPlayers}
+        action={updateEvent} // Pass the updateEvent action directly
+        formTitle={`Edit Event: ${event.name}`}
+        formDescription="Modify the details and results for this poker event."
+        submitButtonText="Save Changes"
+      />
     </div>
   );
 }

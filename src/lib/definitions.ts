@@ -1,3 +1,4 @@
+
 export type PlayerStats = {
   gamesPlayed: number;
   wins: number;
@@ -36,6 +37,8 @@ export type EventResult = {
 };
 
 export type EventStatus = "draft" | "active" | "completed" | "cancelled";
+export const eventStatuses: EventStatus[] = ["draft", "active", "completed", "cancelled"];
+
 
 export type Event = {
   id: string; // UUID
@@ -78,4 +81,31 @@ export type AppSettings = {
   defaultBuyIn: number;
   defaultMaxPlayers: number;
   // Potentially other app-wide settings
+};
+
+// This type is specifically for form state in actions.ts
+export type EventFormState = {
+  errors?: {
+    id?: string[];
+    name?: string[];
+    date?: string[];
+    buyIn?: string[];
+    rebuyAllowed?: string[];
+    rebuyPrice?: string[];
+    maxPlayers?: string[];
+    prizePoolTotal?: string[];
+    participantIds?: string[];
+    status?: string[];
+    results?: string[]; // For errors related to the results array as a whole
+    _form?: string[]; // General form errors
+  };
+  message?: string | null;
+};
+
+// Helper type for EventForm to manage results input
+export type EventResultInput = {
+  playerId: string;
+  playerName: string; // For display purposes in the form
+  position: string; // Kept as string for input field binding
+  prize: string;    // Kept as string for input field binding
 };
