@@ -135,19 +135,19 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
 
   React.useEffect(() => {
     const numParticipants = enrichedParticipants.length;
-    const currentBuyInNum = parseFloat(buyInValue);
-    const currentRebuyPriceNum = parseFloat(rebuyPrice);
+    const currentBuyInNum = parseFloat(buyInValue) || 0;
+    const currentRebuyPriceNum = parseFloat(rebuyPrice) || 0;
   
     let calculatedTotal = 0;
   
-    if (!isNaN(currentBuyInNum) && currentBuyInNum > 0) {
+    if (currentBuyInNum > 0) {
       calculatedTotal += numParticipants * currentBuyInNum;
     }
   
-    if (!isNaN(currentRebuyPriceNum) && currentRebuyPriceNum > 0) {
+    if (currentRebuyPriceNum > 0) {
       enrichedParticipants.forEach(participant => {
-        const rebuys = parseInt(participant.rebuys);
-        if (!isNaN(rebuys) && rebuys > 0) {
+        const rebuys = parseInt(participant.rebuys) || 0;
+        if (rebuys > 0) {
           calculatedTotal += rebuys * currentRebuyPriceNum;
         }
       });
@@ -158,14 +158,14 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
   }, [enrichedParticipants, buyInValue, rebuyPrice]);
 
   React.useEffect(() => {
-    const prizePoolNum = parseFloat(totalPrizePoolValue);
-    const buyInNum = parseFloat(buyInValue);
+    const prizePoolNum = parseFloat(totalPrizePoolValue) || 0;
+    const buyInNum = parseFloat(buyInValue) || 0;
     const numParticipants = enrichedParticipants.length;
 
     setPositionalResults(prevResults => {
       const newDistributedResults = prevResults.map(pr => ({ ...pr, prize: '0.00' }));
 
-      if (isNaN(prizePoolNum) || prizePoolNum <= 0 || numParticipants === 0) {
+      if (prizePoolNum <= 0 || numParticipants === 0) {
         return newDistributedResults; 
       }
 
@@ -178,8 +178,8 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
         if (numParticipants >= 1) firstPrize = prizePoolNum * 0.50;
         if (numParticipants >= 2) secondPrize = prizePoolNum * 0.30;
         if (numParticipants >= 3) thirdPrize = prizePoolNum * 0.20;
-      } else {
-        if (!isNaN(buyInNum) && buyInNum > 0) {
+      } else { // 14 participants or more
+        if (buyInNum > 0) { // Buy-in must be specified for 4th place to get buy-in back
           if (prizePoolNum >= buyInNum) {
             fourthPrize = buyInNum;
             const remainingPool = prizePoolNum - fourthPrize;
@@ -192,7 +192,7 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
             // if prize pool not enough for buyIn, 4th gets all
             fourthPrize = prizePoolNum; 
           }
-        } else { // No buy-in specified, default to 3 positions
+        } else { // No buy-in specified (or 0), or not enough for 4th, default to 3 positions for the whole pool
           if (numParticipants >= 1) firstPrize = prizePoolNum * 0.50;
           if (numParticipants >= 2) secondPrize = prizePoolNum * 0.30;
           if (numParticipants >= 3) thirdPrize = prizePoolNum * 0.20;
@@ -211,7 +211,9 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
       if (numParticipants >= 1) assignPrize(1, firstPrize); else assignPrize(1,0);
       if (numParticipants >= 2) assignPrize(2, secondPrize); else assignPrize(2,0);
       if (numParticipants >= 3) assignPrize(3, thirdPrize); else assignPrize(3,0);
+      // Only assign 4th prize if it was calculated (i.e., >= 14 participants and buy-in specified)
       if (numParticipants >= 4 && fourthPrize > 0) assignPrize(4, fourthPrize); else assignPrize(4,0);
+
 
       return newDistributedResults;
     });
@@ -287,7 +289,7 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
               </div>
               <div>
                 <Label htmlFor="date">Date</Label>
-                <DatePicker date={selectedDate} setDate={setSelectedDate} className="w-full h-9" />
+                <DatePicker date={selectedDate} setDate={setSelectedDate} className="h-9 w-full" />
                 <input type="hidden" name="date" value={selectedDate ? selectedDate.toISOString() : ''} aria-describedby="date-error" />
                 {state.errors?.date && <p id="date-error" className="text-sm text-destructive mt-1">{state.errors.date.join(', ')}</p>}
               </div>
@@ -318,6 +320,7 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
                   name="buyIn" 
                   type="number" 
                   step="0.01" 
+                  min="0"
                   value={buyInValue}
                   onChange={(e) => setBuyInValue(e.target.value)}
                   required 
@@ -333,6 +336,7 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
                     name="rebuyPrice"
                     type="number"
                     step="0.01"
+                    min="0"
                     placeholder="e.g. 20.00"
                     value={rebuyPrice}
                     onChange={(e) => setRebuyPrice(e.target.value)}
@@ -347,7 +351,8 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
                   id="prizePoolTotal" 
                   name="prizePoolTotal" 
                   type="number" 
-                  step="0.01" 
+                  step="0.01"
+                  min="0" 
                   value={totalPrizePoolValue}
                   onChange={(e) => setTotalPrizePoolValue(e.target.value)}
                   required 
@@ -430,48 +435,84 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="w-[15%] text-center">Position</TableHead>
-                      <TableHead className="w-[55%]">Player</TableHead>
-                      <TableHead className="w-[30%] text-right">Prize ($)</TableHead>
+                      <TableHead className="w-[10%] text-center">Position</TableHead>
+                      <TableHead className="w-[30%]">Player</TableHead>
+                      <TableHead className="w-[15%] text-center">Rebuys</TableHead>
+                      <TableHead className="w-[20%] text-right">Prize ($)</TableHead>
+                      <TableHead className="w-[25%] text-right">Final Result ($)</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {positionalResults.map((row) => (
-                      <TableRow key={row.position}>
-                        <TableCell className="font-medium py-1 text-center">{row.position}</TableCell>
-                        <TableCell className="py-1">
-                          <Select
-                            value={row.playerId || NO_PLAYER_SELECTED_VALUE}
-                            onValueChange={(value) => handlePositionalResultChange(row.position, 'playerId', value)}
-                          >
-                            <SelectTrigger className="w-full h-9">
-                              <SelectValue placeholder="-- Select Player --" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value={NO_PLAYER_SELECTED_VALUE}>-- None --</SelectItem>
-                              {enrichedParticipants.map(ep => (
-                                <SelectItem key={ep.player.id} value={ep.player.id}>
-                                  {ep.player.firstName} {ep.player.lastName} {ep.player.nickname ? `(${ep.player.nickname})` : ''}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </TableCell>
-                        <TableCell className="py-1">
-                          <Input
-                            id={`prize-pos-${row.position}`}
-                            type="number"
-                            step="0.01"
-                            min="0"
-                            placeholder="e.g., 100.00"
-                            value={row.prize}
-                            onChange={(e) => handlePositionalResultChange(row.position, 'prize', e.target.value)}
-                            className="text-right h-9"
-                            disabled={!row.playerId || row.playerId === NO_PLAYER_SELECTED_VALUE}
-                          />
-                        </TableCell>
-                      </TableRow>
-                    ))}
+                    {positionalResults.map((row) => {
+                      const participant = enrichedParticipants.find(p => p.player.id === row.playerId);
+                      const rebuysDisplay = participant ? participant.rebuys : '0';
+                      
+                      const prizeNum = parseFloat(row.prize) || 0;
+                      const buyInNum = parseFloat(buyInValue) || 0;
+                      const rebuysNum = participant ? (parseInt(participant.rebuys) || 0) : 0;
+                      const rebuyPriceNum = parseFloat(rebuyPrice) || 0;
+                      let calculatedFinalResult = 0;
+
+                      if (row.playerId && row.playerId !== NO_PLAYER_SELECTED_VALUE) {
+                        calculatedFinalResult = prizeNum - (buyInNum + (rebuysNum * rebuyPriceNum));
+                      }
+                      const finalResultDisplay = calculatedFinalResult.toFixed(2);
+
+                      return (
+                        <TableRow key={row.position}>
+                          <TableCell className="font-medium py-1 text-center">{row.position}</TableCell>
+                          <TableCell className="py-1">
+                            <Select
+                              value={row.playerId || NO_PLAYER_SELECTED_VALUE}
+                              onValueChange={(value) => handlePositionalResultChange(row.position, 'playerId', value)}
+                            >
+                              <SelectTrigger className="w-full h-9">
+                                <SelectValue placeholder="-- Select Player --" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value={NO_PLAYER_SELECTED_VALUE}>-- None --</SelectItem>
+                                {enrichedParticipants.map(ep => (
+                                  <SelectItem key={ep.player.id} value={ep.player.id}
+                                    disabled={positionalResults.some(pr => pr.playerId === ep.player.id && pr.position !== row.position)}
+                                  >
+                                    {ep.player.firstName} {ep.player.lastName} {ep.player.nickname ? `(${ep.player.nickname})` : ''}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </TableCell>
+                          <TableCell className="py-1 text-center">
+                            <Input
+                              type="text"
+                              value={rebuysDisplay}
+                              readOnly
+                              className="h-9 text-center bg-muted/50 border-none"
+                            />
+                          </TableCell>
+                          <TableCell className="py-1">
+                            <Input
+                              id={`prize-pos-${row.position}`}
+                              type="number"
+                              step="0.01"
+                              min="0"
+                              placeholder="e.g., 100.00"
+                              value={row.prize}
+                              onChange={(e) => handlePositionalResultChange(row.position, 'prize', e.target.value)}
+                              className="text-right h-9"
+                              disabled={!row.playerId || row.playerId === NO_PLAYER_SELECTED_VALUE}
+                            />
+                          </TableCell>
+                          <TableCell className="py-1 text-right">
+                             <Input
+                              type="text"
+                              value={finalResultDisplay}
+                              readOnly
+                              className="h-9 text-right bg-muted/50 border-none"
+                            />
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
                   </TableBody>
                 </Table>
                 {positionalResults.length === 0 && <p className="text-muted-foreground p-4 text-center">Add participants to enable result entry.</p>}
@@ -492,4 +533,3 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
     </Card>
   );
 }
-
