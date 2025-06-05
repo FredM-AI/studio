@@ -182,7 +182,7 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
           
           <div className="space-y-6 p-6 border rounded-lg shadow-sm">
             <h3 className="font-headline text-lg flex items-center"><Info className="mr-2 h-5 w-5 text-primary" />Event Details</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div>
                 <Label htmlFor="name">Event Name</Label>
                 <Input id="name" name="name" defaultValue={event?.name} required aria-describedby="name-error"/>
@@ -194,8 +194,7 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
                 <input type="hidden" name="date" value={selectedDate ? selectedDate.toISOString() : ''} aria-describedby="date-error" />
                 {state.errors?.date && <p id="date-error" className="text-sm text-destructive mt-1">{state.errors.date.join(', ')}</p>}
               </div>
-            </div>
-             <div>
+              <div>
                 <Label htmlFor="status">Event Status</Label>
                 <Select name="status" value={currentStatus} onValueChange={(value) => setCurrentStatus(value as EventStatus)}>
                   <SelectTrigger id="status" aria-describedby="status-error">
@@ -209,6 +208,7 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
                 </Select>
                 {state.errors?.status && <p id="status-error" className="text-sm text-destructive mt-1">{state.errors.status.join(', ')}</p>}
               </div>
+            </div>
           </div>
 
           <div className="space-y-6 p-6 border rounded-lg shadow-sm">
@@ -372,5 +372,7 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
     </Card>
   );
 }
+
+    
 
     
