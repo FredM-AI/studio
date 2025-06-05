@@ -281,7 +281,7 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
               <h3 className="font-headline text-lg flex items-center"><Trophy className="mr-2 h-5 w-5 text-primary" />Event Results</h3>
               {state.errors?.results && <p className="text-sm text-destructive mt-1">{state.errors.results.join(', ')}</p>}
               {state.errors?.resultsJson && <p className="text-sm text-destructive mt-1">{typeof state.errors.resultsJson === 'string' ? state.errors.resultsJson : state.errors.resultsJson.join(', ')}</p>}
-              <ScrollArea className="max-h-96 w-full rounded-md border">
+              <ScrollArea className="max-h-72 w-full rounded-md border">
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -360,3 +360,4 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
     </Card>
   );
 }
+
