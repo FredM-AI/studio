@@ -38,5 +38,306 @@
     },
     "createdAt": "2025-06-05T13:50:16.246Z",
     "updatedAt": "2025-06-05T13:50:16.246Z"
+  },
+
+  {
+    "id": "e1915c6d-1a34-4096-a594-3dc5d0902c6b",
+    "firstName": "Laura",
+    "lastName": "Briggs",
+    "nickname": "QueenBee",
+    "email": "laura.b@gmail.com",
+    "phone": "",
+    "isActive": true,
+    "stats": {
+      "gamesPlayed": 0,
+      "wins": 0,
+      "finalTables": 0,
+      "totalWinnings": 0,
+      "totalBuyIns": 0,
+      "bestPosition": null,
+      "averagePosition": null
+    },
+    "createdAt": "2025-06-05T13:50:16.246Z",
+    "updatedAt": "2025-06-05T13:50:16.246Z"
+  },
+  {
+    "id": "9bd2b218-c395-45e7-913f-93417db1d7b4",
+    "firstName": "Julien",
+    "lastName": "Moreau",
+    "nickname": "AceHigh",
+    "email": "j.moreau@gmail.com",
+    "phone": "",
+    "isActive": true,
+    "stats": {
+      "gamesPlayed": 0,
+      "wins": 0,
+      "finalTables": 0,
+      "totalWinnings": 0,
+      "totalBuyIns": 0,
+      "bestPosition": null,
+      "averagePosition": null
+    },
+    "createdAt": "2025-06-05T13:50:16.246Z",
+    "updatedAt": "2025-06-05T13:50:16.246Z"
+  },
+  {
+    "id": "af93d90d-517e-4fd7-8093-86a43cddcccb",
+    "firstName": "Sophie",
+    "lastName": "Lambert",
+    "nickname": "BluffQueen",
+    "email": "sophie.l@gmail.com",
+    "phone": "",
+    "isActive": true,
+    "stats": {
+      "gamesPlayed": 0,
+      "wins": 0,
+      "finalTables": 0,
+      "totalWinnings": 0,
+      "totalBuyIns": 0,
+      "bestPosition": null,
+      "averagePosition": null
+    },
+    "createdAt": "2025-06-05T13:50:16.246Z",
+    "updatedAt": "2025-06-05T13:50:16.246Z"
+  },
+  {
+    "id": "c74d422f-e982-4ab3-aaf7-fcda3b43df2f",
+    "firstName": "Mathieu",
+    "lastName": "Dupuis",
+    "nickname": "StackShark",
+    "email": "m.dupuis@gmail.com",
+    "phone": "",
+    "isActive": true,
+    "stats": {
+      "gamesPlayed": 0,
+      "wins": 0,
+      "finalTables": 0,
+      "totalWinnings": 0,
+      "totalBuyIns": 0,
+      "bestPosition": null,
+      "averagePosition": null
+    },
+    "createdAt": "2025-06-05T13:50:16.246Z",
+    "updatedAt": "2025-06-05T13:50:16.246Z"
+  },
+  {
+    "id": "71c0248f-c1a3-4063-9a1a-c6f69e1d1c82",
+    "firstName": "Isabelle",
+    "lastName": "Garnier",
+    "nickname": "IceQueen",
+    "email": "isa.garnier@gmail.com",
+    "phone": "",
+    "isActive": true,
+    "stats": {
+      "gamesPlayed": 0,
+      "wins": 0,
+      "finalTables": 0,
+      "totalWinnings": 0,
+      "totalBuyIns": 0,
+      "bestPosition": null,
+      "averagePosition": null
+    },
+    "createdAt": "2025-06-05T13:50:16.246Z",
+    "updatedAt": "2025-06-05T13:50:16.246Z"
+  },
+  {
+    "id": "13950276-2e55-4bdf-9c12-040a9dce3f8b",
+    "firstName": "Yannick",
+    "lastName": "Martel",
+    "nickname": "The Grinder",
+    "email": "yannick.martel@gmail.com",
+    "phone": "",
+    "isActive": true,
+    "stats": {
+      "gamesPlayed": 0,
+      "wins": 0,
+      "finalTables": 0,
+      "totalWinnings": 0,
+      "totalBuyIns": 0,
+      "bestPosition": null,
+      "averagePosition": null
+    },
+    "createdAt": "2025-06-05T13:50:16.246Z",
+    "updatedAt": "2025-06-05T13:50:16.246Z"
+  },
+  {
+    "id": "6b5aa2e0-01f3-4b3b-b089-2380cb70c2aa",
+    "firstName": "Chloé",
+    "lastName": "Dumont",
+    "nickname": "LuckyStar",
+    "email": "chloe.dumont@gmail.com",
+    "phone": "",
+    "isActive": true,
+    "stats": {
+      "gamesPlayed": 0,
+      "wins": 0,
+      "finalTables": 0,
+      "totalWinnings": 0,
+      "totalBuyIns": 0,
+      "bestPosition": null,
+      "averagePosition": null
+    },
+    "createdAt": "2025-06-05T13:50:16.246Z",
+    "updatedAt": "2025-06-05T13:50:16.246Z"
+  },
+  {
+    "id": "ce14e5ac-e302-4294-970d-5b1a541e9b5e",
+    "firstName": "Marc",
+    "lastName": "Leclerc",
+    "nickname": "FullHouse",
+    "email": "marc.leclerc@gmail.com",
+    "phone": "",
+    "isActive": true,
+    "stats": {
+      "gamesPlayed": 0,
+      "wins": 0,
+      "finalTables": 0,
+      "totalWinnings": 0,
+      "totalBuyIns": 0,
+      "bestPosition": null,
+      "averagePosition": null
+    },
+    "createdAt": "2025-06-05T13:50:16.246Z",
+    "updatedAt": "2025-06-05T13:50:16.246Z"
+  },
+  {
+    "id": "3f6a3c82-6b86-4931-9e4c-7bfa88fced94",
+    "firstName": "Alice",
+    "lastName": "Faure",
+    "nickname": "PocketRockets",
+    "email": "alice.f@gmail.com",
+    "phone": "",
+    "isActive": true,
+    "stats": {
+      "gamesPlayed": 0,
+      "wins": 0,
+      "finalTables": 0,
+      "totalWinnings": 0,
+      "totalBuyIns": 0,
+      "bestPosition": null,
+      "averagePosition": null
+    },
+    "createdAt": "2025-06-05T13:50:16.246Z",
+    "updatedAt": "2025-06-05T13:50:16.246Z"
+  },
+  {
+    "id": "6ed96fc2-0159-4a0a-a12b-e1f631f03c7a",
+    "firstName": "Kevin",
+    "lastName": "Benoit",
+    "nickname": "Deadman’sHand",
+    "email": "kevin.benoit@gmail.com",
+    "phone": "",
+    "isActive": true,
+    "stats": {
+      "gamesPlayed": 0,
+      "wins": 0,
+      "finalTables": 0,
+      "totalWinnings": 0,
+      "totalBuyIns": 0,
+      "bestPosition": null,
+      "averagePosition": null
+    },
+    "createdAt": "2025-06-05T13:50:16.246Z",
+    "updatedAt": "2025-06-05T13:50:16.246Z"
+  },
+  {
+    "id": "58fda83d-5746-47aa-9a8b-b0d382b1e6ec",
+    "firstName": "Claire",
+    "lastName": "Robert",
+    "nickname": "RiverQueen",
+    "email": "claire.r@gmail.com",
+    "phone": "",
+    "isActive": true,
+    "stats": {
+      "gamesPlayed": 0,
+      "wins": 0,
+      "finalTables": 0,
+      "totalWinnings": 0,
+      "totalBuyIns": 0,
+      "bestPosition": null,
+      "averagePosition": null
+    },
+    "createdAt": "2025-06-05T13:50:16.246Z",
+    "updatedAt": "2025-06-05T13:50:16.246Z"
+  },
+  {
+    "id": "0f99c71d-c7a7-4e4c-94fb-cfca7c6e9df3",
+    "firstName": "Benoît",
+    "lastName": "Guérin",
+    "nickname": "SlowRoll",
+    "email": "ben.guerin@gmail.com",
+    "phone": "",
+    "isActive": true,
+    "stats": {
+      "gamesPlayed": 0,
+      "wins": 0,
+      "finalTables": 0,
+      "totalWinnings": 0,
+      "totalBuyIns": 0,
+      "bestPosition": null,
+      "averagePosition": null
+    },
+    "createdAt": "2025-06-05T13:50:16.246Z",
+    "updatedAt": "2025-06-05T13:50:16.246Z"
+  },
+  {
+    "id": "d12fc15d-34b3-44c2-96ff-ef7ad49ad72b",
+    "firstName": "Élodie",
+    "lastName": "Noël",
+    "nickname": "TiltProof",
+    "email": "elodie.noel@gmail.com",
+    "phone": "",
+    "isActive": true,
+    "stats": {
+      "gamesPlayed": 0,
+      "wins": 0,
+      "finalTables": 0,
+      "totalWinnings": 0,
+      "totalBuyIns": 0,
+      "bestPosition": null,
+      "averagePosition": null
+    },
+    "createdAt": "2025-06-05T13:50:16.246Z",
+    "updatedAt": "2025-06-05T13:50:16.246Z"
+  },
+  {
+    "id": "3a74dafe-c103-4032-b1f0-107a6c889f47",
+    "firstName": "Lucas",
+    "lastName": "Renard",
+    "nickname": "Chipleader",
+    "email": "lucas.renard@gmail.com",
+    "phone": "",
+    "isActive": true,
+    "stats": {
+      "gamesPlayed": 0,
+      "wins": 0,
+      "finalTables": 0,
+      "totalWinnings": 0,
+      "totalBuyIns": 0,
+      "bestPosition": null,
+      "averagePosition": null
+    },
+    "createdAt": "2025-06-05T13:50:16.246Z",
+    "updatedAt": "2025-06-05T13:50:16.246Z"
+  },
+  {
+    "id": "849d37aa-659e-4553-8bc3-7b1d24bb6883",
+    "firstName": "Nina",
+    "lastName": "Pires",
+    "nickname": "BlindQueen",
+    "email": "nina.pires@gmail.com",
+    "phone": "",
+    "isActive": true,
+    "stats": {
+      "gamesPlayed": 0,
+      "wins": 0,
+      "finalTables": 0,
+      "totalWinnings": 0,
+      "totalBuyIns": 0,
+      "bestPosition": null,
+      "averagePosition": null
+    },
+    "createdAt": "2025-06-05T13:50:16.246Z",
+    "updatedAt": "2025-06-05T13:50:16.246Z"
   }
 ]

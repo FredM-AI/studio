@@ -6,6 +6,7 @@ import type { Event, Player } from "@/lib/definitions";
 import { ArrowLeft, Edit, Users, DollarSign, CalendarDays, Trophy, Info, Tag, CheckCircle, XCircle } from "lucide-react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge"; // Added for status display
+import { ScrollArea } from "@/components/ui/scroll-area"; // Added import for ScrollArea
 
 async function getEventDetails(id: string): Promise<{ event: Event | undefined, players: Player[] }> {
   const events = await getEvents();
@@ -178,3 +179,4 @@ export default async function EventDetailsPage({ params }: { params: { eventId: 
     </div>
   );
 }
+
