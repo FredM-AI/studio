@@ -6,7 +6,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { Badge } from '@/components/ui/badge';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import Link from 'next/link';
-import { format } from 'date-fns';
+import { format, subMonths, startOfMonth, isFuture, isToday } from 'date-fns';
 import * as React from 'react';
 
 interface SeasonDetailsCalendarProps {
@@ -14,9 +14,31 @@ interface SeasonDetailsCalendarProps {
 }
 
 export default function SeasonDetailsCalendar({ events }: SeasonDetailsCalendarProps) {
-  const [currentMonth, setCurrentMonth] = React.useState<Date>(
-    events.length > 0 ? new Date(events[0].date) : new Date()
-  );
+  const [currentBaseMonth, setCurrentBaseMonth] = React.useState<Date>(() => {
+    const today = new Date();
+    let initialTargetMonth: Date;
+
+    const sortedEvents = [...events].sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+    if (sortedEvents.length > 0) {
+      const futureOrTodayEvents = sortedEvents.filter(event => {
+        const eventDate = new Date(event.date);
+        return isFuture(eventDate) || isToday(eventDate);
+      });
+
+      if (futureOrTodayEvents.length > 0) {
+        initialTargetMonth = new Date(futureOrTodayEvents[0].date);
+      } else {
+        initialTargetMonth = new Date(sortedEvents[sortedEvents.length - 1].date);
+      }
+    } else {
+      initialTargetMonth = today;
+    }
+    
+    // We want initialTargetMonth to be the middle month of three.
+    // So, the calendar's 'month' prop (currentBaseMonth) should be one month before.
+    return subMonths(startOfMonth(initialTargetMonth), 1);
+  });
   
   const eventsByDate = React.useMemo(() => {
     const map = new Map<string, Event[]>();
@@ -33,7 +55,7 @@ export default function SeasonDetailsCalendar({ events }: SeasonDetailsCalendarP
   const eventDateModifiers = {
     eventDay: Array.from(eventsByDate.keys()).map(dateStr => {
         const [year, month, day] = dateStr.split('-').map(Number);
-        return new Date(year, month - 1, day); // Construct Date object correctly
+        return new Date(year, month - 1, day); 
     })
   };
   
@@ -57,7 +79,6 @@ export default function SeasonDetailsCalendar({ events }: SeasonDetailsCalendarP
     return (
       <Popover>
         <PopoverTrigger asChild>
-          {/* Changed from button to div to avoid nesting buttons */}
           <div 
             className="w-full h-full flex items-center justify-center relative focus:outline-none focus:ring-2 focus:ring-ring rounded-sm cursor-pointer"
             aria-label={`Events on ${format(date, 'PPP')}`}
@@ -101,10 +122,10 @@ export default function SeasonDetailsCalendar({ events }: SeasonDetailsCalendarP
     <div className="flex justify-center">
       <Calendar
         mode="single"
-        selected={currentMonth} // Selected is not strictly needed for this display but DayPicker requires it for single mode
-        onSelect={() => {}} // No action on select for display-only calendar
-        month={currentMonth}
-        onMonthChange={setCurrentMonth}
+        onSelect={() => {}} 
+        month={currentBaseMonth} 
+        onMonthChange={setCurrentBaseMonth} 
+        numberOfMonths={3}
         className="rounded-md border shadow"
         modifiers={eventDateModifiers}
         modifiersStyles={eventDateModifierStyles}
