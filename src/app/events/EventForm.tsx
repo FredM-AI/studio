@@ -27,7 +27,7 @@ interface EventFormProps {
 
 type PositionalResultEntry = {
   position: number;
-  playerId: string | null; 
+  playerId: string | null;
   prize: string;
   rebuys: string;
 };
@@ -46,9 +46,9 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
 
   const [availablePlayers, setAvailablePlayers] = React.useState<Player[]>([]);
   const [currentParticipants, setCurrentParticipants] = React.useState<Player[]>([]);
-  
+
   const [positionalResults, setPositionalResults] = React.useState<PositionalResultEntry[]>([]);
-  
+
   const [searchTerm, setSearchTerm] = React.useState('');
 
   React.useEffect(() => {
@@ -66,7 +66,7 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
     const initialParticipantIds = event?.participants || [];
     const initialParticipants = allPlayers.filter(p => initialParticipantIds.includes(p.id));
     const initialAvailable = allPlayers.filter(p => !initialParticipantIds.includes(p.id));
-    
+
     setCurrentParticipants(initialParticipants.sort((a,b) => a.firstName.localeCompare(b.firstName)));
     setAvailablePlayers(initialAvailable.sort((a,b) => a.firstName.localeCompare(b.firstName)));
 
@@ -91,11 +91,11 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
           if (existingRowInPrevState.playerId && participantIdsSet.has(existingRowInPrevState.playerId)) {
             playerIdToSet = existingRowInPrevState.playerId;
           } else {
-            playerIdToSet = null; 
+            playerIdToSet = null;
           }
-          prizeToSet = existingRowInPrevState.prize; 
-          rebuysToSet = existingRowInPrevState.rebuys; 
-        } 
+          prizeToSet = existingRowInPrevState.prize;
+          rebuysToSet = existingRowInPrevState.rebuys;
+        }
         else if (savedResultFromEventProp) {
           if (participantIdsSet.has(savedResultFromEventProp.playerId)) {
             playerIdToSet = savedResultFromEventProp.playerId;
@@ -103,13 +103,13 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
             rebuysToSet = savedResultFromEventProp.rebuys?.toString() || '0';
           }
         }
-        
+
         if (playerIdToSet && !participantIdsSet.has(playerIdToSet)) {
             playerIdToSet = null;
         }
 
         newTableData.push({
-          position: i, 
+          position: i,
           playerId: playerIdToSet,
           prize: prizeToSet,
           rebuys: rebuysToSet,
@@ -117,7 +117,7 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
       }
       return newTableData;
     });
-  }, [currentParticipants, event?.results, event?.id]); 
+  }, [currentParticipants, event?.results, event?.id]);
 
 
   const handleAddPlayer = (player: Player) => {
@@ -131,8 +131,8 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
   };
 
   const handlePositionalResultChange = (position: number, field: 'playerId' | 'prize' | 'rebuys', value: string | null) => {
-    setPositionalResults(prev => 
-      prev.map(row => 
+    setPositionalResults(prev =>
+      prev.map(row =>
         row.position === position ? { ...row, [field]: value === NO_PLAYER_SELECTED_VALUE ? null : value } : row
       )
     );
@@ -141,13 +141,13 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
   const filteredAvailablePlayers = availablePlayers.filter(player =>
     `${player.firstName} ${player.lastName} ${player.nickname || ''}`.toLowerCase().includes(searchTerm.toLowerCase())
   );
-  
+
   const hiddenParticipantIds = currentParticipants.map(p => p.id).join(',');
-  
+
   const finalResultsForJson = positionalResults
-    .filter(row => row.playerId && row.playerId !== NO_PLAYER_SELECTED_VALUE) 
+    .filter(row => row.playerId && row.playerId !== NO_PLAYER_SELECTED_VALUE)
     .map(row => ({
-      playerId: row.playerId!, 
+      playerId: row.playerId!,
       position: row.position,
       prize: parseFloat(row.prize) || 0,
       rebuys: parseInt(row.rebuys) || 0,
@@ -165,7 +165,7 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
         <CardContent className="space-y-8">
           {event?.id && <input type="hidden" name="id" defaultValue={event.id} />}
           <input type="hidden" name="resultsJson" value={resultsJson} />
-          
+
           <div className="space-y-6 p-6 border rounded-lg shadow-sm">
             <h3 className="font-headline text-lg flex items-center"><Info className="mr-2 h-5 w-5 text-primary" />Event Details</h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -207,11 +207,11 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
               </div>
               <div>
                 <Label htmlFor="rebuyPrice">Rebuy Price ($)</Label>
-                <Input 
-                    id="rebuyPrice" 
-                    name="rebuyPrice" 
-                    type="number" 
-                    step="0.01" 
+                <Input
+                    id="rebuyPrice"
+                    name="rebuyPrice"
+                    type="number"
+                    step="0.01"
                     placeholder="e.g. 20.00"
                     value={rebuyPrice}
                     onChange={(e) => setRebuyPrice(e.target.value)}
@@ -226,7 +226,7 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
               </div>
             </div>
           </div>
-          
+
           <div className="space-y-4 p-6 border rounded-lg shadow-sm">
             <h3 className="font-headline text-lg flex items-center"><Users className="mr-2 h-5 w-5 text-primary" />Participants ({currentParticipants.length})</h3>
              {state.errors?.participantIds && <p className="text-sm text-destructive mt-1">{state.errors.participantIds.join(', ')}</p>}
@@ -234,7 +234,7 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="searchPlayers">Search Available Players</Label>
-                 <Input 
+                 <Input
                     id="searchPlayers"
                     placeholder="Search by name or nickname..."
                     value={searchTerm}
@@ -245,7 +245,7 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
                   {filteredAvailablePlayers.length > 0 ? filteredAvailablePlayers.map(player => (
                     <div key={player.id} className="flex items-center justify-between p-2 hover:bg-muted/50 rounded-md">
                       <span>{player.firstName} {player.lastName} {player.nickname ? `(${player.nickname})` : ''}</span>
-                      <Button type="button" variant="outline" size="sm" onClick={() => handleAddPlayer(player)} title="Add player" 
+                      <Button type="button" variant="outline" size="sm" onClick={() => handleAddPlayer(player)} title="Add player"
                         disabled={currentParticipants.some(p => p.id === player.id)}>
                         <PlusCircle className="h-4 w-4" />
                       </Button>
@@ -315,7 +315,7 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
                             value={row.rebuys}
                             onChange={(e) => handlePositionalResultChange(row.position, 'rebuys', e.target.value)}
                             className="text-center"
-                            disabled={!row.playerId || row.playerId === NO_PLAYER_SELECTED_VALUE || !(parseFloat(rebuyPrice) > 0)} 
+                            disabled={!row.playerId || row.playerId === NO_PLAYER_SELECTED_VALUE || !(parseFloat(rebuyPrice) > 0)}
                           />
                         </TableCell>
                         <TableCell className="py-2">

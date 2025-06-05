@@ -78,5 +78,37 @@
     ],
     "createdAt": "2025-06-05T13:52:12.681Z",
     "updatedAt": "2025-06-05T14:46:29.039Z"
+  },
+  {
+    "id": "e9ea9bcd-c941-47a4-9d3f-c39ebf249d0d",
+    "name": "MagicScreen",
+    "date": "2025-06-26T22:00:00.000Z",
+    "buyIn": 20,
+    "rebuyPrice": 20,
+    "status": "draft",
+    "prizePool": {
+      "total": 480,
+      "distributionType": "automatic",
+      "distribution": []
+    },
+    "participants": [
+      "3f6a3c82-6b86-4931-9e4c-7bfa88fced94",
+      "0f99c71d-c7a7-4e4c-94fb-cfca7c6e9df3",
+      "6b5aa2e0-01f3-4b3b-b089-2380cb70c2aa",
+      "58fda83d-5746-47aa-9a8b-b0d382b1e6ec",
+      "cf3fd736-a65d-4f35-ab29-bed54a22f16e",
+      "d33fe6bd-5270-4d14-ab19-05af4da1845a",
+      "71c0248f-c1a3-4063-9a1a-c6f69e1d1c82",
+      "9bd2b218-c395-45e7-913f-93417db1d7b4",
+      "6ed96fc2-0159-4a0a-a12b-e1f631f03c7a",
+      "3a74dafe-c103-4032-b1f0-107a6c889f47",
+      "c74d422f-e982-4ab3-aaf7-fcda3b43df2f",
+      "849d37aa-659e-4553-8bc3-7b1d24bb6883",
+      "af93d90d-517e-4fd7-8093-86a43cddcccb",
+      "13950276-2e55-4bdf-9c12-040a9dce3f8b"
+    ],
+    "results": [],
+    "createdAt": "2025-06-05T14:58:42.267Z",
+    "updatedAt": "2025-06-05T14:58:42.267Z"
   }
 ]
