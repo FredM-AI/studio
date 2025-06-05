@@ -1,7 +1,7 @@
 
 "use client"
 
-import *a React from "react"
+import * as React from "react"
 import { format } from "date-fns"
 import { Calendar as CalendarIcon } from "lucide-react"
 
@@ -49,3 +49,4 @@ export function DatePicker({ date, setDate, disabled, className }: DatePickerPro
     </Popover>
   )
 }
+
