@@ -6,10 +6,10 @@ const Table = React.forwardRef<
   HTMLTableElement,
   React.HTMLAttributes<HTMLTableElement>
 >(({ className, ...props }, ref) => (
-  <div className="relative w-full overflow-auto">
+  <div className="relative w-full"> {/* Suppression de overflow-auto */}
     <table
       ref={ref}
-      className={cn("min-w-full caption-bottom text-sm", className)}
+      className={cn("w-full table-fixed caption-bottom text-sm", className)} /* Changement de min-w-full à w-full et ajout de table-fixed */
       {...props}
     />
   </div>
