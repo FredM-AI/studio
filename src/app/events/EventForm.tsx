@@ -35,6 +35,8 @@ type PositionalResultEntry = {
   rebuys: string;
 };
 
+const NO_PLAYER_SELECTED_VALUE = "_internal_no_player_selected_";
+
 
 export default function EventForm({ event, allPlayers, action, formTitle, formDescription, submitButtonText }: EventFormProps) {
   const initialState: ServerEventFormState = { message: null, errors: {} };
@@ -304,14 +306,14 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
                         <TableCell className="font-medium py-3 text-center">{row.position}</TableCell>
                         <TableCell className="py-2">
                           <Select
-                            value={row.playerId || ""}
-                            onValueChange={(value) => handlePositionalResultChange(row.position, 'playerId', value === "" ? null : value)}
+                            value={row.playerId || NO_PLAYER_SELECTED_VALUE}
+                            onValueChange={(value) => handlePositionalResultChange(row.position, 'playerId', value === NO_PLAYER_SELECTED_VALUE ? null : value)}
                           >
                             <SelectTrigger className="w-full">
                               <SelectValue placeholder="-- Select Player --" />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="">-- None --</SelectItem>
+                              <SelectItem value={NO_PLAYER_SELECTED_VALUE}>-- None --</SelectItem>
                               {currentParticipants.map(p => (
                                 <SelectItem key={p.id} value={p.id}>
                                   {p.firstName} {p.lastName} {p.nickname ? `(${p.nickname})` : ''}
