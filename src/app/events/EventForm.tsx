@@ -77,11 +77,13 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
 
 
   React.useEffect(() => {
+    // Determine the number of positions based on the current number of participants.
     const numPositions = currentParticipants.length;
     const participantIdsSet = new Set(currentParticipants.map(p => p.id));
 
     setPositionalResults(prevPositionalResults => {
       const newTableData: PositionalResultEntry[] = [];
+      // Create a row for each position, from 1 to the number of participants.
       for (let i = 1; i <= numPositions; i++) {
         const existingRowInPrevState = prevPositionalResults.find(row => row.position === i);
         const savedResultFromEventProp = event?.results.find(r => r.position === i);
@@ -118,15 +120,16 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
         }
 
         newTableData.push({
-          position: i,
+          position: i, // Assigns the current position number
           playerId: playerIdToSet,
           prize: prizeToSet,
           rebuys: rebuysToSet,
         });
       }
+      // The newTableData will always have 'numPositions' (i.e., currentParticipants.length) entries.
       return newTableData;
     });
-  }, [currentParticipants, event?.results, event?.id]);
+  }, [currentParticipants, event?.results, event?.id]); // Dependencies that trigger recalculation
 
 
   const handleAddPlayer = (player: Player) => {
@@ -156,7 +159,7 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
   const hiddenParticipantIds = currentParticipants.map(p => p.id).join(',');
   
   const finalResultsForJson = positionalResults
-    .filter(row => row.playerId) // Only include rows where a player is assigned
+    .filter(row => row.playerId && row.playerId !== NO_PLAYER_SELECTED_VALUE) // Only include rows where a player is assigned
     .map(row => ({
       playerId: row.playerId!, // playerID is confirmed to be non-null by filter
       position: row.position,
@@ -331,7 +334,7 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
                             value={row.rebuys}
                             onChange={(e) => handlePositionalResultChange(row.position, 'rebuys', e.target.value)}
                             className="text-center"
-                            disabled={!rebuyAllowed || !row.playerId} 
+                            disabled={!rebuyAllowed || !row.playerId || row.playerId === NO_PLAYER_SELECTED_VALUE} 
                           />
                         </TableCell>
                         <TableCell className="py-2">
@@ -344,7 +347,7 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
                             value={row.prize}
                             onChange={(e) => handlePositionalResultChange(row.position, 'prize', e.target.value)}
                             className="text-right"
-                            disabled={!row.playerId}
+                            disabled={!row.playerId || row.playerId === NO_PLAYER_SELECTED_VALUE}
                           />
                         </TableCell>
                       </TableRow>

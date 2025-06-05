@@ -28,62 +28,55 @@
     ],
     "results": [
       {
-        "playerId": "3f6a3c82-6b86-4931-9e4c-7bfa88fced94",
-        "position": 0,
-        "prize": 0
-      },
-      {
-        "playerId": "6b5aa2e0-01f3-4b3b-b089-2380cb70c2aa",
-        "position": 0,
-        "prize": 0
-      },
-      {
-        "playerId": "cf3fd736-a65d-4f35-ab29-bed54a22f16e",
-        "position": 0,
-        "prize": 0
-      },
-      {
         "playerId": "d33fe6bd-5270-4d14-ab19-05af4da1845a",
-        "position": 0,
-        "prize": 0
-      },
-      {
-        "playerId": "71c0248f-c1a3-4063-9a1a-c6f69e1d1c82",
-        "position": 0,
-        "prize": 0
+        "position": 1,
+        "prize": 0,
+        "rebuys": 0
       },
       {
         "playerId": "6ed96fc2-0159-4a0a-a12b-e1f631f03c7a",
-        "position": 0,
-        "prize": 0
+        "position": 2,
+        "prize": 0,
+        "rebuys": 1
       },
       {
-        "playerId": "e1915c6d-1a34-4096-a594-3dc5d0902c6b",
-        "position": 0,
-        "prize": 0
+        "playerId": "6b5aa2e0-01f3-4b3b-b089-2380cb70c2aa",
+        "position": 3,
+        "prize": 0,
+        "rebuys": 0
       },
       {
-        "playerId": "3a74dafe-c103-4032-b1f0-107a6c889f47",
-        "position": 0,
-        "prize": 0
-      },
-      {
-        "playerId": "ce14e5ac-e302-4294-970d-5b1a541e9b5e",
-        "position": 0,
-        "prize": 0
+        "playerId": "cf3fd736-a65d-4f35-ab29-bed54a22f16e",
+        "position": 4,
+        "prize": 0,
+        "rebuys": 2
       },
       {
         "playerId": "849d37aa-659e-4553-8bc3-7b1d24bb6883",
-        "position": 0,
-        "prize": 0
+        "position": 5,
+        "prize": 0,
+        "rebuys": 0
       },
       {
-        "playerId": "af93d90d-517e-4fd7-8093-86a43cddcccb",
-        "position": 0,
-        "prize": 0
+        "playerId": "ce14e5ac-e302-4294-970d-5b1a541e9b5e",
+        "position": 6,
+        "prize": 0,
+        "rebuys": 2
+      },
+      {
+        "playerId": "3a74dafe-c103-4032-b1f0-107a6c889f47",
+        "position": 7,
+        "prize": 0,
+        "rebuys": 0
+      },
+      {
+        "playerId": "3f6a3c82-6b86-4931-9e4c-7bfa88fced94",
+        "position": 8,
+        "prize": 0,
+        "rebuys": 1
       }
     ],
     "createdAt": "2025-06-05T13:52:12.681Z",
-    "updatedAt": "2025-06-05T14:13:06.766Z"
+    "updatedAt": "2025-06-05T14:37:44.880Z"
   }
 ]
