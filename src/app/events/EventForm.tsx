@@ -88,7 +88,7 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
         const savedResultFromEventProp = event?.results.find(r => r.position === i);
 
         let playerIdToSet: string | null = null;
-        let prizeToSet = '';
+        let prizeToSet = '0'; // Default to '0'
         let rebuysToSet = '0';
 
         if (existingRowInPrevState) {
@@ -97,13 +97,13 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
           } else {
             playerIdToSet = null;
           }
-          prizeToSet = existingRowInPrevState.prize;
-          rebuysToSet = existingRowInPrevState.rebuys;
+          prizeToSet = existingRowInPrevState.prize || '0';
+          rebuysToSet = existingRowInPrevState.rebuys || '0';
         }
         else if (savedResultFromEventProp) {
           if (participantIdsSet.has(savedResultFromEventProp.playerId)) {
             playerIdToSet = savedResultFromEventProp.playerId;
-            prizeToSet = savedResultFromEventProp.prize.toString();
+            prizeToSet = savedResultFromEventProp.prize?.toString() || '0';
             rebuysToSet = savedResultFromEventProp.rebuys?.toString() || '0';
           }
         }
@@ -111,6 +111,10 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
         if (playerIdToSet && !participantIdsSet.has(playerIdToSet)) {
             playerIdToSet = null;
         }
+        
+        // Ensure prize is always a string, default to '0' if it becomes undefined/null
+        if (playerIdToSet === null) prizeToSet = '0';
+
 
         newTableData.push({
           position: i,
@@ -149,6 +153,69 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
     setTotalPrizePoolValue(calculatedTotal.toFixed(2));
   
   }, [currentParticipants.length, buyInValue, rebuyPrice, positionalResults]);
+
+  // Auto-distribute prizes
+  React.useEffect(() => {
+    const prizePoolNum = parseFloat(totalPrizePoolValue);
+    const buyInNum = parseFloat(buyInValue);
+    const numParticipants = currentParticipants.length;
+
+    setPositionalResults(prevResults => {
+      const newDistributedResults = prevResults.map(pr => ({ ...pr, prize: '0.00' }));
+
+      if (isNaN(prizePoolNum) || prizePoolNum <= 0 || numParticipants === 0) {
+        return newDistributedResults; 
+      }
+
+      let firstPrize = 0;
+      let secondPrize = 0;
+      let thirdPrize = 0;
+      let fourthPrize = 0;
+
+      if (numParticipants < 14) {
+        if (numParticipants >= 1) firstPrize = prizePoolNum * 0.50;
+        if (numParticipants >= 2) secondPrize = prizePoolNum * 0.30;
+        if (numParticipants >= 3) thirdPrize = prizePoolNum * 0.20;
+      } else { // numParticipants >= 14
+        if (!isNaN(buyInNum) && buyInNum > 0) {
+          if (prizePoolNum >= buyInNum) {
+            fourthPrize = buyInNum;
+            const remainingPool = prizePoolNum - fourthPrize;
+            if (remainingPool > 0) {
+              firstPrize = remainingPool * 0.50;
+              secondPrize = remainingPool * 0.30;
+              thirdPrize = remainingPool * 0.20;
+            }
+          } else { // prizePoolNum < buyInNum
+            fourthPrize = prizePoolNum; // 4th takes the entire (small) pool
+          }
+        } else { // buyIn is invalid or zero, revert to <14 distribution for 1st-3rd using full pool
+          if (numParticipants >= 1) firstPrize = prizePoolNum * 0.50;
+          if (numParticipants >= 2) secondPrize = prizePoolNum * 0.30;
+          if (numParticipants >= 3) thirdPrize = prizePoolNum * 0.20;
+        }
+      }
+      
+      const assignPrize = (pos: number, amount: number) => {
+        const index = newDistributedResults.findIndex(r => r.position === pos);
+        if (index !== -1 && amount > 0) {
+          newDistributedResults[index].prize = amount.toFixed(2);
+        } else if (index !== -1) {
+          newDistributedResults[index].prize = '0.00';
+        }
+      };
+      
+      if (numParticipants >= 1) assignPrize(1, firstPrize); else assignPrize(1,0);
+      if (numParticipants >= 2) assignPrize(2, secondPrize); else assignPrize(2,0);
+      if (numParticipants >= 3) assignPrize(3, thirdPrize); else assignPrize(3,0);
+      if (numParticipants >= 4 && fourthPrize > 0) assignPrize(4, fourthPrize); else assignPrize(4,0);
+
+      // Ensure any positions beyond the distributed ones have prize '0.00'
+      // This is already handled by the initial map: const newDistributedResults = prevResults.map(pr => ({ ...pr, prize: '0.00' }));
+
+      return newDistributedResults;
+    });
+  }, [totalPrizePoolValue, currentParticipants.length, buyInValue]);
 
 
   const handleAddPlayer = (player: Player) => {
@@ -382,7 +449,7 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
                             step="0.01"
                             min="0"
                             placeholder="e.g., 100.00"
-                            value={row.prize}
+                            value={row.prize} // This will now be auto-calculated primarily
                             onChange={(e) => handlePositionalResultChange(row.position, 'prize', e.target.value)}
                             className="text-right h-9"
                             disabled={!row.playerId || row.playerId === NO_PLAYER_SELECTED_VALUE}
@@ -410,3 +477,4 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
     </Card>
   );
 }
+
