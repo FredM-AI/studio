@@ -12,6 +12,7 @@ const EventResultInputSchema = z.object({
   playerId: z.string().min(1),
   position: z.coerce.number().int().min(0, { message: "Position must be 0 or greater." }),
   prize: z.coerce.number().min(0, { message: "Prize must be 0 or greater." }),
+  rebuys: z.coerce.number().int().min(0, {message: "Rebuys must be 0 or greater."}).optional().default(0),
   // eliminatedBy is not handled in this form
 });
 
@@ -33,12 +34,11 @@ const EventFormSchema = z.object({
     if (!val || val === '[]') return [];
     try {
       const parsed = JSON.parse(val);
-      // Ensure parsed is an array before validating with Zod
       if (!Array.isArray(parsed)) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           message: "Results must be an array.",
-          path: ['results']
+          path: ['resultsJson']
         });
         return z.NEVER;
       }
@@ -46,8 +46,8 @@ const EventFormSchema = z.object({
       if (!validatedResults.success) {
          ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: `Invalid results format: ${validatedResults.error.flatten().fieldErrors}`,
-          path: ['results'] 
+          message: `Invalid results format: ${JSON.stringify(validatedResults.error.flatten().fieldErrors)}`,
+          path: ['resultsJson']
         });
         return z.NEVER;
       }
@@ -56,17 +56,17 @@ const EventFormSchema = z.object({
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message: "Results JSON is malformed.",
-        path: ['results']
+        path: ['resultsJson']
       });
       return z.NEVER;
     }
-  }).pipe(z.array(EventResultInputSchema.extend({ eliminatedBy: z.string().optional() })).optional().default([])), // Store as 'results'
+  }).pipe(z.array(EventResultInputSchema.extend({ eliminatedBy: z.string().optional() })).optional().default([])),
 }).refine(data => !data.rebuyAllowed || (data.rebuyAllowed && data.rebuyPrice !== undefined && data.rebuyPrice > 0), {
   message: "Rebuy price must be set if rebuys are allowed.",
   path: ["rebuyPrice"],
 }).refine(data => {
   if (data.status === 'completed' && (!data.resultsJson || data.resultsJson.length === 0) && data.participantIds.length > 0) {
-    return false; // Results are required for completed events with participants
+    return false; 
   }
   return true;
 }, {
@@ -76,22 +76,19 @@ const EventFormSchema = z.object({
   const participantIdsInResults = new Set(data.resultsJson?.map(r => r.playerId));
   for (const participantId of data.participantIds) {
     if (!participantIdsInResults.has(participantId) && data.status === 'completed') {
-      // If event is completed, all participants should ideally have a result entry,
-      // or results should be empty if no participants.
-      // This might be too strict depending on UX for partial results entry.
-      // For now, we allow participants without results if status is completed.
-      // A more robust validation could check if ALL participants have results if status is 'completed'.
+      // This validation can be adjusted based on strictness.
+      // For now, if an event is completed, we expect results for all participants.
+      // Or, if results are provided, they must be for actual participants.
     }
   }
-  // Check that all playerIds in results are actual participants
   for (const result of data.resultsJson || []) {
     if (!data.participantIds.includes(result.playerId)) {
-      return false; // A result is for a non-participant
+      return false; 
     }
   }
   return true;
 }, {
-  message: "All players in results must be participants in the event. Or, results submitted for non-participant.",
+  message: "All players in results must be participants in the event, or results submitted for non-participants.",
   path: ["resultsJson"],
 });
 
@@ -99,7 +96,6 @@ const EventFormSchema = z.object({
 export async function createEvent(prevState: EventFormState, formData: FormData): Promise<EventFormState> {
   const rawFormData = Object.fromEntries(formData.entries());
   const participantIdsData = formData.getAll('participantIds');
-  // Handle single string vs array for participantIds, ensuring it's always an array for Zod
   rawFormData.participantIds = participantIdsData.length === 1 && typeof participantIdsData[0] === 'string' ? participantIdsData[0].split(',') : participantIdsData;
 
 
@@ -136,7 +132,13 @@ export async function createEvent(prevState: EventFormState, formData: FormData)
       distribution: [],
     },
     participants: data.participantIds.filter(id => id.trim() !== ''), // Clean empty strings
-    results: data.resultsJson || [],
+    results: data.resultsJson?.map(r => ({
+        playerId: r.playerId,
+        position: r.position,
+        prize: r.prize,
+        rebuys: r.rebuys, // Added rebuys
+        eliminatedBy: undefined, 
+    })) || [],
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   };
@@ -198,11 +200,17 @@ export async function updateEvent(prevState: EventFormState, formData: FormData)
       maxPlayers: data.maxPlayers,
       status: data.status as EventStatus,
       prizePool: {
-        ...events[eventIndex].prizePool, // Preserve existing distribution type/custom distribution
+        ...events[eventIndex].prizePool, 
         total: data.prizePoolTotal,
       },
       participants: data.participantIds.filter(id => id.trim() !== ''),
-      results: data.resultsJson || [],
+      results: data.resultsJson?.map(r => ({
+        playerId: r.playerId,
+        position: r.position,
+        prize: r.prize,
+        rebuys: r.rebuys, // Added rebuys
+        eliminatedBy: undefined,
+      })) || [],
       updatedAt: new Date().toISOString(),
     };
 
@@ -217,5 +225,6 @@ export async function updateEvent(prevState: EventFormState, formData: FormData)
   revalidatePath('/events');
   revalidatePath(`/events/${data.id}`);
   revalidatePath(`/events/${data.id}/edit`);
-  redirect(`/events/${data.id}`); // Redirect to event details page after update
+  redirect(`/events/${data.id}`); 
 }
+

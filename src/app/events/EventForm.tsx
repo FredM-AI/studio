@@ -1,8 +1,8 @@
 
 'use client';
 
-import type { Event, Player, EventStatus, eventStatuses as EventStatusesType, EventResultInput as FormEventResultInput } from '@/lib/definitions'; // Corrected type import
-import type { EventFormState as ServerEventFormState } from '@/lib/definitions';
+import type { Event, Player, EventStatus, EventResultInput as FormEventResultInput } from '@/lib/definitions';
+import type { ServerEventFormState } from '@/lib/definitions';
 import * as React from 'react';
 import { useActionState } from 'react';
 import { Input } from '@/components/ui/input';
@@ -13,9 +13,10 @@ import { Switch } from '@/components/ui/switch';
 import { DatePicker } from '@/components/ui/date-picker';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Trophy, PlusCircle, MinusCircle, Users, DollarSign, CalendarDays, Settings, ListChecks, Info } from 'lucide-react';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Trophy, PlusCircle, MinusCircle, Users, DollarSign, CalendarDays, Settings, Info, Repeat } from 'lucide-react';
 import Link from 'next/link';
-import { eventStatuses } from '@/lib/definitions'; // Added import for eventStatuses array
+import { eventStatuses } from '@/lib/definitions';
 
 interface EventFormProps {
   event?: Event;
@@ -58,22 +59,22 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
           playerName: player ? `${player.firstName} ${player.lastName}` : 'Unknown Player',
           position: result.position.toString(),
           prize: result.prize.toString(),
+          rebuys: result.rebuys?.toString() || '0', // Default to '0'
         };
       });
       setEventResultsInput(resultsWithNames);
     } else {
-       // Initialize empty results for current participants if no results exist yet
       const emptyResults = initialParticipants.map(p => ({
         playerId: p.id,
         playerName: `${p.firstName} ${p.lastName}`,
         position: '',
         prize: '',
+        rebuys: '0', // Default to '0'
       }));
       setEventResultsInput(emptyResults);
     }
   }, [allPlayers, event]);
 
-  // Update eventResultsInput when currentParticipants changes
   React.useEffect(() => {
     setEventResultsInput(prevResults => {
       const newResults: FormEventResultInput[] = currentParticipants.map(participant => {
@@ -83,8 +84,10 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
           playerName: `${participant.firstName} ${participant.lastName}`,
           position: '',
           prize: '',
+          rebuys: '0', // Default to '0' for new participants added to form
         };
       });
+      // Sort by player name for consistent order in the results table
       return newResults.sort((a,b) => a.playerName.localeCompare(b.playerName));
     });
   }, [currentParticipants]);
@@ -98,9 +101,11 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
   const handleRemovePlayer = (player: Player) => {
     setAvailablePlayers(prev => [...prev, player].sort((a, b) => a.firstName.localeCompare(b.firstName)));
     setCurrentParticipants(prev => prev.filter(p => p.id !== player.id));
+    // Also remove their result entry if they are removed from participants
+    setEventResultsInput(prev => prev.filter(r => r.playerId !== player.id));
   };
 
-  const handleResultChange = (playerId: string, field: 'position' | 'prize', value: string) => {
+  const handleResultChange = (playerId: string, field: 'position' | 'prize' | 'rebuys', value: string) => {
     setEventResultsInput(prev => 
       prev.map(result => 
         result.playerId === playerId ? { ...result, [field]: value } : result
@@ -115,11 +120,12 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
   const hiddenParticipantIds = currentParticipants.map(p => p.id).join(',');
   const resultsJson = JSON.stringify(
     eventResultsInput
-      .filter(r => currentParticipants.some(p => p.id === r.playerId)) // Only include results for current participants
+      .filter(r => currentParticipants.some(p => p.id === r.playerId)) 
       .map(r => ({
         playerId: r.playerId,
-        position: parseInt(r.position) || 0, // Default to 0 if NaN
-        prize: parseFloat(r.prize) || 0,   // Default to 0 if NaN
+        position: parseInt(r.position) || 0, 
+        prize: parseFloat(r.prize) || 0,
+        rebuys: parseInt(r.rebuys) || 0, // Added rebuys
       }))
   );
 
@@ -151,7 +157,7 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
             </div>
              <div>
                 <Label htmlFor="status">Event Status</Label>
-                <Select name="status" defaultValue={currentStatus} onValueChange={(value) => setCurrentStatus(value as EventStatus)}>
+                <Select name="status" value={currentStatus} onValueChange={(value) => setCurrentStatus(value as EventStatus)}>
                   <SelectTrigger id="status" aria-describedby="status-error">
                     <SelectValue placeholder="Select status" />
                   </SelectTrigger>
@@ -218,7 +224,8 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
                   {filteredAvailablePlayers.length > 0 ? filteredAvailablePlayers.map(player => (
                     <div key={player.id} className="flex items-center justify-between p-2 hover:bg-muted/50 rounded-md">
                       <span>{player.firstName} {player.lastName} {player.nickname ? `(${player.nickname})` : ''}</span>
-                      <Button type="button" variant="outline" size="sm" onClick={() => handleAddPlayer(player)} title="Add player" disabled={event && currentParticipants.length >= (event.maxPlayers || Infinity) && !event.id /* Disable add if editing and max players reached. For new events, maxPlayers might not be set in the event object yet. */}>
+                      <Button type="button" variant="outline" size="sm" onClick={() => handleAddPlayer(player)} title="Add player" 
+                        disabled={(event?.maxPlayers !== undefined && currentParticipants.length >= event.maxPlayers)}>
                         <PlusCircle className="h-4 w-4" />
                       </Button>
                     </div>
@@ -241,49 +248,68 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
             </div>
           </div>
 
-          {/* Results Section - only if editing and participants exist */}
           {currentParticipants.length > 0 && (
             <div className="space-y-6 p-6 border rounded-lg shadow-sm">
               <h3 className="font-headline text-lg flex items-center"><Trophy className="mr-2 h-5 w-5 text-primary" />Event Results</h3>
               {state.errors?.results && <p className="text-sm text-destructive mt-1">{state.errors.results.join(', ')}</p>}
-              {state.errors?.resultsJson && <p className="text-sm text-destructive mt-1">{state.errors.resultsJson.join(', ')}</p>}
-              <ScrollArea className="h-96 w-full rounded-md border">
-                <div className="p-4 space-y-4">
-                {eventResultsInput.map((resultItem) => (
-                  <div key={resultItem.playerId} className="p-3 border rounded-md shadow-sm bg-muted/20">
-                    <p className="font-medium text-md mb-2">{resultItem.playerName}</p>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor={`position-${resultItem.playerId}`}>Position</Label>
-                        <Input
-                          id={`position-${resultItem.playerId}`}
-                          name={`results[${resultItem.playerId}][position]`} // Name not strictly needed if using resultsJson
-                          type="number"
-                          placeholder="e.g., 1"
-                          value={resultItem.position}
-                          onChange={(e) => handleResultChange(resultItem.playerId, 'position', e.target.value)}
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor={`prize-${resultItem.playerId}`}>Prize ($)</Label>
-                        <Input
-                          id={`prize-${resultItem.playerId}`}
-                          name={`results[${resultItem.playerId}][prize]`} // Name not strictly needed
-                          type="number"
-                          step="0.01"
-                          placeholder="e.g., 100.00"
-                          value={resultItem.prize}
-                          onChange={(e) => handleResultChange(resultItem.playerId, 'prize', e.target.value)}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                ))}
-                </div>
+              {state.errors?.resultsJson && <p className="text-sm text-destructive mt-1">{typeof state.errors.resultsJson === 'string' ? state.errors.resultsJson : state.errors.resultsJson.join(', ')}</p>}
+              <ScrollArea className="max-h-[500px] w-full rounded-md border">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-[40%]">Player</TableHead>
+                      <TableHead className="w-[20%] text-center">Position</TableHead>
+                      <TableHead className="w-[20%] text-center">Rebuys</TableHead>
+                      <TableHead className="w-[20%] text-right">Prize ($)</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {eventResultsInput.map((resultItem) => (
+                      <TableRow key={resultItem.playerId}>
+                        <TableCell className="font-medium py-3">{resultItem.playerName}</TableCell>
+                        <TableCell className="py-2">
+                          <Input
+                            id={`position-${resultItem.playerId}`}
+                            type="number"
+                            min="0"
+                            placeholder="e.g., 1"
+                            value={resultItem.position}
+                            onChange={(e) => handleResultChange(resultItem.playerId, 'position', e.target.value)}
+                            className="text-center"
+                          />
+                        </TableCell>
+                        <TableCell className="py-2">
+                          <Input
+                            id={`rebuys-${resultItem.playerId}`}
+                            type="number"
+                            min="0"
+                            placeholder="e.g., 0"
+                            value={resultItem.rebuys}
+                            onChange={(e) => handleResultChange(resultItem.playerId, 'rebuys', e.target.value)}
+                            className="text-center"
+                            disabled={!rebuyAllowed} // Disable if rebuys not allowed for the event
+                          />
+                        </TableCell>
+                        <TableCell className="py-2">
+                          <Input
+                            id={`prize-${resultItem.playerId}`}
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            placeholder="e.g., 100.00"
+                            value={resultItem.prize}
+                            onChange={(e) => handleResultChange(resultItem.playerId, 'prize', e.target.value)}
+                            className="text-right"
+                          />
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+                {eventResultsInput.length === 0 && <p className="text-muted-foreground p-4 text-center">Add participants to enter results.</p>}
               </ScrollArea>
             </div>
           )}
-
 
           {state.message && <p className="text-sm text-destructive mt-2 text-center p-2 bg-destructive/10 rounded-md">{state.message}</p>}
           {state.errors?._form && <p className="text-sm text-destructive mt-2 text-center p-2 bg-destructive/10 rounded-md">{state.errors._form.join(', ')}</p>}
@@ -298,6 +324,3 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
     </Card>
   );
 }
-
-
-    

@@ -12,7 +12,7 @@ export type PlayerStats = {
 export type Player = {
   id: string; // UUID
   firstName: string;
-  lastName: string;
+  lastName:string;
   nickname?: string;
   email: string; // Should be unique
   phone?: string;
@@ -33,6 +33,7 @@ export type EventResult = {
   playerId: string;
   position: number;
   prize: number;
+  rebuys?: number; // Added for tracking rebuys per player in an event
   eliminatedBy?: string; // Player ID or null
 };
 
@@ -97,6 +98,7 @@ export type EventFormState = {
     participantIds?: string[];
     status?: string[];
     results?: string[]; // For errors related to the results array as a whole
+    resultsJson?: string[]; // For errors related to the resultsJson field specifically
     _form?: string[]; // General form errors
   };
   message?: string | null;
@@ -108,4 +110,9 @@ export type EventResultInput = {
   playerName: string; // For display purposes in the form
   position: string; // Kept as string for input field binding
   prize: string;    // Kept as string for input field binding
+  rebuys: string;   // Kept as string for input field binding, new field
 };
+
+// Type for EventForm to use in useActionState
+export type ServerEventFormState = EventFormState;
+
