@@ -39,8 +39,8 @@ export async function loginUser(
       httpOnly: true,
       path: '/',
       maxAge: 60 * 60 * 24 * 7, // 1 week
-      sameSite: 'none', // Changed from 'lax'
-      secure: true, // Crucial for HTTPS environments like Firebase console
+      sameSite: 'none', 
+      secure: true, 
     });
     redirect('/dashboard');
   } else {
@@ -52,13 +52,13 @@ export async function loginUser(
 }
 
 export async function logoutUser() {
+  const cookieStore = cookies();
   // Ensure all relevant cookie attributes match how it was set for reliable deletion
-  cookies().delete(AUTH_COOKIE_NAME, {
+  cookieStore.delete(AUTH_COOKIE_NAME, {
     path: '/',
     httpOnly: true,
-    sameSite: 'none', // Changed from 'lax'
+    sameSite: 'none', 
     secure: true,
   });
   redirect('/login');
 }
-
