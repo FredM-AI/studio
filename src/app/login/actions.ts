@@ -11,9 +11,8 @@ const LoginSchema = z.object({
   password: z.string().min(1, { message: 'Password is required.' }),
 });
 
-// Hardcoded admin credentials for demonstration purposes
 const ADMIN_USERNAME = 'admin';
-const ADMIN_PASSWORD = 'pbc_pwd25'; // In a real app, NEVER hardcode passwords. Use environment variables and hashing.
+const ADMIN_PASSWORD = 'pbc_pwd25'; 
 const AUTH_COOKIE_NAME = 'app_session_active';
 
 export async function loginUser(
@@ -34,7 +33,6 @@ export async function loginUser(
   const { username, password } = validatedFields.data;
 
   if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
-    // Set a simple cookie to simulate session
     cookies().set(AUTH_COOKIE_NAME, 'true', {
       httpOnly: true,
       path: '/',
@@ -54,17 +52,17 @@ export async function loginUser(
 export async function logoutUser() {
   try {
     const cookieStore = cookies();
-    // console.log(`[Logout] Attempting to delete cookie: ${AUTH_COOKIE_NAME}`);
-    cookieStore.delete(AUTH_COOKIE_NAME, {
-      path: '/',
-      httpOnly: true,
-      sameSite: 'none', 
-      secure: true,
+    // console.log(`[Logout] Attempting to clear cookie: ${AUTH_COOKIE_NAME} by setting expiry`);
+    cookieStore.set(AUTH_COOKIE_NAME, '', { // Set empty value
+        httpOnly: true,
+        path: '/', // Must match the path the cookie was set with
+        sameSite: 'none', 
+        secure: true, // Must match the secure flag the cookie was set with
+        expires: new Date(0) // Set to a past date to expire the cookie
     });
-    // console.log(`[Logout] Cookie ${AUTH_COOKIE_NAME} delete operation called.`);
+    // console.log(`[Logout] Cookie ${AUTH_COOKIE_NAME} set with past expiry.`);
   } catch (error) {
-    // console.error('[Logout] Error during cookie deletion:', error);
-    // Attempt to redirect even if cookie deletion fails, though the session might persist.
+    // console.error('[Logout] Error during cookie clearing:', error);
   }
   redirect('/login');
 }

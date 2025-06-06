@@ -1,7 +1,11 @@
+
 import type { Metadata } from 'next';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 import Header from '@/components/Header';
+import { cookies } from 'next/headers'; // Import cookies
+
+const AUTH_COOKIE_NAME = 'app_session_active'; // Define cookie name
 
 export const metadata: Metadata = {
   title: 'Poker Tournament Manager',
@@ -13,6 +17,9 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const cookieStore = cookies();
+  const isAuthenticated = cookieStore.get(AUTH_COOKIE_NAME)?.value === 'true';
+
   return (
     <html lang="en">
       <head>
@@ -22,7 +29,7 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
       </head>
       <body className="font-body antialiased min-h-screen flex flex-col">
-        <Header />
+        <Header isAuthenticated={isAuthenticated} /> {/* Pass isAuthenticated as a prop */}
         <main className="flex-grow container mx-auto px-4 py-8">
           {children}
         </main>
