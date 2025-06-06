@@ -16,7 +16,7 @@ interface Message {
   timestamp: Date;
 }
 
-// Simple Bull SVG Icon (consistent with settings page)
+// New Bull SVG Icon inspired by the provided image (consistent with assistant page)
 const BullIcon = (props: React.SVGProps<SVGSVGElement>) => (
   <svg 
     xmlns="http://www.w3.org/2000/svg" 
@@ -28,10 +28,24 @@ const BullIcon = (props: React.SVGProps<SVGSVGElement>) => (
     strokeLinejoin="round"
     {...props}
   >
-    <path d="M16 16c-1.657 1.657-4.343 1.657-6 0"/>
-    <path d="M12 2c-3.5 0-7 2-7 8.5c0 3.286 1.714 6.5 4.5 6.5c1.929 0 3.5-1.071 3.5-1.071s1.571 1.071 3.5 1.071c2.786 0 4.5-3.214 4.5-6.5C19 4 15.5 2 12 2Z"/>
-    <path d="M6 10c-1.105 0-2 .895-2 2s.895 2 2 2"/>
-    <path d="M18 10c1.105 0 2 .895 2 2s-.895 2-2 2"/>
+    {/* Horns */}
+    <path d="M5 9C2.5 7.5 3 4 7 4" />
+    <path d="M19 9C21.5 7.5 21 4 17 4" />
+
+    {/* Head Top */}
+    <path d="M7 4C8.5 2.5 15.5 2.5 17 4" />
+
+    {/* Face Outline & Snout Area */}
+    <path d="M17 4L19 9L17 14L15.5 18C14.5 20 9.5 20 8.5 18L7 14L5 9L7 4Z" />
+    
+    {/* Eye Details (X shapes for an intense look) */}
+    <path d="M9 10.5L10.5 11.5" />
+    <path d="M10.5 10.5L9 11.5" /> 
+    <path d="M15 10.5L13.5 11.5" />
+    <path d="M13.5 10.5L15 11.5" />
+
+    {/* Snout line */}
+    <path d="M9 16C10.5 17.5 13.5 17.5 15 16" />
   </svg>
 );
 
@@ -94,9 +108,10 @@ export default function AssistantChatForm() {
         
         if (responseData && typeof responseData.output === 'string') {
           assistantReplyText = responseData.output;
-        } else if (responseData && responseData.reply) {
+        } else if (responseData && responseData.reply) { // Fallback for other possible reply structures
           assistantReplyText = responseData.reply;
         } else if (Array.isArray(responseData) && responseData.length > 0 && responseData[0]?.body?.message) {
+           // Handling specific n8n test webhook structure if no 'output' or 'reply'
            assistantReplyText = `Echo: ${responseData[0].body.message}`;
         } else if (responseData && responseData.message === "Workflow0 was started"){
            assistantReplyText = "Message received by the assistant. Waiting for processing...";
