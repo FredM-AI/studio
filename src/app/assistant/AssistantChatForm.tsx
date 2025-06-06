@@ -73,14 +73,16 @@ export default function AssistantChatForm() {
       if (contentType && contentType.includes("application/json")) {
         const responseData = await response.json();
         
-        if (responseData && responseData.reply) {
+        if (responseData && typeof responseData.output === 'string') {
+          assistantReplyText = responseData.output;
+        } else if (responseData && responseData.reply) {
           assistantReplyText = responseData.reply;
         } else if (Array.isArray(responseData) && responseData.length > 0 && responseData[0]?.body?.message) {
            assistantReplyText = `Echo: ${responseData[0].body.message}`;
         } else if (responseData && responseData.message === "Workflow0 was started"){
            assistantReplyText = "Message received by the assistant. Waiting for processing...";
         } else if (responseData) {
-           assistantReplyText = `Received JSON: ${JSON.stringify(responseData)}`;
+           assistantReplyText = `Received unhandled JSON: ${JSON.stringify(responseData)}`;
         } else {
            assistantReplyText = "Received an empty JSON response from assistant.";
         }
