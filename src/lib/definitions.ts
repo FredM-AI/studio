@@ -135,7 +135,17 @@ export type SeasonFormState = {
     startDate?: string[];
     endDate?: string[];
     isActive?: string[];
+    eventIdsToAssociate?: string[];
     _form?: string[];
+  };
+  message?: string | null;
+};
+
+export type LoginFormState = {
+  errors?: {
+    username?: string[];
+    password?: string[];
+    _form?: string[]; // For general form errors
   };
   message?: string | null;
 };
