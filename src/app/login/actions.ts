@@ -36,11 +36,11 @@ export async function loginUser(
   if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
     // Set a simple cookie to simulate session
     cookies().set(AUTH_COOKIE_NAME, 'true', {
-      httpOnly: true, // For real apps, makes it inaccessible to client-side JS
+      httpOnly: true,
       path: '/',
-      maxAge: 60 * 60 * 24 * 7, // 1 week, for example
+      maxAge: 60 * 60 * 24 * 7, // 1 week
+      sameSite: 'lax', // Explicitly set SameSite attribute
       // secure: process.env.NODE_ENV === 'production', // For real apps, only transmit over HTTPS
-      // sameSite: 'lax', // For real apps, CSRF protection
     });
     redirect('/dashboard');
   } else {
@@ -52,6 +52,6 @@ export async function loginUser(
 }
 
 export async function logoutUser() {
-  cookies().delete(AUTH_COOKIE_NAME);
+  cookies().delete(AUTH_COOKIE_NAME, { path: '/' }); // Ensure path is specified for deletion
   redirect('/login');
 }
