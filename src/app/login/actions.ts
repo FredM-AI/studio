@@ -12,7 +12,7 @@ const LoginSchema = z.object({
 
 // Hardcoded admin credentials for demonstration purposes
 const ADMIN_USERNAME = 'admin';
-const ADMIN_PASSWORD = 'password'; // In a real app, NEVER hardcode passwords. Use environment variables and hashing.
+const ADMIN_PASSWORD = 'pbc_pwd25'; // In a real app, NEVER hardcode passwords. Use environment variables and hashing.
 
 export async function loginUser(
   prevState: LoginFormState,
