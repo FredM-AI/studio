@@ -56,24 +56,42 @@ export default function AssistantChatForm() {
         body: JSON.stringify({ message: userMessage.text }),
       });
 
-      if (!response.ok) {
-        const errorData = await response.text();
-        throw new Error(`Network response was not ok: ${response.status} ${response.statusText}. Details: ${errorData}`);
-      }
-
-      const responseData = await response.json();
-      
       let assistantReplyText = "Received acknowledgment from assistant.";
-      // n8n webhook test might return the input in data[0].body.message
-      // or if a "Respond to Webhook" node is used, it might be in data.reply
-      if (responseData && responseData.reply) {
-        assistantReplyText = responseData.reply;
-      } else if (Array.isArray(responseData) && responseData[0]?.body?.message) {
-         assistantReplyText = `Echo: ${responseData[0].body.message}`;
-      } else if (responseData && responseData.message === "Workflow0 was started"){ // Common n8n test response
-         assistantReplyText = "Message received by the assistant. Waiting for processing...";
-      }
 
+      if (!response.ok) {
+        let errorDetails = "Could not retrieve error details from response body.";
+        try {
+          errorDetails = await response.text();
+        } catch (textError) {
+          console.warn("Failed to read error response body as text:", textError);
+        }
+        throw new Error(`Network response was not ok: ${response.status} ${response.statusText}. Details: ${errorDetails}`);
+      }
+      
+      const contentType = response.headers.get("content-type");
+
+      if (contentType && contentType.includes("application/json")) {
+        const responseData = await response.json();
+        
+        if (responseData && responseData.reply) {
+          assistantReplyText = responseData.reply;
+        } else if (Array.isArray(responseData) && responseData.length > 0 && responseData[0]?.body?.message) {
+           assistantReplyText = `Echo: ${responseData[0].body.message}`;
+        } else if (responseData && responseData.message === "Workflow0 was started"){
+           assistantReplyText = "Message received by the assistant. Waiting for processing...";
+        } else if (responseData) {
+           assistantReplyText = `Received JSON: ${JSON.stringify(responseData)}`;
+        } else {
+           assistantReplyText = "Received an empty JSON response from assistant.";
+        }
+      } else {
+        const textResponse = await response.text();
+        if (textResponse && textResponse.trim()) {
+          assistantReplyText = textResponse;
+        } else {
+          assistantReplyText = "Received an empty or non-text response from assistant.";
+        }
+      }
 
       const assistantMessage: Message = {
         id: crypto.randomUUID(),
