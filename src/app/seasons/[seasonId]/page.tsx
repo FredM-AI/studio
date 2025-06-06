@@ -90,13 +90,13 @@ export default async function SeasonDetailsPage({ params }: { params: { seasonId
       </div>
 
       <Tabs defaultValue="leaderboard" className="w-full">
-        <TabsList className="grid w-full grid-cols-1 sm:grid-cols-3">
+        <TabsList className="grid w-full grid-cols-1 sm:grid-cols-3 mb-6">
           <TabsTrigger value="leaderboard"><BarChart3 className="mr-2 h-4 w-4" />Leaderboard</TabsTrigger>
           <TabsTrigger value="calendar"><CalendarDays className="mr-2 h-4 w-4" />Events Calendar</TabsTrigger>
           <TabsTrigger value="progress"><TrendingUp className="mr-2 h-4 w-4" />Player Progress</TabsTrigger>
         </TabsList>
         
-        <TabsContent value="leaderboard" className="mt-6">
+        <TabsContent value="leaderboard">
           <Card>
             <CardHeader>
               <CardTitle className="font-headline">Season Leaderboard</CardTitle>
@@ -112,7 +112,7 @@ export default async function SeasonDetailsPage({ params }: { params: { seasonId
           </Card>
         </TabsContent>
 
-        <TabsContent value="calendar" className="mt-6">
+        <TabsContent value="calendar">
           <Card>
             <CardHeader>
               <CardTitle className="font-headline">Events Calendar</CardTitle>
@@ -124,7 +124,7 @@ export default async function SeasonDetailsPage({ params }: { params: { seasonId
           </Card>
         </TabsContent>
 
-        <TabsContent value="progress" className="mt-6">
+        <TabsContent value="progress">
           <Card>
             <CardHeader>
               <CardTitle className="font-headline">Player Progress</CardTitle>
