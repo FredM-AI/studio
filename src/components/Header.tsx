@@ -28,9 +28,10 @@ const Header = ({ isAuthenticated }: { isAuthenticated: boolean }) => {
   if (isAuthenticated) {
     navItems = [...baseNavItems, ...adminNavItems];
   } else {
+    // Login is now part of navItems for unauthenticated users
     navItems = [
       ...baseNavItems,
-      { href: '/login', label: 'Login', icon: LogIn } // Add Login button for unauthenticated users
+      { href: '/login', label: 'Login', icon: LogIn } 
     ];
   }
 
