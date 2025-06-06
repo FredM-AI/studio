@@ -8,6 +8,9 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { ArrowLeft, Edit, Mail, Phone, CheckCircle, XCircle, TrendingUp, TrendingDown, Minus } from "lucide-react";
 import Image from "next/image";
+import { cookies } from 'next/headers';
+
+const AUTH_COOKIE_NAME = 'app_session_active';
 
 async function getPlayerWithStats(id: string): Promise<{ player?: Player; calculatedStats?: PlayerStats }> {
   const players = await getPlayers();
@@ -23,6 +26,8 @@ async function getPlayerWithStats(id: string): Promise<{ player?: Player; calcul
 }
 
 export default async function PlayerDetailPage({ params }: { params: { playerId: string } }) {
+  const cookieStore = cookies();
+  const isAuthenticated = cookieStore.get(AUTH_COOKIE_NAME)?.value === 'true';
   const { player, calculatedStats } = await getPlayerWithStats(params.playerId);
 
   if (!player || !calculatedStats) {
@@ -79,11 +84,13 @@ export default async function PlayerDetailPage({ params }: { params: { playerId:
                 {player.isActive ? "Active" : "Inactive"}
             </div>
           </div>
-          <Button asChild variant="outline">
-            <Link href={`/players/${player.id}/edit`}>
-              <Edit className="mr-2 h-4 w-4" /> Edit Player
-            </Link>
-          </Button>
+          {isAuthenticated && (
+            <Button asChild variant="outline">
+              <Link href={`/players/${player.id}/edit`}>
+                <Edit className="mr-2 h-4 w-4" /> Edit Player
+              </Link>
+            </Button>
+          )}
         </CardHeader>
         <CardContent className="p-6 grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
           <div>

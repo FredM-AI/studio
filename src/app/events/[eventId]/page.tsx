@@ -7,6 +7,9 @@ import { ArrowLeft, Edit, Users, DollarSign, CalendarDays, Trophy, Info, Tag, Ch
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { cookies } from 'next/headers';
+
+const AUTH_COOKIE_NAME = 'app_session_active';
 
 async function getEventDetails(id: string): Promise<{ event: Event | undefined, players: Player[] }> {
   const events = await getEvents();
@@ -16,6 +19,8 @@ async function getEventDetails(id: string): Promise<{ event: Event | undefined, 
 }
 
 export default async function EventDetailsPage({ params }: { params: { eventId: string } }) {
+  const cookieStore = cookies();
+  const isAuthenticated = cookieStore.get(AUTH_COOKIE_NAME)?.value === 'true';
   const { event, players: allPlayers } = await getEventDetails(params.eventId);
 
   if (!event) {
@@ -67,11 +72,13 @@ export default async function EventDetailsPage({ params }: { params: { eventId: 
                 {new Date(event.date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
               </CardDescription>
             </div>
-            <Button asChild variant="outline" className="mt-4 md:mt-0">
-              <Link href={`/events/${event.id}/edit`}>
-                <Edit className="mr-2 h-4 w-4" /> Edit Event
-              </Link>
-            </Button>
+            {isAuthenticated && (
+              <Button asChild variant="outline" className="mt-4 md:mt-0">
+                <Link href={`/events/${event.id}/edit`}>
+                  <Edit className="mr-2 h-4 w-4" /> Edit Event
+                </Link>
+              </Button>
+            )}
           </div>
         </CardHeader>
         <CardContent className="p-6 grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">

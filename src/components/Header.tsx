@@ -13,27 +13,13 @@ import { usePathname } from 'next/navigation'; // Import usePathname
 const Header = ({ isAuthenticated }: { isAuthenticated: boolean }) => {
   const pathname = usePathname(); // Get current path
 
-  const baseNavItems = [
+  const navItems = [
     { href: '/dashboard', label: 'Dashboard', icon: Home },
-    { href: '/assistant', label: 'Assistant', icon: MessageSquare },
-  ];
-
-  const adminNavItems = [
     { href: '/events', label: 'Events', icon: CalendarDays },
     { href: '/players', label: 'Players', icon: Users },
     { href: '/seasons', label: 'Seasons', icon: BarChart3 },
+    { href: '/assistant', label: 'Assistant', icon: MessageSquare },
   ];
-
-  let navItems = [];
-  if (isAuthenticated) {
-    navItems = [...baseNavItems, ...adminNavItems];
-  } else {
-    // Login is now part of navItems for unauthenticated users
-    navItems = [
-      ...baseNavItems,
-      { href: '/login', label: 'Login', icon: LogIn } 
-    ];
-  }
 
   const showNav = pathname !== '/login';
 
@@ -54,12 +40,18 @@ const Header = ({ isAuthenticated }: { isAuthenticated: boolean }) => {
                   </Link>
                 </Button>
               ))}
-              {isAuthenticated && (
+              {isAuthenticated ? (
                 <form action={logoutUser} className="ml-2">
                   <Button variant="ghost" type="submit" size="sm">
                     <LogOut className="mr-2 h-4 w-4" /> Logout
                   </Button>
                 </form>
+              ) : (
+                <Button variant="ghost" asChild className="ml-2">
+                  <Link href="/login">
+                    <LogIn className="mr-2 h-4 w-4" /> Login
+                  </Link>
+                </Button>
               )}
             </nav>
 
@@ -82,12 +74,18 @@ const Header = ({ isAuthenticated }: { isAuthenticated: boolean }) => {
                         </Link>
                       </Button>
                     ))}
-                    {isAuthenticated && (
+                    {isAuthenticated ? (
                       <form action={logoutUser} className="mt-4 border-t pt-4">
                         <Button variant="outline" type="submit" className="w-full justify-start text-base py-3 h-auto">
                           <LogOut className="mr-3 h-5 w-5" /> Logout
                         </Button>
                       </form>
+                    ) : (
+                       <Button variant="outline" className="w-full justify-start text-base py-3 h-auto mt-4 border-t pt-4" asChild>
+                        <Link href="/login">
+                          <LogIn className="mr-3 h-5 w-5" /> Login
+                        </Link>
+                      </Button>
                     )}
                   </nav>
                 </SheetContent>

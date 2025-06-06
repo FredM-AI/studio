@@ -10,7 +10,9 @@ import SeasonDetailsCalendar from './SeasonDetailsCalendar';
 import SeasonLeaderboardTable from './SeasonLeaderboardTable';
 import SeasonPlayerProgressChart from './SeasonPlayerProgressChart';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { cookies } from 'next/headers';
 
+const AUTH_COOKIE_NAME = 'app_session_active';
 
 async function getSeasonData(seasonId: string): Promise<{ season?: Season; allEvents: EventType[]; allPlayers: Player[]; seasonStats?: SeasonStats, seasonEvents: EventType[] }> {
   const season = (await getSeasons()).find(s => s.id === seasonId);
@@ -30,6 +32,8 @@ async function getSeasonData(seasonId: string): Promise<{ season?: Season; allEv
 
 
 export default async function SeasonDetailsPage({ params }: { params: { seasonId: string } }) {
+  const cookieStore = cookies();
+  const isAuthenticated = cookieStore.get(AUTH_COOKIE_NAME)?.value === 'true';
   const { seasonId } = params;
   const { season, allPlayers, seasonStats, seasonEvents } = await getSeasonData(seasonId);
 
@@ -76,11 +80,13 @@ export default async function SeasonDetailsPage({ params }: { params: { seasonId
             {season.endDate ? new Date(season.endDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : 'Ongoing'}
           </p>
         </div>
-        <Button asChild>
-          <Link href={`/seasons/${season.id}/edit`}>
-            <Edit className="mr-2 h-4 w-4" /> Edit Season
-          </Link>
-        </Button>
+        {isAuthenticated && (
+          <Button asChild>
+            <Link href={`/seasons/${season.id}/edit`}>
+              <Edit className="mr-2 h-4 w-4" /> Edit Season
+            </Link>
+          </Button>
+        )}
       </div>
 
       <Tabs defaultValue="leaderboard" className="w-full">
