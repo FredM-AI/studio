@@ -85,18 +85,12 @@ export default async function DashboardPage() {
             {currentSeason.endDate ? new Date(currentSeason.endDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : 'Ongoing'}
           </p>
         </div>
-        {isAuthenticated ? (
+        {isAuthenticated && (
           <Button asChild variant="outline">
             <Link href={`/seasons/${currentSeason.id}/edit`}>
               <Edit className="mr-2 h-4 w-4" /> Edit Current Season
             </Link>
           </Button>
-        ) : (
-            <Button asChild variant="outline">
-                <Link href="/login">
-                    <LogIn className="mr-2 h-4 w-4" /> Login
-                </Link>
-            </Button>
         )}
       </div>
 
