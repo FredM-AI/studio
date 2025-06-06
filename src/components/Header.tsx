@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import Logo from './Logo';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { Menu, LogOut, Home, MessageSquare, CalendarDays, Users, BarChart3 } from 'lucide-react';
+import { Menu, LogOut, Home, MessageSquare, CalendarDays, Users, BarChart3, LogIn } from 'lucide-react';
 import { logoutUser } from '@/app/login/actions';
 import { usePathname } from 'next/navigation'; // Import usePathname
 
@@ -24,9 +24,17 @@ const Header = ({ isAuthenticated }: { isAuthenticated: boolean }) => {
     { href: '/seasons', label: 'Seasons', icon: BarChart3 },
   ];
 
-  const navItems = isAuthenticated ? [...baseNavItems, ...adminNavItems] : baseNavItems;
+  let navItems = [];
+  if (isAuthenticated) {
+    navItems = [...baseNavItems, ...adminNavItems];
+  } else {
+    navItems = [
+      ...baseNavItems,
+      { href: '/login', label: 'Login', icon: LogIn } // Add Login button for unauthenticated users
+    ];
+  }
 
-  const showNav = pathname !== '/login'; // Condition to show nav items
+  const showNav = pathname !== '/login';
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
