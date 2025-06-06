@@ -5,11 +5,14 @@ import { calculateSeasonStats, type SeasonStats } from '@/lib/stats-service';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import Link from 'next/link';
-import { BarChart3, CalendarDays, TrendingUp, Edit, PlusCircle, Info } from 'lucide-react';
+import { BarChart3, CalendarDays, TrendingUp, Edit, PlusCircle, Info, LogIn } from 'lucide-react';
 import SeasonDetailsCalendar from '@/app/seasons/[seasonId]/SeasonDetailsCalendar';
 import SeasonLeaderboardTable from '@/app/seasons/[seasonId]/SeasonLeaderboardTable';
 import SeasonPlayerProgressChart from '@/app/seasons/[seasonId]/SeasonPlayerProgressChart';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { cookies } from 'next/headers';
+
+const AUTH_COOKIE_NAME = 'app_session_active';
 
 async function getCurrentSeasonData(): Promise<{ currentSeason?: Season; allEvents: EventType[]; allPlayers: Player[]; seasonStats?: SeasonStats, seasonEvents: EventType[] }> {
   const allSeasons = await getSeasons();
@@ -34,6 +37,9 @@ async function getCurrentSeasonData(): Promise<{ currentSeason?: Season; allEven
 }
 
 export default async function DashboardPage() {
+  const cookieStore = cookies();
+  const isAuthenticated = cookieStore.get(AUTH_COOKIE_NAME)?.value === 'true';
+
   const { currentSeason, allPlayers, seasonStats, seasonEvents } = await getCurrentSeasonData();
 
   if (!currentSeason || !seasonStats) {
@@ -48,11 +54,19 @@ export default async function DashboardPage() {
             <p className="text-muted-foreground mb-6">
               There is no active season currently running. Please create a new season or activate an existing one to see the dashboard.
             </p>
-            <Button asChild>
-              <Link href="/seasons">
-                <CalendarDays className="mr-2 h-4 w-4" /> Manage Seasons
-              </Link>
-            </Button>
+            {isAuthenticated ? (
+              <Button asChild>
+                <Link href="/seasons">
+                  <CalendarDays className="mr-2 h-4 w-4" /> Manage Seasons
+                </Link>
+              </Button>
+            ) : (
+              <Button asChild>
+                <Link href="/login">
+                  <LogIn className="mr-2 h-4 w-4" /> Login to Manage
+                </Link>
+              </Button>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -71,11 +85,20 @@ export default async function DashboardPage() {
             {currentSeason.endDate ? new Date(currentSeason.endDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : 'Ongoing'}
           </p>
         </div>
-        <Button asChild variant="outline">
-          <Link href={`/seasons/${currentSeason.id}/edit`}>
-            <Edit className="mr-2 h-4 w-4" /> Edit Current Season
-          </Link>
-        </Button>
+        {isAuthenticated && (
+          <Button asChild variant="outline">
+            <Link href={`/seasons/${currentSeason.id}/edit`}>
+              <Edit className="mr-2 h-4 w-4" /> Edit Current Season
+            </Link>
+          </Button>
+        )}
+         {!isAuthenticated && (
+            <Button asChild variant="outline">
+                <Link href="/login">
+                    <LogIn className="mr-2 h-4 w-4" /> Login to Edit
+                </Link>
+            </Button>
+        )}
       </div>
 
       <Tabs defaultValue="leaderboard" className="w-full">
