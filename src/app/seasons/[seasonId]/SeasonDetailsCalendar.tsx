@@ -6,14 +6,19 @@ import { Calendar } from '@/components/ui/calendar';
 import { Badge } from '@/components/ui/badge';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import Link from 'next/link';
-import { format, subMonths, startOfMonth, isFuture, isToday } from 'date-fns';
+import { format, subMonths, startOfMonth, isFuture, isToday, isSameMonth } from 'date-fns';
 import * as React from 'react';
+import { useRouter } from 'next/navigation';
+import type { DayContentProps } from 'react-day-picker';
+import { cn } from '@/lib/utils';
 
 interface SeasonDetailsCalendarProps {
   events: Event[];
 }
 
 export default function SeasonDetailsCalendar({ events }: SeasonDetailsCalendarProps) {
+  const router = useRouter();
+
   const [currentBaseMonth, setCurrentBaseMonth] = React.useState<Date>(() => {
     const today = new Date();
     let initialTargetMonth: Date;
@@ -34,9 +39,6 @@ export default function SeasonDetailsCalendar({ events }: SeasonDetailsCalendarP
     } else {
       initialTargetMonth = today;
     }
-    
-    // We want initialTargetMonth to be the middle month of three.
-    // So, the calendar's 'month' prop (currentBaseMonth) should be one month before.
     return subMonths(startOfMonth(initialTargetMonth), 1);
   });
   
@@ -62,32 +64,51 @@ export default function SeasonDetailsCalendar({ events }: SeasonDetailsCalendarP
   const eventDateModifierStyles = {
     eventDay: {
       fontWeight: 'bold' as React.CSSProperties['fontWeight'],
-      textDecoration: 'underline',
       color: 'hsl(var(--primary))',
       position: 'relative' as React.CSSProperties['position'],
     }
   };
 
-  const DayWithEvents = ({ date }: { date: Date }) => {
+  const DayContentWithPopover = ({ date, displayMonth }: DayContentProps) => {
     const dateStr = format(date, 'yyyy-MM-dd');
     const dayEvents = eventsByDate.get(dateStr) || [];
+    const isOutside = !isSameMonth(date, displayMonth);
+
+    const dayNumberText = format(date, 'd');
+
+    const dayBaseContent = (
+      <span className={cn(isOutside ? "text-muted-foreground opacity-50" : "")}>
+        {dayNumberText}
+      </span>
+    );
 
     if (dayEvents.length === 0) {
-      return <span>{format(date, 'd')}</span>;
+      return dayBaseContent;
     }
     
+    const contentWithBadge = (
+      <div className={cn(
+        "w-full h-full flex items-center justify-center relative",
+        dayEvents.length > 1 && "cursor-pointer" // Cursor pointer for multi-event popover trigger
+      )}>
+        {dayNumberText}
+        <Badge variant="destructive" className="absolute -top-1 -right-1 h-3.5 w-3.5 p-0 flex items-center justify-center text-[9px] leading-none">
+          {dayEvents.length}
+        </Badge>
+      </div>
+    );
+
+    if (dayEvents.length === 1) {
+      // Single event: onDayClick on Calendar handles navigation. Content just shows badge.
+      // The cell will be styled by eventDay modifier.
+      return contentWithBadge;
+    }
+
+    // Multiple events: use Popover, triggered by clicking the day cell content
     return (
       <Popover>
         <PopoverTrigger asChild>
-          <div 
-            className="w-full h-full flex items-center justify-center relative focus:outline-none focus:ring-2 focus:ring-ring rounded-sm cursor-pointer"
-            aria-label={`Events on ${format(date, 'PPP')}`}
-          >
-            {format(date, 'd')}
-            <Badge variant="destructive" className="absolute -top-1 -right-1 h-3.5 w-3.5 p-0 flex items-center justify-center text-[9px] leading-none">
-              {dayEvents.length}
-            </Badge>
-          </div>
+          {contentWithBadge}
         </PopoverTrigger>
         <PopoverContent className="w-80 z-10">
           <div className="grid gap-4">
@@ -122,7 +143,8 @@ export default function SeasonDetailsCalendar({ events }: SeasonDetailsCalendarP
     <div className="flex justify-center">
       <Calendar
         mode="single"
-        onSelect={() => {}} 
+        selected={undefined} // Keep selection uncontrolled or manage as needed for other features
+        onSelect={() => {}} // Can be used if direct day selection styling is desired
         month={currentBaseMonth} 
         onMonthChange={setCurrentBaseMonth} 
         numberOfMonths={3}
@@ -130,7 +152,21 @@ export default function SeasonDetailsCalendar({ events }: SeasonDetailsCalendarP
         modifiers={eventDateModifiers}
         modifiersStyles={eventDateModifierStyles}
         components={{
-          DayContent: DayWithEvents,
+          DayContent: DayContentWithPopover,
+        }}
+        onDayClick={(day, modifiersClicked, e) => {
+          // Check if 'eventDay' modifier is applied to the clicked day
+          // modifiersClicked.eventDay will be true if the 'eventDay' from eventDateModifiers matches
+          if (modifiersClicked.eventDay) {
+            const dateStr = format(day, 'yyyy-MM-dd');
+            const dayEvents = eventsByDate.get(dateStr) || [];
+            if (dayEvents.length === 1) {
+               // If the DayContent itself contains a PopoverTrigger, a click might also trigger it.
+               // However, for single events, DayContentWithPopover does not render a Popover.
+              router.push(`/events/${dayEvents[0].id}`);
+            }
+            // If dayEvents.length > 1, the Popover rendered by DayContentWithPopover handles the interaction.
+          }
         }}
         showOutsideDays
       />
