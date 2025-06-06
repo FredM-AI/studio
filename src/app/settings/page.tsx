@@ -2,7 +2,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import AssistantChatForm from "@/app/assistant/AssistantChatForm";
 
-// Simple Bull SVG Icon
+// Simple Bull SVG Icon (consistent with chat form)
 const BullIcon = (props: React.SVGProps<SVGSVGElement>) => (
   <svg 
     xmlns="http://www.w3.org/2000/svg" 
