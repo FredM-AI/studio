@@ -1,0 +1,181 @@
+
+'use client';
+
+import * as React from 'react';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { SendHorizontal, User, BotIcon, Loader2 } from 'lucide-react';
+import { cn } from '@/lib/utils';
+
+interface Message {
+  id: string;
+  text: string;
+  sender: 'user' | 'assistant';
+  timestamp: Date;
+}
+
+const ASSISTANT_WEBHOOK_URL = 'https://n8n-cio9.onrender.com/webhook-test/23b89964-aef6-457a-8f88-c9abd537fea3';
+
+export default function AssistantChatForm() {
+  const [inputValue, setInputValue] = React.useState('');
+  const [messages, setMessages] = React.useState<Message[]>([]);
+  const [isLoading, setIsLoading] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
+
+  const scrollAreaRef = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    if (scrollAreaRef.current) {
+      scrollAreaRef.current.scrollTo({ top: scrollAreaRef.current.scrollHeight, behavior: 'smooth' });
+    }
+  }, [messages]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!inputValue.trim() || isLoading) return;
+
+    const userMessage: Message = {
+      id: crypto.randomUUID(),
+      text: inputValue.trim(),
+      sender: 'user',
+      timestamp: new Date(),
+    };
+    setMessages(prev => [...prev, userMessage]);
+    setInputValue('');
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch(ASSISTANT_WEBHOOK_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ message: userMessage.text }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.text();
+        throw new Error(`Network response was not ok: ${response.status} ${response.statusText}. Details: ${errorData}`);
+      }
+
+      const responseData = await response.json();
+      
+      let assistantReplyText = "Received acknowledgment from assistant.";
+      // n8n webhook test might return the input in data[0].body.message
+      // or if a "Respond to Webhook" node is used, it might be in data.reply
+      if (responseData && responseData.reply) {
+        assistantReplyText = responseData.reply;
+      } else if (Array.isArray(responseData) && responseData[0]?.body?.message) {
+         assistantReplyText = `Echo: ${responseData[0].body.message}`;
+      } else if (responseData && responseData.message === "Workflow0 was started"){ // Common n8n test response
+         assistantReplyText = "Message received by the assistant. Waiting for processing...";
+      }
+
+
+      const assistantMessage: Message = {
+        id: crypto.randomUUID(),
+        text: assistantReplyText,
+        sender: 'assistant',
+        timestamp: new Date(),
+      };
+      setMessages(prev => [...prev, assistantMessage]);
+
+    } catch (err: any) {
+      console.error("Webhook call failed:", err);
+      setError(err.message || 'Failed to send message to assistant.');
+      const errorMessage: Message = {
+        id: crypto.randomUUID(),
+        text: `Error: ${err.message || 'Could not connect to assistant.'}`,
+        sender: 'assistant',
+        timestamp: new Date(),
+      };
+      setMessages(prev => [...prev, errorMessage]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <div className="flex flex-col h-[calc(100vh-12rem)] md:h-[600px]">
+      <ScrollArea className="flex-grow p-4 space-y-4" ref={scrollAreaRef}>
+        {messages.map(msg => (
+          <div
+            key={msg.id}
+            className={cn(
+              'flex items-end gap-2 mb-4',
+              msg.sender === 'user' ? 'justify-end' : 'justify-start'
+            )}
+          >
+            {msg.sender === 'assistant' && (
+              <Avatar className="h-8 w-8">
+                <AvatarFallback className="bg-primary text-primary-foreground">
+                  <BotIcon className="h-5 w-5" />
+                </AvatarFallback>
+              </Avatar>
+            )}
+            <div
+              className={cn(
+                'max-w-[70%] p-3 rounded-lg shadow',
+                msg.sender === 'user'
+                  ? 'bg-primary text-primary-foreground rounded-br-none'
+                  : 'bg-muted text-foreground rounded-bl-none'
+              )}
+            >
+              <p className="text-sm whitespace-pre-wrap">{msg.text}</p>
+              <p className={cn(
+                  "text-xs mt-1",
+                  msg.sender === 'user' ? 'text-primary-foreground/70 text-right' : 'text-muted-foreground/70 text-left'
+              )}>
+                  {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+              </p>
+            </div>
+            {msg.sender === 'user' && (
+              <Avatar className="h-8 w-8">
+                <AvatarFallback>
+                  <User className="h-5 w-5" />
+                </AvatarFallback>
+              </Avatar>
+            )}
+          </div>
+        ))}
+        {isLoading && messages[messages.length-1]?.sender === 'user' && (
+           <div className="flex items-end gap-2 mb-4 justify-start">
+             <Avatar className="h-8 w-8">
+                <AvatarFallback className="bg-primary text-primary-foreground">
+                  <BotIcon className="h-5 w-5" />
+                </AvatarFallback>
+              </Avatar>
+             <div className="max-w-[70%] p-3 rounded-lg shadow bg-muted text-foreground rounded-bl-none">
+                <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+             </div>
+           </div>
+        )}
+      </ScrollArea>
+      
+      {error && (
+        <div className="p-2 text-center text-sm text-destructive bg-destructive/10">
+          {error}
+        </div>
+      )}
+
+      <form onSubmit={handleSubmit} className="flex items-center gap-2 p-4 border-t">
+        <Input
+          type="text"
+          placeholder="Type your message..."
+          value={inputValue}
+          onChange={e => setInputValue(e.target.value)}
+          disabled={isLoading}
+          className="flex-grow"
+          aria-label="Chat message input"
+        />
+        <Button type="submit" disabled={isLoading || !inputValue.trim()} size="icon">
+          {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <SendHorizontal className="h-5 w-5" />}
+          <span className="sr-only">Send message</span>
+        </Button>
+      </form>
+    </div>
+  );
+}
