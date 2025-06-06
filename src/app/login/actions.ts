@@ -39,7 +39,7 @@ export async function loginUser(
       httpOnly: true,
       path: '/',
       maxAge: 60 * 60 * 24 * 7, // 1 week
-      sameSite: 'lax',
+      sameSite: 'none', // Changed from 'lax'
       secure: true, // Crucial for HTTPS environments like Firebase console
     });
     redirect('/dashboard');
@@ -56,7 +56,7 @@ export async function logoutUser() {
   cookies().delete(AUTH_COOKIE_NAME, {
     path: '/',
     httpOnly: true,
-    sameSite: 'lax',
+    sameSite: 'none', // Changed from 'lax'
     secure: true,
   });
   redirect('/login');
