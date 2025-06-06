@@ -9,8 +9,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { AlertCircle, LogIn } from 'lucide-react';
+import { AlertCircle, LogIn, Eye } from 'lucide-react';
 import Image from 'next/image';
+import Link from 'next/link';
+import { Separator } from '@/components/ui/separator';
 
 export default function LoginPage() {
   const initialState: LoginFormState = { message: null, errors: {} };
@@ -28,26 +30,30 @@ export default function LoginPage() {
             className="mx-auto mb-4 h-20 w-auto object-contain"
             data-ai-hint="poker bull card"
           />
-          <CardTitle className="font-headline text-3xl">Admin Login</CardTitle>
-          <CardDescription>Access the Poker Tournament Manager dashboard.</CardDescription>
+          <CardTitle className="font-headline text-3xl">Poker Bulls Club</CardTitle>
+          <CardDescription>Access your dashboard or continue as a guest.</CardDescription>
         </CardHeader>
+        
         <form action={dispatch}>
           <CardContent className="space-y-6">
-            <div className="space-y-2">
-              <Label htmlFor="username">Username</Label>
-              <Input
-                id="username"
-                name="username"
-                type="text"
-                placeholder="admin"
-                required
-                aria-describedby="username-error"
-              />
-              {state.errors?.username && (
-                <p id="username-error" className="text-sm text-destructive flex items-center gap-1 mt-1">
-                   <AlertCircle className="h-3 w-3" /> {state.errors.username.join(', ')}
-                </p>
-              )}
+             <div>
+                <p className="text-sm font-medium text-center text-muted-foreground mb-2">Admin Access</p>
+                <div className="space-y-2">
+                  <Label htmlFor="username">Username</Label>
+                  <Input
+                    id="username"
+                    name="username"
+                    type="text"
+                    placeholder="admin"
+                    required
+                    aria-describedby="username-error"
+                  />
+                  {state.errors?.username && (
+                    <p id="username-error" className="text-sm text-destructive flex items-center gap-1 mt-1">
+                      <AlertCircle className="h-3 w-3" /> {state.errors.username.join(', ')}
+                    </p>
+                  )}
+                </div>
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
@@ -61,7 +67,7 @@ export default function LoginPage() {
               />
               {state.errors?.password && (
                 <p id="password-error" className="text-sm text-destructive flex items-center gap-1 mt-1">
-                   <AlertCircle className="h-3 w-3" /> {state.errors.password.join(', ')}
+                  <AlertCircle className="h-3 w-3" /> {state.errors.password.join(', ')}
                 </p>
               )}
             </div>
@@ -84,15 +90,29 @@ export default function LoginPage() {
               </div>
             )}
           </CardContent>
-          <CardFooter>
+          <CardFooter className="flex flex-col gap-4">
             <Button type="submit" className="w-full">
-              <LogIn className="mr-2 h-5 w-5" /> Login
+              <LogIn className="mr-2 h-5 w-5" /> Login as Admin
             </Button>
+            <p className="text-center text-xs text-muted-foreground">
+              Demo credentials: admin / pbc_pwd25
+            </p>
           </CardFooter>
         </form>
-         <p className="px-6 pb-4 text-center text-xs text-muted-foreground">
-            Demo credentials: admin / password
-          </p>
+
+        <div className="px-6 pb-6">
+            <div className="relative my-4">
+                <Separator />
+                <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-background px-2 text-xs text-muted-foreground">
+                    OR
+                </span>
+            </div>
+            <Button variant="outline" className="w-full" asChild>
+              <Link href="/dashboard">
+                <Eye className="mr-2 h-5 w-5" /> Continue as Guest
+              </Link>
+            </Button>
+        </div>
       </Card>
     </div>
   );
