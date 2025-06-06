@@ -52,13 +52,19 @@ export async function loginUser(
 }
 
 export async function logoutUser() {
-  const cookieStore = cookies();
-  // Ensure all relevant cookie attributes match how it was set for reliable deletion
-  cookieStore.delete(AUTH_COOKIE_NAME, {
-    path: '/',
-    httpOnly: true,
-    sameSite: 'none', 
-    secure: true,
-  });
+  try {
+    const cookieStore = cookies();
+    // console.log(`[Logout] Attempting to delete cookie: ${AUTH_COOKIE_NAME}`);
+    cookieStore.delete(AUTH_COOKIE_NAME, {
+      path: '/',
+      httpOnly: true,
+      sameSite: 'none', 
+      secure: true,
+    });
+    // console.log(`[Logout] Cookie ${AUTH_COOKIE_NAME} delete operation called.`);
+  } catch (error) {
+    // console.error('[Logout] Error during cookie deletion:', error);
+    // Attempt to redirect even if cookie deletion fails, though the session might persist.
+  }
   redirect('/login');
 }
