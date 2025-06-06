@@ -15,16 +15,16 @@ export default function SeasonLeaderboardTable({ leaderboardData }: SeasonLeader
   }
 
   return (
-    <div className="overflow-x-auto rounded-md border">
+    <div className="rounded-md border"> {/* Removed overflow-x-auto as Table component now handles it */}
       <Table>
         <TableHeader>
           <TableRow>
             <TableHead className="w-[60px] text-center px-2 py-3">Rank</TableHead>
-            <TableHead className="px-4 py-3">Player</TableHead>
+            <TableHead className="min-w-[150px] px-4 py-3">Player</TableHead> {/* Added min-w for Player column */}
             <TableHead className="w-[100px] text-center px-2 py-3">Events</TableHead>
             <TableHead className="w-[80px] text-center px-2 py-3">Wins</TableHead>
             <TableHead className="w-[120px] text-center px-2 py-3">Final Tables</TableHead>
-            <TableHead className="w-[150px] text-right px-4 py-3">Total Net ($)</TableHead>
+            <TableHead className="min-w-[150px] w-[150px] text-right px-4 py-3">Total Net ($)</TableHead> {/* Ensured Total Net also has min-width */}
           </TableRow>
         </TableHeader>
         <TableBody>
