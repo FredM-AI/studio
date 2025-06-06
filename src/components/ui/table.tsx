@@ -6,19 +6,17 @@ import { cn } from "@/lib/utils"
 const Table = React.forwardRef<
   HTMLTableElement,
   React.HTMLAttributes<HTMLTableElement>
->(({ className, children, ...restProps }, ref) => {
-  return (
-    <div className="relative w-full overflow-auto">
-      <table
-        ref={ref}
-        className={cn("w-full caption-bottom text-sm", className)}
-        {...restProps}
-      >
-        {children}
-      </table>
-    </div>
-  );
-});
+>(({ className, children, ...restProps }, ref) => (
+  <div className="relative w-full overflow-auto">
+    <table
+      ref={ref}
+      className={cn("w-full caption-bottom text-sm", className)}
+      {...restProps}
+    >
+      {children}
+    </table>
+  </div>
+));
 Table.displayName = "Table"
 
 const TableHeader = React.forwardRef<
@@ -65,18 +63,18 @@ TableFooter.displayName = "TableFooter"
 const TableRow = React.forwardRef<
   HTMLTableRowElement,
   React.HTMLAttributes<HTMLTableRowElement>
->(({ className, children, ...restProps }, ref) => (
-  <tr
-    ref={ref}
-    className={cn(
-      "border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted",
-      className
-    )}
-    {...restProps}
-  >
-    {children}
-  </tr>
-));
+>(({ className, children, ...restProps }, ref) => {
+  return (
+    <tr
+      ref={ref}
+      className={cn(
+        "border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted",
+        className
+      )}
+      {...restProps}
+    >{children}</tr>
+  );
+});
 TableRow.displayName = "TableRow"
 
 const TableHead = React.forwardRef<
