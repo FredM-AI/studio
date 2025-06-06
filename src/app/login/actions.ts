@@ -4,6 +4,7 @@
 import { z } from 'zod';
 import { redirect } from 'next/navigation';
 import type { LoginFormState } from '@/lib/definitions';
+import { cookies } from 'next/headers';
 
 const LoginSchema = z.object({
   username: z.string().min(1, { message: 'Username is required.' }),
@@ -13,6 +14,7 @@ const LoginSchema = z.object({
 // Hardcoded admin credentials for demonstration purposes
 const ADMIN_USERNAME = 'admin';
 const ADMIN_PASSWORD = 'pbc_pwd25'; // In a real app, NEVER hardcode passwords. Use environment variables and hashing.
+const AUTH_COOKIE_NAME = 'app_session_active';
 
 export async function loginUser(
   prevState: LoginFormState,
@@ -32,13 +34,24 @@ export async function loginUser(
   const { username, password } = validatedFields.data;
 
   if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
-    // In a real application, you would set up a session here (e.g., using cookies or a library like NextAuth.js)
-    // For this prototype, we'll just redirect.
-    redirect('/');
+    // Set a simple cookie to simulate session
+    cookies().set(AUTH_COOKIE_NAME, 'true', {
+      httpOnly: true, // For real apps, makes it inaccessible to client-side JS
+      path: '/',
+      maxAge: 60 * 60 * 24 * 7, // 1 week, for example
+      // secure: process.env.NODE_ENV === 'production', // For real apps, only transmit over HTTPS
+      // sameSite: 'lax', // For real apps, CSRF protection
+    });
+    redirect('/dashboard');
   } else {
     return {
       errors: { _form: ['Invalid username or password.'] },
       message: 'Invalid username or password.',
     };
   }
+}
+
+export async function logoutUser() {
+  cookies().delete(AUTH_COOKIE_NAME);
+  redirect('/login');
 }
