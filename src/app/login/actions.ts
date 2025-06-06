@@ -39,8 +39,8 @@ export async function loginUser(
       httpOnly: true,
       path: '/',
       maxAge: 60 * 60 * 24 * 7, // 1 week
-      sameSite: 'lax', // Explicitly set SameSite attribute
-      // secure: process.env.NODE_ENV === 'production', // For real apps, only transmit over HTTPS
+      sameSite: 'lax',
+      secure: true, // Crucial for HTTPS environments like Firebase console
     });
     redirect('/dashboard');
   } else {
@@ -52,6 +52,13 @@ export async function loginUser(
 }
 
 export async function logoutUser() {
-  cookies().delete(AUTH_COOKIE_NAME, { path: '/' }); // Ensure path is specified for deletion
+  // Ensure all relevant cookie attributes match how it was set for reliable deletion
+  cookies().delete(AUTH_COOKIE_NAME, {
+    path: '/',
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: true,
+  });
   redirect('/login');
 }
+
