@@ -11,7 +11,7 @@ const navItems = [
   { href: '/events', label: 'Events' },
   { href: '/players', label: 'Players' },
   { href: '/seasons', label: 'Seasons' },
-  { href: '/assistant', label: 'Assistant' },
+  { href: '/assistant', label: 'Assistant' }, // Changed here
 ];
 
 const Header = () => {
