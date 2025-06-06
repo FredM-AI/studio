@@ -58,14 +58,17 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
   const [searchTerm, setSearchTerm] = React.useState('');
 
   React.useEffect(() => {
-    setSelectedDate(undefined);
     if (event?.date) {
       const parsedDate = new Date(event.date);
       if (!isNaN(parsedDate.getTime())) {
         setSelectedDate(parsedDate);
+      } else {
+        setSelectedDate(undefined);
       }
+    } else {
+      setSelectedDate(undefined);
     }
-  }, [event?.date, event?.id]);
+  }, [event?.id, event?.date]);
 
   React.useEffect(() => {
     const initialParticipantIds = new Set(event?.participants || []);

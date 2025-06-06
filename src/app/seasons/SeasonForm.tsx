@@ -27,13 +27,9 @@ export default function SeasonForm({ season, allEvents, action, formTitle, formD
   const initialState: SeasonFormState = { message: null, errors: {} };
   const [state, dispatch] = useActionState(action, initialState);
 
-  const [startDate, setStartDate] = React.useState<Date | undefined>(
-    season?.startDate ? new Date(season.startDate) : undefined
-  );
-  const [endDate, setEndDate] = React.useState<Date | undefined>(
-    season?.endDate ? new Date(season.endDate) : undefined
-  );
-  const [isActive, setIsActive] = React.useState<boolean>(season ? season.isActive : true);
+  const [startDate, setStartDate] = React.useState<Date | undefined>(undefined);
+  const [endDate, setEndDate] = React.useState<Date | undefined>(undefined);
+  const [isActive, setIsActive] = React.useState<boolean>(true); // Default, will be set by useEffect for existing season
 
   const [associatedEventIds, setAssociatedEventIds] = React.useState<string[]>([]);
 
@@ -43,11 +39,13 @@ export default function SeasonForm({ season, allEvents, action, formTitle, formD
       setEndDate(season.endDate ? new Date(season.endDate) : undefined);
       setIsActive(season.isActive);
       
-      // Initialize associatedEventIds based on events linked to this season
       const currentlyAssociated = allEvents.filter(event => event.seasonId === season.id).map(event => event.id);
       setAssociatedEventIds(currentlyAssociated);
     } else {
-      // For new seasons, start with no events associated
+      // For new seasons
+      setStartDate(undefined);
+      setEndDate(undefined);
+      setIsActive(true); // Default for new season form
       setAssociatedEventIds([]);
     }
   }, [season, allEvents]);
