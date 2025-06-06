@@ -5,8 +5,8 @@ import * as React from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { SendHorizontal, User, BotIcon, Loader2 } from 'lucide-react';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar'; // Removed AvatarImage
+import { SendHorizontal, User, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface Message {
@@ -15,6 +15,25 @@ interface Message {
   sender: 'user' | 'assistant';
   timestamp: Date;
 }
+
+// Simple Bull SVG Icon (consistent with settings page)
+const BullIcon = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg 
+    xmlns="http://www.w3.org/2000/svg" 
+    viewBox="0 0 24 24" 
+    fill="none" 
+    stroke="currentColor" 
+    strokeWidth="2" 
+    strokeLinecap="round" 
+    strokeLinejoin="round"
+    {...props}
+  >
+    <path d="M16 16c-1.657 1.657-4.343 1.657-6 0"/>
+    <path d="M12 2c-3.5 0-7 2-7 8.5c0 3.286 1.714 6.5 4.5 6.5c1.929 0 3.5-1.071 3.5-1.071s1.571 1.071 3.5 1.071c2.786 0 4.5-3.214 4.5-6.5C19 4 15.5 2 12 2Z"/>
+    <path d="M6 10c-1.105 0-2 .895-2 2s.895 2 2 2"/>
+    <path d="M18 10c1.105 0 2 .895 2 2s-.895 2-2 2"/>
+  </svg>
+);
 
 const ASSISTANT_WEBHOOK_URL = 'https://n8n-cio9.onrender.com/webhook-test/23b89964-aef6-457a-8f88-c9abd537fea3';
 
@@ -119,7 +138,7 @@ export default function AssistantChatForm() {
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-12rem)] md:h-[600px]">
+    <div className="flex flex-col h-[calc(100vh-12rem)] md:h-[600px] bg-background">
       <ScrollArea className="flex-grow p-4 space-y-4" ref={scrollAreaRef}>
         {messages.map(msg => (
           <div
@@ -131,8 +150,8 @@ export default function AssistantChatForm() {
           >
             {msg.sender === 'assistant' && (
               <Avatar className="h-8 w-8">
-                <AvatarFallback className="bg-primary text-primary-foreground">
-                  <BotIcon className="h-5 w-5" />
+                <AvatarFallback className="bg-primary text-primary-foreground p-1.5">
+                  <BullIcon className="h-full w-full" />
                 </AvatarFallback>
               </Avatar>
             )}
@@ -141,20 +160,20 @@ export default function AssistantChatForm() {
                 'max-w-[70%] p-3 rounded-lg shadow',
                 msg.sender === 'user'
                   ? 'bg-primary text-primary-foreground rounded-br-none'
-                  : 'bg-muted text-foreground rounded-bl-none'
+                  : 'bg-card text-card-foreground rounded-bl-none' 
               )}
             >
               <p className="text-sm whitespace-pre-wrap">{msg.text}</p>
               <p className={cn(
                   "text-xs mt-1",
-                  msg.sender === 'user' ? 'text-primary-foreground/70 text-right' : 'text-muted-foreground/70 text-left'
+                  msg.sender === 'user' ? 'text-primary-foreground/70 text-right' : 'text-muted-foreground/80 text-left'
               )}>
                   {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
               </p>
             </div>
             {msg.sender === 'user' && (
               <Avatar className="h-8 w-8">
-                <AvatarFallback>
+                <AvatarFallback className="bg-muted text-muted-foreground">
                   <User className="h-5 w-5" />
                 </AvatarFallback>
               </Avatar>
@@ -164,11 +183,11 @@ export default function AssistantChatForm() {
         {isLoading && messages[messages.length-1]?.sender === 'user' && (
            <div className="flex items-end gap-2 mb-4 justify-start">
              <Avatar className="h-8 w-8">
-                <AvatarFallback className="bg-primary text-primary-foreground">
-                  <BotIcon className="h-5 w-5" />
+                <AvatarFallback className="bg-primary text-primary-foreground p-1.5">
+                  <BullIcon className="h-full w-full" />
                 </AvatarFallback>
               </Avatar>
-             <div className="max-w-[70%] p-3 rounded-lg shadow bg-muted text-foreground rounded-bl-none">
+             <div className="max-w-[70%] p-3 rounded-lg shadow bg-card text-card-foreground rounded-bl-none">
                 <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
              </div>
            </div>
@@ -181,17 +200,17 @@ export default function AssistantChatForm() {
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="flex items-center gap-2 p-4 border-t">
+      <form onSubmit={handleSubmit} className="flex items-center gap-2 p-4 border-t border-border">
         <Input
           type="text"
-          placeholder="Type your message..."
+          placeholder="Message El Toro..."
           value={inputValue}
           onChange={e => setInputValue(e.target.value)}
           disabled={isLoading}
-          className="flex-grow"
+          className="flex-grow bg-input text-foreground placeholder:text-muted-foreground/70"
           aria-label="Chat message input"
         />
-        <Button type="submit" disabled={isLoading || !inputValue.trim()} size="icon">
+        <Button type="submit" disabled={isLoading || !inputValue.trim()} size="icon" className="bg-primary hover:bg-primary/90 text-primary-foreground">
           {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <SendHorizontal className="h-5 w-5" />}
           <span className="sr-only">Send message</span>
         </Button>
