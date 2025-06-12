@@ -14,20 +14,22 @@ import { cookies } from 'next/headers';
 
 const AUTH_COOKIE_NAME = 'app_session_active';
 
+// Modifié pour retourner aussi les événements de la saison (tous statuts)
 async function getSeasonData(seasonId: string): Promise<{ season?: Season; allEvents: EventType[]; allPlayers: Player[]; seasonStats?: SeasonStats, seasonEvents: EventType[] }> {
   const season = (await getSeasons()).find(s => s.id === seasonId);
   const allEvents = await getEvents();
   const allPlayers = await getPlayers();
   
   let seasonStats: SeasonStats | undefined = undefined;
-  let seasonEvents: EventType[] = [];
+  let seasonEventsForCalendar: EventType[] = []; // Tous les événements associés à la saison
 
   if (season) {
     seasonStats = await calculateSeasonStats(season, allEvents, allPlayers);
-    seasonEvents = allEvents.filter(event => event.seasonId === season.id).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    // Pour le calendrier, on prend tous les événements de la saison
+    seasonEventsForCalendar = allEvents.filter(event => event.seasonId === season.id).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
   }
   
-  return { season, allEvents, allPlayers, seasonStats, seasonEvents };
+  return { season, allEvents, allPlayers, seasonStats, seasonEvents: seasonEventsForCalendar };
 }
 
 
@@ -35,7 +37,8 @@ export default async function SeasonDetailsPage({ params }: { params: { seasonId
   const cookieStore = cookies();
   const isAuthenticated = cookieStore.get(AUTH_COOKIE_NAME)?.value === 'true';
   const { seasonId } = params;
-  const { season, allPlayers, seasonStats, seasonEvents } = await getSeasonData(seasonId);
+  // seasonEvents ici contient tous les événements de la saison pour le calendrier
+  const { season, allPlayers, seasonStats, seasonEvents: seasonEventsForCalendar } = await getSeasonData(seasonId);
 
   if (!season) {
     return (
@@ -63,7 +66,8 @@ export default async function SeasonDetailsPage({ params }: { params: { seasonId
     );
   }
 
-  const completedSeasonEvents = seasonEvents.filter(e => e.status === 'completed');
+  // completedSeasonEvents sera utilisé pour le Leaderboard et le ProgressChart
+  const completedSeasonEvents = seasonStats?.completedSeasonEvents || [];
 
   return (
     <div className="space-y-8">
@@ -103,8 +107,11 @@ export default async function SeasonDetailsPage({ params }: { params: { seasonId
               <CardDescription>Ranking based on total net profit/loss from season events.</CardDescription>
             </CardHeader>
             <CardContent>
-              {seasonStats && seasonStats.leaderboard.length > 0 ? (
-                <SeasonLeaderboardTable leaderboardData={seasonStats.leaderboard} />
+              {seasonStats && seasonStats.leaderboard.length > 0 && completedSeasonEvents.length > 0 ? (
+                <SeasonLeaderboardTable 
+                  leaderboardData={seasonStats.leaderboard} 
+                  seasonEvents={completedSeasonEvents}
+                />
               ) : (
                 <p className="text-muted-foreground text-center py-8">No completed events with results in this season yet to generate a leaderboard.</p>
               )}
@@ -116,10 +123,10 @@ export default async function SeasonDetailsPage({ params }: { params: { seasonId
           <Card>
             <CardHeader>
               <CardTitle className="font-headline">Events Calendar</CardTitle>
-              <CardDescription>Overview of all events scheduled for this season.</CardDescription>
+              <CardDescription>Overview of all events scheduled for this season (includes draft, active, completed).</CardDescription>
             </CardHeader>
             <CardContent>
-                <SeasonDetailsCalendar events={seasonEvents} />
+                <SeasonDetailsCalendar events={seasonEventsForCalendar} /> {/* Utilise tous les événements pour le calendrier */}
             </CardContent>
           </Card>
         </TabsContent>
@@ -131,7 +138,7 @@ export default async function SeasonDetailsPage({ params }: { params: { seasonId
               <CardDescription>Cumulative net profit/loss over the season's completed events.</CardDescription>
             </CardHeader>
             <CardContent>
-              {seasonStats && Object.keys(seasonStats.playerProgress).length > 0 ? (
+              {seasonStats && Object.keys(seasonStats.playerProgress).length > 0 && completedSeasonEvents.length > 0 ? (
                 <SeasonPlayerProgressChart
                   playerProgressData={seasonStats.playerProgress}
                   players={allPlayers}

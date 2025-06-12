@@ -26,7 +26,7 @@ async function getCurrentSeasonData(): Promise<{ currentSeason?: Season; allEven
   const currentSeason = activeSeasons.length > 0 ? activeSeasons[0] : undefined;
   
   let seasonStats: SeasonStats | undefined = undefined;
-  let seasonEvents: EventType[] = [];
+  let seasonEvents: EventType[] = []; // Tous les événements de la saison (draft, active, completed)
 
   if (currentSeason) {
     seasonStats = await calculateSeasonStats(currentSeason, allEvents, allPlayers);
@@ -42,7 +42,7 @@ export default async function DashboardPage() {
 
   const { currentSeason, allPlayers, seasonStats, seasonEvents } = await getCurrentSeasonData();
 
-  if (!currentSeason || !seasonStats) {
+  if (!currentSeason) { // Modification: seulement vérifier currentSeason ici, seasonStats peut être undefined.
     return (
       <div className="flex flex-col items-center justify-center min-h-[calc(100vh-10rem)]">
         <Card className="max-w-lg text-center">
@@ -61,11 +61,8 @@ export default async function DashboardPage() {
                 </Link>
               </Button>
             ) : (
-              <Button asChild>
-                <Link href="/login">
-                  <LogIn className="mr-2 h-4 w-4" /> Login to Manage
-                </Link>
-              </Button>
+               // No login button here, header handles it for guests
+               null
             )}
           </CardContent>
         </Card>
@@ -73,7 +70,8 @@ export default async function DashboardPage() {
     );
   }
   
-  const completedSeasonEvents = seasonEvents.filter(e => e.status === 'completed');
+  // completedSeasonEvents sera passé à SeasonLeaderboardTable et SeasonPlayerProgressChart
+  const completedSeasonEvents = seasonStats?.completedSeasonEvents || [];
 
   return (
     <div className="space-y-8">
@@ -109,7 +107,10 @@ export default async function DashboardPage() {
             </CardHeader>
             <CardContent>
               {seasonStats && seasonStats.leaderboard.length > 0 ? (
-                <SeasonLeaderboardTable leaderboardData={seasonStats.leaderboard} />
+                <SeasonLeaderboardTable 
+                  leaderboardData={seasonStats.leaderboard} 
+                  seasonEvents={completedSeasonEvents} 
+                />
               ) : (
                 <p className="text-muted-foreground text-center py-8">No completed events with results in this season yet to generate a leaderboard.</p>
               )}
@@ -121,10 +122,10 @@ export default async function DashboardPage() {
           <Card>
             <CardHeader>
               <CardTitle className="font-headline">Events Calendar</CardTitle>
-              <CardDescription>Overview of all events scheduled for this season.</CardDescription>
+              <CardDescription>Overview of all events scheduled for this season (includes draft, active, completed).</CardDescription>
             </CardHeader>
             <CardContent>
-                <SeasonDetailsCalendar events={seasonEvents} />
+                <SeasonDetailsCalendar events={seasonEvents} /> {/* Utilise tous les événements de la saison pour le calendrier */}
             </CardContent>
           </Card>
         </TabsContent>
@@ -136,7 +137,7 @@ export default async function DashboardPage() {
               <CardDescription>Cumulative net profit/loss over the season's completed events.</CardDescription>
             </CardHeader>
             <CardContent>
-              {seasonStats && Object.keys(seasonStats.playerProgress).length > 0 ? (
+              {seasonStats && Object.keys(seasonStats.playerProgress).length > 0 && completedSeasonEvents.length > 0 ? (
                 <SeasonPlayerProgressChart
                   playerProgressData={seasonStats.playerProgress}
                   players={allPlayers}

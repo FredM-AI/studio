@@ -1,15 +1,15 @@
 
 'use server';
 
-import type { Season, Event, Player, PlayerStats } from './definitions';
+import type { Season, Event, Player, PlayerStats, EventResult } from './definitions';
 
+// Modifiée pour inclure les résultats par événement
 export interface LeaderboardEntry {
   playerId: string;
   playerName: string;
+  eventResults: { [eventId: string]: number }; // eventId -> netResultForPlayerInEvent
   totalFinalResult: number;
-  eventsPlayed: number;
-  wins: number;
-  finalTables: number;
+  // eventsPlayed: number; // On peut le déduire de eventResults ou le calculer si besoin ailleurs
 }
 
 export interface PlayerProgressPoint {
@@ -22,6 +22,8 @@ export interface PlayerProgressPoint {
 export interface SeasonStats {
   leaderboard: LeaderboardEntry[];
   playerProgress: { [playerId: string]: PlayerProgressPoint[] };
+  // Ajout des événements complétés de la saison pour que la table puisse construire ses colonnes
+  completedSeasonEvents: Event[];
 }
 
 function getPlayerName(player: Player | undefined): string {
@@ -32,7 +34,7 @@ function getPlayerName(player: Player | undefined): string {
 export async function calculatePlayerOverallStats(
   playerId: string,
   allEvents: Event[],
-  allPlayers: Player[] // Keep allPlayers to find the specific player if needed, or could pass player object
+  allPlayers: Player[]
 ): Promise<PlayerStats> {
   const player = allPlayers.find(p => p.id === playerId);
   const defaultStats: PlayerStats = {
@@ -79,7 +81,7 @@ export async function calculatePlayerOverallStats(
       }
 
       const numParticipants = event.participants.length;
-      let finalTableThreshold = 3; // Default
+      let finalTableThreshold = 3; 
       if (numParticipants >= 10) finalTableThreshold = Math.ceil(numParticipants * 0.3);
       else if (numParticipants >= 5) finalTableThreshold = 3;
       else finalTableThreshold = numParticipants > 0 ? numParticipants : 1;
@@ -88,7 +90,6 @@ export async function calculatePlayerOverallStats(
         finalTables++;
       }
     }
-    // Cost for the event for this player
     totalBuyIns += buyIn + (playerRebuysInEvent * rebuyPrice);
   }
 
@@ -112,135 +113,91 @@ export async function calculateSeasonStats(
   allEvents: Event[],
   allPlayers: Player[]
 ): Promise<SeasonStats> {
-  const seasonEvents = allEvents
+  const completedSeasonEvents = allEvents
     .filter((event) => event.seasonId === season.id && event.status === 'completed')
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
-  const playerStatsMap: Map<string, Omit<LeaderboardEntry, 'playerName' | 'playerId'> & { progress: PlayerProgressPoint[], lastCumulative: number }> = new Map();
+  const playerSeasonSummaries: Map<string, {
+    eventResults: { [eventId: string]: number };
+    totalFinalResult: number;
+    eventsPlayed: number;
+    progress: PlayerProgressPoint[];
+    lastCumulative: number;
+  }> = new Map();
 
+  // Initialiser pour tous les joueurs afin que même ceux n'ayant pas joué dans la saison apparaissent si besoin (pour le moment, ils seront filtrés)
   allPlayers.forEach(player => {
-    playerStatsMap.set(player.id, {
+    playerSeasonSummaries.set(player.id, {
+      eventResults: {},
       totalFinalResult: 0,
       eventsPlayed: 0,
-      wins: 0,
-      finalTables: 0,
       progress: [],
-      lastCumulative: 0, // Track cumulative result for progress points
+      lastCumulative: 0,
     });
   });
 
-  for (const event of seasonEvents) {
-    const buyIn = event.buyIn || 0;
-    const rebuyPrice = event.rebuyPrice || 0;
+  for (const event of completedSeasonEvents) {
+    const buyInForEvent = event.buyIn || 0;
+    const rebuyPriceForEvent = event.rebuyPrice || 0;
     const participantIdsInEvent = new Set(event.participants);
 
-    // Process results for players who got a prize or have a result entry
-    const processedPlayerIdsFromResult = new Set<string>();
-    if (event.results && event.results.length > 0) {
-        for (const result of event.results) {
-            const playerAggregatedStats = playerStatsMap.get(result.playerId);
-            if (!playerAggregatedStats) continue;
-            
-            if (!participantIdsInEvent.has(result.playerId)) continue; // Ensure player in result is actually a participant
+    for (const playerId of participantIdsInEvent) {
+      const summary = playerSeasonSummaries.get(playerId);
+      if (!summary) continue; // Devrait pas arriver si initialisé pour allPlayers
 
-            processedPlayerIdsFromResult.add(result.playerId);
-
-            // Only increment eventsPlayed once per event, even if processed multiple times (which it shouldn't be here)
-            if (!playerAggregatedStats.progress.some(p => p.eventDate === event.date)) {
-                 playerAggregatedStats.eventsPlayed += 1;
-            }
+      // Si c'est la première fois qu'on traite cet event pour ce joueur dans cette session de calcul (évite double comptage si structure de données évolue)
+      if (summary.eventResults[event.id] === undefined) {
+           if(!Object.keys(summary.eventResults).length) summary.eventsPlayed = 0; // reset for first event
+           // Check if this is a new event for this player in the season before incrementing
+           const eventsProcessedForPlayer = new Set(Object.keys(summary.eventResults));
+           if (!eventsProcessedForPlayer.has(event.id)) {
+             summary.eventsPlayed += 1;
+           }
+      }
 
 
-            if (result.position === 1) {
-              // Ensure wins are not double-counted if logic runs multiple times for same event/player
-              const hasWonThisEventInMap = playerAggregatedStats.progress.find(p => p.eventDate === event.date && playerStatsMap.get(result.playerId)?.wins! > (playerAggregatedStats.wins -1) );
-              if(!hasWonThisEventInMap) playerAggregatedStats.wins += 1;
-            }
-            
-            const numParticipants = event.participants.length;
-            let finalTableThreshold = 3; 
-            if (numParticipants >= 10) finalTableThreshold = Math.ceil(numParticipants * 0.3); 
-            else if (numParticipants >= 5 ) finalTableThreshold = 3;
-            else finalTableThreshold = numParticipants > 0 ? numParticipants : 1;
+      const playerResultEntry = event.results.find(r => r.playerId === playerId);
+      const rebuysCount = playerResultEntry?.rebuys || 0;
+      const prizeWon = playerResultEntry?.prize || 0;
+      const costForEvent = buyInForEvent + (rebuysCount * rebuyPriceForEvent);
+      const eventNetResult = prizeWon - costForEvent;
 
+      // Mettre à jour/ajouter le résultat de l'événement
+      if (summary.eventResults[event.id] !== undefined) { // Si l'event a déjà été traité (ex: joueur dans results et dans participants)
+        summary.totalFinalResult -= summary.eventResults[event.id]!; // Soustraire l'ancien
+        summary.lastCumulative -= summary.eventResults[event.id]!;
+      }
+      summary.eventResults[event.id] = eventNetResult;
+      summary.totalFinalResult += eventNetResult;
+      summary.lastCumulative += eventNetResult;
 
-            if (result.position <= finalTableThreshold) {
-               // Ensure finalTables are not double-counted
-              const hasFinalTabledThisEventInMap = playerAggregatedStats.progress.find(p => p.eventDate === event.date && playerStatsMap.get(result.playerId)?.finalTables! > (playerAggregatedStats.finalTables -1) );
-              if(!hasFinalTabledThisEventInMap) playerAggregatedStats.finalTables += 1;
-            }
-
-            const numRebuys = result.rebuys || 0;
-            const costForEvent = buyIn + numRebuys * rebuyPrice;
-            const eventFinalResult = result.prize - costForEvent;
-            
-            // If already processed (e.g. from participant loop), sum final results, otherwise set from scratch for this event
-            const existingProgressPoint = playerAggregatedStats.progress.find(p => p.eventDate === event.date);
-            if (existingProgressPoint) {
-                // This path should ideally not be hit if participant loop is correctly skipped
-                playerAggregatedStats.totalFinalResult -= existingProgressPoint.eventFinalResult; // Remove old
-                playerAggregatedStats.totalFinalResult += eventFinalResult; // Add new
-                playerAggregatedStats.lastCumulative -= existingProgressPoint.eventFinalResult;
-                playerAggregatedStats.lastCumulative += eventFinalResult;
-                existingProgressPoint.eventFinalResult = eventFinalResult;
-                existingProgressPoint.cumulativeFinalResult = playerAggregatedStats.lastCumulative;
-            } else {
-                playerAggregatedStats.totalFinalResult += eventFinalResult; 
-                playerAggregatedStats.lastCumulative += eventFinalResult;
-                playerAggregatedStats.progress.push({
-                    eventDate: event.date,
-                    eventName: event.name,
-                    eventFinalResult: eventFinalResult,
-                    cumulativeFinalResult: playerAggregatedStats.lastCumulative,
-                });
-            }
-        }
-    }
-    
-    // Process other participants (those who played but didn't get a result entry - e.g. didn't cash)
-    for (const participantId of participantIdsInEvent) {
-        if (processedPlayerIdsFromResult.has(participantId)) continue; 
-
-        const playerAggregatedStats = playerStatsMap.get(participantId);
-        if (!playerAggregatedStats) continue;
-
-        if (!playerAggregatedStats.progress.some(p => p.eventDate === event.date)) { 
-            playerAggregatedStats.eventsPlayed += 1; 
-        }
-        
-        // Find if this participant had rebuys (e.g. if event.results isn't exhaustive of all participants but contains rebuy info for all)
-        // For now, assume 0 rebuys if not in a result entry for simplicity.
-        // This is a limitation if rebuys are not tracked for non-cashing players in event.results.
-        const participantResultData = event.results.find(r => r.playerId === participantId);
-        const numRebuys = participantResultData?.rebuys || 0;
-
-        const costForEvent = buyIn + (numRebuys * rebuyPrice); 
-        const eventFinalResult = 0 - costForEvent; // Prize is 0
-
-        playerAggregatedStats.totalFinalResult += eventFinalResult;
-        playerAggregatedStats.lastCumulative += eventFinalResult;
-        
-        playerAggregatedStats.progress.push({
-            eventDate: event.date,
-            eventName: event.name,
-            eventFinalResult: eventFinalResult,
-            cumulativeFinalResult: playerAggregatedStats.lastCumulative,
+      // Mettre à jour la progression pour le graphique
+      // S'assurer qu'un seul point est ajouté par événement pour ce joueur
+      const progressPointIndex = summary.progress.findIndex(p => p.eventDate === event.date);
+      if (progressPointIndex > -1) {
+        summary.progress[progressPointIndex].eventFinalResult = eventNetResult; // Mettre à jour si déjà existant
+        summary.progress[progressPointIndex].cumulativeFinalResult = summary.lastCumulative;
+      } else {
+        summary.progress.push({
+          eventDate: event.date,
+          eventName: event.name,
+          eventFinalResult: eventNetResult,
+          cumulativeFinalResult: summary.lastCumulative,
         });
+      }
     }
   }
 
-
   const leaderboard: LeaderboardEntry[] = [];
-  playerStatsMap.forEach((stats, playerId) => {
-    if (stats.eventsPlayed > 0) {
+  playerSeasonSummaries.forEach((summary, playerId) => {
+    // Inclure uniquement les joueurs ayant participé à au moins un événement de la saison
+    if (summary.eventsPlayed > 0) {
       const player = allPlayers.find((p) => p.id === playerId);
       leaderboard.push({
         playerId,
         playerName: getPlayerName(player),
-        totalFinalResult: stats.totalFinalResult,
-        eventsPlayed: stats.eventsPlayed,
-        wins: stats.wins,
-        finalTables: stats.finalTables,
+        eventResults: summary.eventResults,
+        totalFinalResult: summary.totalFinalResult,
       });
     }
   });
@@ -248,12 +205,11 @@ export async function calculateSeasonStats(
   leaderboard.sort((a, b) => b.totalFinalResult - a.totalFinalResult);
   
   const playerProgress: { [playerId: string]: PlayerProgressPoint[] } = {};
-  playerStatsMap.forEach((stats, playerId) => {
-      if (stats.eventsPlayed > 0) { 
-         playerProgress[playerId] = stats.progress.sort((a,b) => new Date(a.eventDate).getTime() - new Date(b.eventDate).getTime());
+  playerSeasonSummaries.forEach((summary, playerId) => {
+      if (summary.eventsPlayed > 0) { 
+         playerProgress[playerId] = summary.progress.sort((a,b) => new Date(a.eventDate).getTime() - new Date(b.eventDate).getTime());
       }
   });
 
-  return { leaderboard, playerProgress };
+  return { leaderboard, playerProgress, completedSeasonEvents };
 }
-
