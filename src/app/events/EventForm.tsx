@@ -46,8 +46,8 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
   const [selectedDate, setSelectedDate] = React.useState<Date | undefined>(undefined);
   const [currentStatus, setCurrentStatus] = React.useState<EventStatus>(event?.status || 'draft');
   
-  const [buyInValue, setBuyInValue] = React.useState<string>(event?.buyIn?.toString() || '');
-  const [rebuyPrice, setRebuyPrice] = React.useState<string>(event?.rebuyPrice?.toString() || '');
+  const [buyInValue, setBuyInValue] = React.useState<string>(event ? (event.buyIn?.toString() ?? '0') : '20');
+  const [rebuyPrice, setRebuyPrice] = React.useState<string>(event ? (event.rebuyPrice?.toString() ?? '0') : '20');
   const [totalPrizePoolValue, setTotalPrizePoolValue] = React.useState<string>(event?.prizePool.total?.toString() || '0');
 
   const [availablePlayers, setAvailablePlayers] = React.useState<Player[]>([]);
@@ -138,8 +138,8 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
 
   React.useEffect(() => {
     const numParticipants = enrichedParticipants.length;
-    const currentBuyInNum = parseFloat(buyInValue) || 0;
-    const currentRebuyPriceNum = parseFloat(rebuyPrice) || 0;
+    const currentBuyInNum = parseInt(buyInValue) || 0;
+    const currentRebuyPriceNum = parseInt(rebuyPrice) || 0;
   
     let calculatedTotal = 0;
   
@@ -156,17 +156,17 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
       });
     }
   
-    setTotalPrizePoolValue(calculatedTotal.toFixed(2));
+    setTotalPrizePoolValue(calculatedTotal.toString());
   
   }, [enrichedParticipants, buyInValue, rebuyPrice]);
 
   React.useEffect(() => {
-    const prizePoolNum = parseFloat(totalPrizePoolValue) || 0;
-    const buyInNum = parseFloat(buyInValue) || 0;
+    const prizePoolNum = parseInt(totalPrizePoolValue) || 0;
+    const buyInNum = parseInt(buyInValue) || 0;
     const numParticipants = enrichedParticipants.length;
 
     setPositionalResults(prevResults => {
-      const newDistributedResults = prevResults.map(pr => ({ ...pr, prize: '0.00' }));
+      const newDistributedResults = prevResults.map(pr => ({ ...pr, prize: '0' }));
 
       if (prizePoolNum <= 0 || numParticipants === 0) {
         return newDistributedResults; 
@@ -178,43 +178,41 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
       let fourthPrize = 0;
 
       if (numParticipants < 14) {
-        if (numParticipants >= 1) firstPrize = prizePoolNum * 0.50;
-        if (numParticipants >= 2) secondPrize = prizePoolNum * 0.30;
-        if (numParticipants >= 3) thirdPrize = prizePoolNum * 0.20;
-      } else { // 14 participants or more
-        if (buyInNum > 0) { // Buy-in must be specified for 4th place to get buy-in back
+        if (numParticipants >= 1) firstPrize = Math.round(prizePoolNum * 0.50);
+        if (numParticipants >= 2) secondPrize = Math.round(prizePoolNum * 0.30);
+        if (numParticipants >= 3) thirdPrize = Math.round(prizePoolNum * 0.20);
+      } else { 
+        if (buyInNum > 0) { 
           if (prizePoolNum >= buyInNum) {
             fourthPrize = buyInNum;
             const remainingPool = prizePoolNum - fourthPrize;
             if (remainingPool > 0) {
-              firstPrize = remainingPool * 0.50;
-              secondPrize = remainingPool * 0.30;
-              thirdPrize = remainingPool * 0.20;
+              firstPrize = Math.round(remainingPool * 0.50);
+              secondPrize = Math.round(remainingPool * 0.30);
+              thirdPrize = Math.round(remainingPool * 0.20);
             }
           } else {
-            // if prize pool not enough for buyIn, 4th gets all
             fourthPrize = prizePoolNum; 
           }
-        } else { // No buy-in specified (or 0), or not enough for 4th, default to 3 positions for the whole pool
-          if (numParticipants >= 1) firstPrize = prizePoolNum * 0.50;
-          if (numParticipants >= 2) secondPrize = prizePoolNum * 0.30;
-          if (numParticipants >= 3) thirdPrize = prizePoolNum * 0.20;
+        } else { 
+          if (numParticipants >= 1) firstPrize = Math.round(prizePoolNum * 0.50);
+          if (numParticipants >= 2) secondPrize = Math.round(prizePoolNum * 0.30);
+          if (numParticipants >= 3) thirdPrize = Math.round(prizePoolNum * 0.20);
         }
       }
       
       const assignPrize = (pos: number, amount: number) => {
         const index = newDistributedResults.findIndex(r => r.position === pos);
         if (index !== -1 && amount > 0) {
-          newDistributedResults[index].prize = amount.toFixed(2);
+          newDistributedResults[index].prize = amount.toString();
         } else if (index !== -1) {
-          newDistributedResults[index].prize = '0.00';
+          newDistributedResults[index].prize = '0';
         }
       };
       
       if (numParticipants >= 1) assignPrize(1, firstPrize); else assignPrize(1,0);
       if (numParticipants >= 2) assignPrize(2, secondPrize); else assignPrize(2,0);
       if (numParticipants >= 3) assignPrize(3, thirdPrize); else assignPrize(3,0);
-      // Only assign 4th prize if it was calculated (i.e., >= 14 participants and buy-in specified)
       if (numParticipants >= 4 && fourthPrize > 0) assignPrize(4, fourthPrize); else assignPrize(4,0);
 
 
@@ -264,7 +262,7 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
       return {
         playerId: row.playerId!,
         position: row.position,
-        prize: parseFloat(row.prize) || 0,
+        prize: parseInt(row.prize) || 0,
         rebuys: rebuysCount,
       };
     });
@@ -322,13 +320,14 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
                   id="buyIn" 
                   name="buyIn" 
                   type="number" 
-                  step="0.01" 
+                  step="1" 
                   min="0"
                   value={buyInValue}
                   onChange={(e) => setBuyInValue(e.target.value)}
                   required 
                   aria-describedby="buyIn-error" 
                   className="h-9"
+                  placeholder="e.g. 20"
                 />
                 {state.errors?.buyIn && <p id="buyIn-error" className="text-sm text-destructive mt-1">{state.errors.buyIn.join(', ')}</p>}
               </div>
@@ -338,9 +337,9 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
                     id="rebuyPrice"
                     name="rebuyPrice"
                     type="number"
-                    step="0.01"
+                    step="1"
                     min="0"
-                    placeholder="e.g. 20.00"
+                    placeholder="e.g. 20"
                     value={rebuyPrice}
                     onChange={(e) => setRebuyPrice(e.target.value)}
                     aria-describedby="rebuyPrice-error"
@@ -354,13 +353,14 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
                   id="prizePoolTotal" 
                   name="prizePoolTotal" 
                   type="number" 
-                  step="0.01"
+                  step="1"
                   min="0" 
                   value={totalPrizePoolValue}
                   onChange={(e) => setTotalPrizePoolValue(e.target.value)}
                   required 
                   aria-describedby="prizePoolTotal-error" 
                   className="h-9"
+                  placeholder="e.g. 200"
                 />
                 {state.errors?.prizePoolTotal && <p id="prizePoolTotal-error" className="text-sm text-destructive mt-1">{state.errors.prizePoolTotal.join(', ')}</p>}
               </div>
@@ -411,11 +411,12 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
                             id={`rebuy-${ep.player.id}`}
                             name={`rebuy-${ep.player.id}`}
                             min="0"
+                            step="1"
                             value={ep.rebuys}
                             onChange={(e) => handleParticipantRebuyChange(ep.player.id, e.target.value)}
                             className="h-8 w-16 text-center"
                             placeholder="Rebuys"
-                            disabled={!(parseFloat(rebuyPrice) > 0)}
+                            disabled={!(parseInt(rebuyPrice) > 0)}
                          />
                          <Repeat className="h-3 w-3 text-muted-foreground" />
                        </div>
@@ -450,16 +451,16 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
                       const participant = enrichedParticipants.find(p => p.player.id === row.playerId);
                       const rebuysDisplay = participant ? participant.rebuys : '0';
                       
-                      const prizeNum = parseFloat(row.prize) || 0;
-                      const buyInNum = parseFloat(buyInValue) || 0;
+                      const prizeNum = parseInt(row.prize) || 0;
+                      const buyInNum = parseInt(buyInValue) || 0;
                       const rebuysNum = participant ? (parseInt(participant.rebuys) || 0) : 0;
-                      const rebuyPriceNum = parseFloat(rebuyPrice) || 0;
+                      const rebuyPriceNum = parseInt(rebuyPrice) || 0;
                       let calculatedFinalResult = 0;
 
                       if (row.playerId && row.playerId !== NO_PLAYER_SELECTED_VALUE) {
                         calculatedFinalResult = prizeNum - (buyInNum + (rebuysNum * rebuyPriceNum));
                       }
-                      const finalResultDisplay = calculatedFinalResult.toFixed(2);
+                      const finalResultDisplay = calculatedFinalResult.toString();
 
                       return (
                         <TableRow key={row.position}>
@@ -496,9 +497,9 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
                             <Input
                               id={`prize-pos-${row.position}`}
                               type="number"
-                              step="0.01"
+                              step="1"
                               min="0"
-                              placeholder="e.g., 100.00"
+                              placeholder="e.g., 100"
                               value={row.prize}
                               onChange={(e) => handlePositionalResultChange(row.position, 'prize', e.target.value)}
                               className="text-right h-9"
@@ -536,3 +537,5 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
     </Card>
   );
 }
+
+    

@@ -86,7 +86,7 @@ export default async function EventDetailsPage({ params }: { params: { eventId: 
             <h3 className="font-headline text-xl text-primary flex items-center"><Info className="mr-2 h-5 w-5"/>Details</h3>
             <div className="flex items-center justify-between text-sm">
               <span className="text-muted-foreground flex items-center"><DollarSign className="mr-2 h-4 w-4"/>Buy-in:</span>
-              <span className="font-medium">${event.buyIn.toFixed(2)}</span>
+              <span className="font-medium">${event.buyIn}</span>
             </div>
             {event.maxPlayers && (
               <div className="flex items-center justify-between text-sm">
@@ -99,11 +99,11 @@ export default async function EventDetailsPage({ params }: { params: { eventId: 
                 {rebuysActive ? <CheckCircle className="mr-2 h-4 w-4 text-green-500"/> : <XCircle className="mr-2 h-4 w-4 text-red-500"/>}
                 Rebuys:
               </span>
-              <span className="font-medium">{rebuysActive ? `Yes (Price: $${event.rebuyPrice?.toFixed(2)})` : 'No'}</span>
+              <span className="font-medium">{rebuysActive ? `Yes (Price: $${event.rebuyPrice})` : 'No'}</span>
             </div>
             <div className="flex items-center justify-between text-sm">
               <span className="text-muted-foreground flex items-center"><DollarSign className="mr-2 h-4 w-4"/>Total Prize Pool:</span>
-              <span className="font-medium">${event.prizePool.total.toFixed(2)}</span>
+              <span className="font-medium">${event.prizePool.total}</span>
             </div>
             <div className="flex items-center justify-between text-sm">
               <span className="text-muted-foreground flex items-center"><CalendarDays className="mr-2 h-4 w-4"/>Status:</span>
@@ -165,7 +165,7 @@ export default async function EventDetailsPage({ params }: { params: { eventId: 
                            </Link>
                         </td>
                         <td className="p-2 text-center">{result.rebuys ?? 0}</td>
-                        <td className="p-2 text-right">${result.prize.toFixed(2)}</td>
+                        <td className="p-2 text-right">${result.prize}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -191,3 +191,5 @@ export default async function EventDetailsPage({ params }: { params: { eventId: 
     </div>
   );
 }
+
+    

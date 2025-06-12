@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { PlayerProgressPoint } from '@/lib/stats-service';
@@ -60,9 +61,8 @@ export default function SeasonPlayerProgressChart({ playerProgressData, players,
     if (seasonEvents.length === 0 || selectedPlayerIds.length === 0) return [];
 
     const data: any[] = [];
-    // Ensure there's a starting point (0) for all selected players before the first event
     const initialDataPoint: any = {
-        date: seasonEvents.length > 0 ? new Date(seasonEvents[0].date).getTime() - 86400000 : new Date().getTime() - 86400000, // One day before first event
+        date: seasonEvents.length > 0 ? new Date(seasonEvents[0].date).getTime() - 86400000 : new Date().getTime() - 86400000, 
         eventName: "Start of Season",
     };
     selectedPlayerIds.forEach(playerId => {
@@ -86,7 +86,6 @@ export default function SeasonPlayerProgressChart({ playerProgressData, players,
         if (eventPoint) {
           dataPoint[getPlayerName(playerId)] = eventPoint.cumulativeFinalResult;
         } else {
-          // If player didn't participate in this event, carry over their previous cumulative result for chart continuity
           dataPoint[getPlayerName(playerId)] = previousPointForPlayer;
         }
       });
@@ -128,7 +127,7 @@ export default function SeasonPlayerProgressChart({ playerProgressData, players,
         </ScrollArea>
       </div>
 
-      {selectedPlayerIds.length > 0 && chartData.length > 1 ? ( // Need at least 2 points for a line
+      {selectedPlayerIds.length > 0 && chartData.length > 1 ? ( 
         <ResponsiveContainer width="100%" height={400}>
           <LineChart data={chartData} margin={{ top: 5, right: 20, left: -20, bottom: 40 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
@@ -162,11 +161,10 @@ export default function SeasonPlayerProgressChart({ playerProgressData, players,
                  return point ? `${format(new Date(label), 'EEE, MMM d, yyyy')} - ${point.eventName}` : format(new Date(label), 'PPP');
               }}
               formatter={(value: number, name: string, props) => {
-                 const eventFinal = props.payload?.eventFinalResult; // This relies on eventFinalResult being available if applicable
-                 const formattedValue = `$${value.toFixed(2)}`;
+                 const formattedValue = `$${value}`;
                  return [formattedValue, name];
               }}
-              itemSorter={(item) => -item.value!} // Sort legend items by value desc
+              itemSorter={(item) => -item.value!} 
             />
             <Legend wrapperStyle={{fontSize: '12px', paddingTop: '20px'}}/>
             {selectedPlayerIds.map((playerId, index) => (
@@ -178,7 +176,7 @@ export default function SeasonPlayerProgressChart({ playerProgressData, players,
                 strokeWidth={2.5}
                 dot={{ r: 3, strokeWidth: 1, fill: generateColor(index) }}
                 activeDot={{ r: 7, strokeWidth: 2, stroke: generateColor(index), fill: 'hsl(var(--background))' }}
-                connectNulls={true} // Important for players not in every event
+                connectNulls={true} 
               />
             ))}
           </LineChart>
@@ -194,3 +192,5 @@ export default function SeasonPlayerProgressChart({ playerProgressData, players,
     </div>
   );
 }
+
+    

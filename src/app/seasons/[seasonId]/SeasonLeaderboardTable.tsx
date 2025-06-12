@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { LeaderboardEntry } from '@/lib/stats-service';
@@ -15,16 +16,16 @@ export default function SeasonLeaderboardTable({ leaderboardData }: SeasonLeader
   }
 
   return (
-    <div className="rounded-md border"> {/* Removed overflow-x-auto as Table component now handles it */}
+    <div className="rounded-md border"> 
       <Table>
         <TableHeader>
           <TableRow>
             <TableHead className="w-[60px] text-center px-2 py-3">Rank</TableHead>
-            <TableHead className="min-w-[150px] px-4 py-3">Player</TableHead> {/* Added min-w for Player column */}
+            <TableHead className="min-w-[150px] px-4 py-3">Player</TableHead> 
             <TableHead className="w-[100px] text-center px-2 py-3">Events</TableHead>
             <TableHead className="w-[80px] text-center px-2 py-3">Wins</TableHead>
             <TableHead className="w-[120px] text-center px-2 py-3">Final Tables</TableHead>
-            <TableHead className="min-w-[150px] w-[150px] text-right px-4 py-3">Total Net ($)</TableHead> {/* Ensured Total Net also has min-width */}
+            <TableHead className="min-w-[150px] w-[150px] text-right px-4 py-3">Total Net ($)</TableHead> 
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -49,7 +50,7 @@ export default function SeasonLeaderboardTable({ leaderboardData }: SeasonLeader
                 {entry.totalFinalResult > 0 && <TrendingUp className="inline-block h-4 w-4 mr-1"/>}
                 {entry.totalFinalResult < 0 && <TrendingDown className="inline-block h-4 w-4 mr-1"/>}
                 {entry.totalFinalResult === 0 && <Minus className="inline-block h-4 w-4 mr-1"/>}
-                {entry.totalFinalResult.toFixed(2)}
+                {entry.totalFinalResult}
               </TableCell>
             </TableRow>
           ))}
@@ -58,3 +59,5 @@ export default function SeasonLeaderboardTable({ leaderboardData }: SeasonLeader
     </div>
   );
 }
+
+    

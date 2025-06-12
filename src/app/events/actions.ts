@@ -11,7 +11,7 @@ import type { EventFormState } from '@/lib/definitions';
 const EventResultInputSchema = z.object({
   playerId: z.string().min(1),
   position: z.coerce.number().int().min(1, { message: "Position must be 1 or greater." }),
-  prize: z.coerce.number().min(0, { message: "Prize must be 0 or greater." }),
+  prize: z.coerce.number().int().min(0, { message: "Prize must be 0 or greater." }),
   rebuys: z.coerce.number().int().min(0, {message: "Rebuys must be 0 or greater."}).optional().default(0),
 });
 
@@ -19,10 +19,10 @@ const EventFormSchema = z.object({
   id: z.string().optional(), 
   name: z.string().min(3, { message: 'Event name must be at least 3 characters.' }),
   date: z.string().min(1, { message: 'Date is required.' }),
-  buyIn: z.coerce.number().positive({ message: 'Buy-in must be a positive number.' }),
-  rebuyPrice: z.coerce.number().nonnegative({ message: 'Rebuy price cannot be negative.' }).optional(),
+  buyIn: z.coerce.number().int().positive({ message: 'Buy-in must be a positive integer.' }),
+  rebuyPrice: z.coerce.number().int().nonnegative({ message: 'Rebuy price must be a non-negative integer.' }).optional(),
   maxPlayers: z.coerce.number().int().positive({ message: 'Max players must be a positive integer.' }).optional(),
-  prizePoolTotal: z.coerce.number().nonnegative({ message: 'Prize pool total cannot be negative.' }),
+  prizePoolTotal: z.coerce.number().int().nonnegative({ message: 'Prize pool total must be a non-negative integer.' }),
   participantIds: z.preprocess(
     (val) => (typeof val === 'string' && val ? val.split(',').filter(id => id.trim() !== '') : Array.isArray(val) ? val : []),
     z.array(z.string()).optional().default([])
@@ -183,7 +183,7 @@ export async function updateEvent(prevState: EventFormState, formData: FormData)
       date: new Date(data.date).toISOString(),
       buyIn: data.buyIn,
       rebuyPrice: data.rebuyPrice,
-      maxPlayers: data.maxPlayers, // Will be undefined if not in form, effectively removing/clearing it
+      maxPlayers: data.maxPlayers, 
       status: data.status as EventStatus,
       prizePool: {
         ...events[eventIndex].prizePool, 
@@ -213,3 +213,5 @@ export async function updateEvent(prevState: EventFormState, formData: FormData)
   revalidatePath(`/events/${data.id}/edit`);
   redirect(`/events/${data.id}`); 
 }
+
+    
