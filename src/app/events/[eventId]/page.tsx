@@ -3,11 +3,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { getEvents, getPlayers } from "@/lib/data-service";
 import type { Event, Player } from "@/lib/definitions";
-import { ArrowLeft, Edit, Users, DollarSign, CalendarDays, Trophy, Info, Tag, CheckCircle, XCircle } from "lucide-react";
+import { ArrowLeft, Edit, Users, DollarSign, CalendarDays, Trophy, Info, Tag, CheckCircle, XCircle, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cookies } from 'next/headers';
+import DeleteEventButton from "./DeleteEventButton"; // Import the new component
 
 const AUTH_COOKIE_NAME = 'app_session_active';
 
@@ -65,7 +66,7 @@ export default async function EventDetailsPage({ params }: { params: { eventId: 
       </Button>
       <Card className="max-w-4xl mx-auto shadow-lg">
         <CardHeader className="bg-muted/30 p-6">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div>
               <CardTitle className="font-headline text-3xl mb-1">{event.name}</CardTitle>
               <CardDescription className="text-lg text-muted-foreground">
@@ -73,11 +74,14 @@ export default async function EventDetailsPage({ params }: { params: { eventId: 
               </CardDescription>
             </div>
             {isAuthenticated && (
-              <Button asChild variant="outline" className="mt-4 md:mt-0">
-                <Link href={`/events/${event.id}/edit`}>
-                  <Edit className="mr-2 h-4 w-4" /> Edit Event
-                </Link>
-              </Button>
+              <div className="flex flex-col sm:flex-row gap-2 mt-4 md:mt-0">
+                <Button asChild variant="outline" className="w-full sm:w-auto">
+                  <Link href={`/events/${event.id}/edit`}>
+                    <Edit className="mr-2 h-4 w-4" /> Edit Event
+                  </Link>
+                </Button>
+                <DeleteEventButton eventId={event.id} eventName={event.name} className="w-full sm:w-auto" />
+              </div>
             )}
           </div>
         </CardHeader>

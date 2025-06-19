@@ -214,4 +214,26 @@ export async function updateEvent(prevState: EventFormState, formData: FormData)
   redirect(`/events/${data.id}`); 
 }
 
+export async function deleteEvent(eventId: string): Promise<{ success: boolean; message: string }> {
+  if (!eventId) {
+    return { success: false, message: 'Event ID is required for deletion.' };
+  }
+  try {
+    const events = await getEvents();
+    const initialLength = events.length;
+    const updatedEvents = events.filter(event => event.id !== eventId);
+
+    if (updatedEvents.length === initialLength) {
+      return { success: false, message: 'Event not found or already deleted.' };
+    }
+
+    await saveEvents(updatedEvents);
+    revalidatePath('/events');
+    // Client will handle redirection or UI update based on this response
+    return { success: true, message: 'Event deleted successfully.' };
+  } catch (error) {
+    console.error('Delete Event Error:', error);
+    return { success: false, message: 'Database Error: Failed to delete event.' };
+  }
+}
     
