@@ -94,9 +94,6 @@ export default function LoginPage() {
             <Button type="submit" className="w-full">
               <LogIn className="mr-2 h-5 w-5" /> Login as Admin
             </Button>
-            <p className="text-center text-xs text-muted-foreground">
-              Demo credentials: admin / pbc_pwd25
-            </p>
           </CardFooter>
         </form>
 
