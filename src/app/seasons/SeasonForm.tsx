@@ -144,13 +144,13 @@ export default function SeasonForm({ season, allEvents, action, formTitle, formD
             </div>
           </div>
 
-          {season && ( // Only show event association for existing seasons
+          {season?.id && ( // Only show event association for existing seasons
             <div className="space-y-4 p-4 border rounded-lg shadow-sm">
               <div className="flex justify-between items-center">
                 <h3 className="font-headline text-lg flex items-center"><ListChecks className="mr-2 h-5 w-5 text-primary" />Manage Associated Events</h3>
                 <Button variant="outline" size="sm" asChild>
-                  <Link href="/events/new">
-                    <PlusCircle className="mr-2 h-4 w-4" /> Create New Event
+                  <Link href={`/events/new?seasonId=${season.id}`}>
+                    <PlusCircle className="mr-2 h-4 w-4" /> Create New Event for this Season
                   </Link>
                 </Button>
               </div>

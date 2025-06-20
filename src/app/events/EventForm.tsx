@@ -1,7 +1,7 @@
 
 'use client';
 
-import type { Event, Player, EventStatus, ServerEventFormState, Season } from '@/lib/definitions'; // Added Season
+import type { Event, Player, EventStatus, ServerEventFormState, Season } from '@/lib/definitions'; 
 import * as React from 'react';
 import { useActionState } from 'react';
 import { Input } from '@/components/ui/input';
@@ -12,18 +12,19 @@ import { DatePicker } from '@/components/ui/date-picker';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Trophy, PlusCircle, MinusCircle, Users, DollarSign, CalendarDays, Settings, Info, Repeat, Star, Gift, BarChart3 } from 'lucide-react'; // Added BarChart3 for season
+import { Trophy, PlusCircle, MinusCircle, Users, DollarSign, CalendarDays, Settings, Info, Repeat, Star, Gift, BarChart3 } from 'lucide-react'; 
 import Link from 'next/link';
 import { eventStatuses } from '@/lib/definitions';
 
 interface EventFormProps {
   event?: Event;
   allPlayers: Player[];
-  allSeasons: Season[]; // Added allSeasons prop
+  allSeasons: Season[]; 
   action: (prevState: ServerEventFormState, formData: FormData) => Promise<ServerEventFormState>;
   formTitle: string;
   formDescription: string;
   submitButtonText: string;
+  defaultSeasonId?: string; // New prop for default season selection
 }
 
 type PositionalResultEntry = {
@@ -40,7 +41,7 @@ interface EnrichedParticipant {
 }
 
 const NO_PLAYER_SELECTED_VALUE = "_internal_no_player_selected_";
-const NO_SEASON_SELECTED_VALUE = "NONE"; // Value for "No Season" option
+const NO_SEASON_SELECTED_VALUE = "NONE"; 
 
 const getPlayerDisplayName = (player: Player | undefined): string => {
   if (!player) return "Unknown Player";
@@ -57,13 +58,16 @@ const getPlayerDisplayName = (player: Player | undefined): string => {
 };
 
 
-export default function EventForm({ event, allPlayers, allSeasons, action, formTitle, formDescription, submitButtonText }: EventFormProps) {
+export default function EventForm({ event, allPlayers, allSeasons, action, formTitle, formDescription, submitButtonText, defaultSeasonId }: EventFormProps) {
   const initialState: ServerEventFormState = { message: null, errors: {} };
   const [state, dispatch] = useActionState(action, initialState);
 
   const [selectedDate, setSelectedDate] = React.useState<Date | undefined>(undefined);
   const [currentStatus, setCurrentStatus] = React.useState<EventStatus>(event?.status || 'draft');
-  const [selectedSeasonId, setSelectedSeasonId] = React.useState<string>(event?.seasonId || NO_SEASON_SELECTED_VALUE);
+  
+  const [selectedSeasonId, setSelectedSeasonId] = React.useState<string>(
+     event?.seasonId || defaultSeasonId || NO_SEASON_SELECTED_VALUE
+  );
 
 
   const [buyInValue, setBuyInValue] = React.useState<string>(
@@ -100,8 +104,15 @@ export default function EventForm({ event, allPlayers, allSeasons, action, formT
     } else {
       setSelectedDate(undefined);
     }
-    setSelectedSeasonId(event?.seasonId || NO_SEASON_SELECTED_VALUE);
-  }, [event?.id, event?.date, event?.seasonId]);
+    // Update selectedSeasonId if event.seasonId or defaultSeasonId changes
+    if (event?.id) { // Editing an existing event
+      setSelectedSeasonId(event.seasonId || NO_SEASON_SELECTED_VALUE);
+    } else if (defaultSeasonId) { // Creating a new event with a default season
+      setSelectedSeasonId(defaultSeasonId);
+    } else { // Creating a new event without a default
+      setSelectedSeasonId(NO_SEASON_SELECTED_VALUE);
+    }
+  }, [event?.id, event?.date, event?.seasonId, defaultSeasonId]);
 
   React.useEffect(() => {
     const initialParticipantIds = new Set(event?.participants || []);
@@ -326,7 +337,10 @@ export default function EventForm({ event, allPlayers, allSeasons, action, formT
         <CardContent className="space-y-6">
           {event?.id && <input type="hidden" name="id" defaultValue={event.id} />}
           <input type="hidden" name="resultsJson" value={resultsJson} />
-          <input type="hidden" name="seasonId" value={selectedSeasonId} />
+          {/* This input is now primarily for display and state management; the form action will use its value */}
+          {/* The name "seasonId" here is critical for FormData to pick it up for the server action */}
+          <input type="hidden" name="seasonId" value={selectedSeasonId === NO_SEASON_SELECTED_VALUE ? "" : selectedSeasonId} />
+
 
           <div className="space-y-4 p-4 border rounded-lg shadow-sm">
             <h3 className="font-headline text-lg flex items-center"><Info className="mr-2 h-5 w-5 text-primary" />Event Details</h3>
@@ -357,10 +371,14 @@ export default function EventForm({ event, allPlayers, allSeasons, action, formT
                 {state.errors?.status && <p id="status-error" className="text-sm text-destructive mt-1">{state.errors.status.join(', ')}</p>}
               </div>
             </div>
-             <div className="pt-2"> {/* Season Selector */}
-                <Label htmlFor="seasonId" className="flex items-center"><BarChart3 className="mr-2 h-4 w-4 text-primary"/>Link to Season (Optional)</Label>
-                <Select value={selectedSeasonId} onValueChange={setSelectedSeasonId} name="seasonId">
-                  <SelectTrigger id="seasonId" aria-describedby="seasonId-error" className="h-9">
+             <div className="pt-2"> 
+                <Label htmlFor="seasonId-select" className="flex items-center"><BarChart3 className="mr-2 h-4 w-4 text-primary"/>Link to Season (Optional)</Label>
+                <Select 
+                    value={selectedSeasonId} 
+                    onValueChange={setSelectedSeasonId}
+                    // The name attribute is removed from Select; the hidden input above handles form submission
+                >
+                  <SelectTrigger id="seasonId-select" aria-describedby="seasonId-error" className="h-9">
                     <SelectValue placeholder="-- Select a Season --" />
                   </SelectTrigger>
                   <SelectContent>
