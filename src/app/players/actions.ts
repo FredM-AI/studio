@@ -1,10 +1,14 @@
+
 'use server';
 
 import { z } from 'zod';
-import { getPlayers, savePlayers } from '@/lib/data-service';
-import type { Player } from '@/lib/definitions';
+import { db } from '@/lib/data-service'; // Import db
+import { collection, doc, setDoc, deleteDoc, getDocs, query, where, getDoc } from 'firebase/firestore';
+import type { Player, PlayerFormState } from '@/lib/definitions';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
+
+const PLAYERS_COLLECTION = 'players';
 
 const PlayerSchema = z.object({
   id: z.string().optional(), // Present for updates, absent for creations
@@ -17,18 +21,6 @@ const PlayerSchema = z.object({
   isActive: z.preprocess((val) => val === 'on' || val === true, z.boolean()).default(true),
 });
 
-export type PlayerFormState = {
-  errors?: {
-    firstName?: string[];
-    lastName?: string[];
-    email?: string[];
-    phone?: string[];
-    avatar?: string[];
-    _form?: string[]; // For general form errors
-  };
-  message?: string | null;
-};
-
 export async function createPlayer(prevState: PlayerFormState, formData: FormData): Promise<PlayerFormState> {
   const validatedFields = PlayerSchema.safeParse(Object.fromEntries(formData.entries()));
 
@@ -40,37 +32,46 @@ export async function createPlayer(prevState: PlayerFormState, formData: FormDat
   }
 
   const data = validatedFields.data;
-  const players = await getPlayers();
-
-  // Check for duplicate email
-  if (players.some(player => player.email === data.email)) {
-    return {
-      errors: { email: ['Email already exists.'] },
-      message: 'Player creation failed.',
-    };
-  }
-
-  const newPlayer: Player = {
-    id: crypto.randomUUID(),
-    ...data,
-    avatar: data.avatar || undefined, // Ensure empty string becomes undefined
-    stats: { // Initialize stats
-      gamesPlayed: 0,
-      wins: 0,
-      finalTables: 0,
-      totalWinnings: 0,
-      totalBuyIns: 0,
-      bestPosition: null,
-      averagePosition: null,
-    },
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  };
 
   try {
-    players.push(newPlayer);
-    await savePlayers(players);
+    // Check for duplicate email in Firestore
+    const playersRef = collection(db, PLAYERS_COLLECTION);
+    const q = query(playersRef, where("email", "==", data.email));
+    const querySnapshot = await getDocs(q);
+    if (!querySnapshot.empty) {
+      return {
+        errors: { email: ['Email already exists.'] },
+        message: 'Player creation failed.',
+      };
+    }
+
+    const playerId = crypto.randomUUID();
+    const newPlayer: Player = {
+      id: playerId,
+      firstName: data.firstName,
+      lastName: data.lastName,
+      nickname: data.nickname,
+      email: data.email,
+      phone: data.phone,
+      avatar: data.avatar || undefined,
+      isActive: data.isActive,
+      stats: {
+        gamesPlayed: 0,
+        wins: 0,
+        finalTables: 0,
+        totalWinnings: 0,
+        totalBuyIns: 0,
+        bestPosition: null,
+        averagePosition: null,
+      },
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    await setDoc(doc(db, PLAYERS_COLLECTION, playerId), newPlayer);
+
   } catch (error) {
+    console.error("Firestore Error creating player:", error);
     return { message: 'Database Error: Failed to create player.' };
   }
   
@@ -89,61 +90,82 @@ export async function updatePlayer(prevState: PlayerFormState, formData: FormDat
   }
   
   const data = validatedFields.data;
-  if (!data.id) {
+  const playerId = data.id;
+
+  if (!playerId) {
     return { message: "Player ID is missing for update." };
   }
 
-  const players = await getPlayers();
-  const playerIndex = players.findIndex(p => p.id === data.id);
-
-  if (playerIndex === -1) {
-    return { message: 'Player not found.' };
-  }
-
-  // Check for duplicate email (excluding the current player)
-  if (players.some(player => player.email === data.email && player.id !== data.id)) {
-     return {
-      errors: { email: ['Email already exists for another player.'] },
-      message: 'Player update failed.',
-    };
-  }
-  
-  const updatedPlayer: Player = {
-    ...players[playerIndex],
-    ...data,
-    avatar: data.avatar || undefined,
-    updatedAt: new Date().toISOString(),
-  };
-
   try {
-    players[playerIndex] = updatedPlayer;
-    await savePlayers(players);
+    // Check for duplicate email (excluding the current player)
+    const playersRef = collection(db, PLAYERS_COLLECTION);
+    const q = query(playersRef, where("email", "==", data.email));
+    const querySnapshot = await getDocs(q);
+    if (!querySnapshot.empty) {
+      let duplicateFound = false;
+      querySnapshot.forEach((docSnap) => {
+        if (docSnap.id !== playerId) {
+          duplicateFound = true;
+        }
+      });
+      if (duplicateFound) {
+        return {
+          errors: { email: ['Email already exists for another player.'] },
+          message: 'Player update failed.',
+        };
+      }
+    }
+  
+    const playerRef = doc(db, PLAYERS_COLLECTION, playerId);
+    const playerSnap = await getDoc(playerRef);
+
+    if (!playerSnap.exists()) {
+      return { message: 'Player not found in database.' };
+    }
+    const existingPlayer = playerSnap.data() as Player;
+
+    const updatedPlayer: Player = {
+      ...existingPlayer, // Preserve existing fields like stats and createdAt
+      firstName: data.firstName,
+      lastName: data.lastName,
+      nickname: data.nickname,
+      email: data.email,
+      phone: data.phone,
+      avatar: data.avatar || undefined,
+      isActive: data.isActive,
+      updatedAt: new Date().toISOString(),
+    };
+
+    await setDoc(playerRef, updatedPlayer); // setDoc will overwrite or create if not exists
+
   } catch (error) {
+    console.error("Firestore Error updating player:", error);
     return { message: 'Database Error: Failed to update player.' };
   }
 
   revalidatePath('/players');
-  revalidatePath(`/players/${data.id}`);
-  revalidatePath(`/players/${data.id}/edit`);
+  revalidatePath(`/players/${playerId}`);
+  revalidatePath(`/players/${playerId}/edit`);
   redirect('/players');
 }
 
-
 export async function deletePlayer(playerId: string): Promise<{ message?: string | null, success?: boolean }> {
+  if (!playerId) {
+    return { message: 'Player ID is required for deletion.', success: false };
+  }
   try {
-    let players = await getPlayers();
-    const initialLength = players.length;
-    players = players.filter(p => p.id !== playerId);
+    const playerRef = doc(db, PLAYERS_COLLECTION, playerId);
+    // Optional: Check if document exists before deleting
+    // const playerSnap = await getDoc(playerRef);
+    // if (!playerSnap.exists()) {
+    //   return { message: 'Player not found or already deleted.', success: false };
+    // }
+    await deleteDoc(playerRef);
 
-    if (players.length === initialLength) {
-      return { message: 'Player not found.', success: false };
-    }
-
-    await savePlayers(players);
     revalidatePath('/players');
     return { message: 'Player deleted successfully.', success: true };
   } catch (error) {
+    console.error('Delete Player Error:', error);
     return { message: 'Database Error: Failed to delete player.', success: false };
   }
 }
-
