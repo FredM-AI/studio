@@ -9,6 +9,8 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import type { EventFormState } from '@/lib/definitions';
 
+const EVENTS_COLLECTION = 'events'; // Define the constant here
+
 // Helper function to remove undefined properties from an object
 function cleanUndefinedProperties(obj: any): any {
   const newObj: any = {};
@@ -289,3 +291,4 @@ export async function deleteEvent(eventId: string): Promise<{ success: boolean; 
     return { success: false, message: 'Database Error: Failed to delete event.' };
   }
 }
+
