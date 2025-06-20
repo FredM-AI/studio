@@ -28,7 +28,16 @@ export interface SeasonStats {
 
 function getPlayerName(player: Player | undefined): string {
   if (!player) return "Unknown Player";
-  return `${player.firstName} ${player.lastName}${player.nickname ? ` (${player.nickname})` : ''}`;
+  if (player.nickname && player.nickname.trim() !== '') {
+    return player.nickname;
+  }
+  if (player.firstName) {
+    return `${player.firstName}${player.lastName ? ' ' + player.lastName.charAt(0) + '.' : ''}`;
+  }
+  if (player.lastName) {
+    return player.lastName;
+  }
+  return "Unnamed";
 }
 
 export async function calculatePlayerOverallStats(
@@ -73,7 +82,9 @@ export async function calculatePlayerOverallStats(
 
     if (playerResultEntry) {
       playerRebuysInEvent = playerResultEntry.rebuys || 0;
-      totalWinnings += playerResultEntry.prize;
+      totalWinnings += playerResultEntry.prize; // Assumed prize is net prize, not including bounty/msko
+      totalWinnings += playerResultEntry.bountiesWon || 0;
+      totalWinnings += playerResultEntry.mysteryKoWon || 0;
       positions.push(playerResultEntry.position);
 
       if (playerResultEntry.position === 1) {
@@ -125,7 +136,6 @@ export async function calculateSeasonStats(
     lastCumulative: number;
   }> = new Map();
 
-  // Initialiser pour tous les joueurs afin que même ceux n'ayant pas joué dans la saison apparaissent si besoin (pour le moment, ils seront filtrés)
   allPlayers.forEach(player => {
     playerSeasonSummaries.set(player.id, {
       eventResults: {},
@@ -143,39 +153,36 @@ export async function calculateSeasonStats(
 
     for (const playerId of participantIdsInEvent) {
       const summary = playerSeasonSummaries.get(playerId);
-      if (!summary) continue; // Devrait pas arriver si initialisé pour allPlayers
+      if (!summary) continue; 
 
-      // Si c'est la première fois qu'on traite cet event pour ce joueur dans cette session de calcul (évite double comptage si structure de données évolue)
       if (summary.eventResults[event.id] === undefined) {
-           if(!Object.keys(summary.eventResults).length) summary.eventsPlayed = 0; // reset for first event
-           // Check if this is a new event for this player in the season before incrementing
+           if(!Object.keys(summary.eventResults).length) summary.eventsPlayed = 0;
            const eventsProcessedForPlayer = new Set(Object.keys(summary.eventResults));
            if (!eventsProcessedForPlayer.has(event.id)) {
              summary.eventsPlayed += 1;
            }
       }
 
-
       const playerResultEntry = event.results.find(r => r.playerId === playerId);
       const rebuysCount = playerResultEntry?.rebuys || 0;
       const prizeWon = playerResultEntry?.prize || 0;
+      const bountiesWon = playerResultEntry?.bountiesWon || 0;
+      const mysteryKoWon = playerResultEntry?.mysteryKoWon || 0;
+      
       const costForEvent = buyInForEvent + (rebuysCount * rebuyPriceForEvent);
-      const eventNetResult = prizeWon - costForEvent;
+      const eventNetResult = prizeWon + bountiesWon + mysteryKoWon - costForEvent;
 
-      // Mettre à jour/ajouter le résultat de l'événement
-      if (summary.eventResults[event.id] !== undefined) { // Si l'event a déjà été traité (ex: joueur dans results et dans participants)
-        summary.totalFinalResult -= summary.eventResults[event.id]!; // Soustraire l'ancien
+      if (summary.eventResults[event.id] !== undefined) { 
+        summary.totalFinalResult -= summary.eventResults[event.id]!; 
         summary.lastCumulative -= summary.eventResults[event.id]!;
       }
       summary.eventResults[event.id] = eventNetResult;
       summary.totalFinalResult += eventNetResult;
       summary.lastCumulative += eventNetResult;
 
-      // Mettre à jour la progression pour le graphique
-      // S'assurer qu'un seul point est ajouté par événement pour ce joueur
       const progressPointIndex = summary.progress.findIndex(p => p.eventDate === event.date);
       if (progressPointIndex > -1) {
-        summary.progress[progressPointIndex].eventFinalResult = eventNetResult; // Mettre à jour si déjà existant
+        summary.progress[progressPointIndex].eventFinalResult = eventNetResult; 
         summary.progress[progressPointIndex].cumulativeFinalResult = summary.lastCumulative;
       } else {
         summary.progress.push({
@@ -190,7 +197,6 @@ export async function calculateSeasonStats(
 
   const leaderboard: LeaderboardEntry[] = [];
   playerSeasonSummaries.forEach((summary, playerId) => {
-    // Inclure uniquement les joueurs ayant participé à au moins un événement de la saison
     if (summary.eventsPlayed > 0) {
       const player = allPlayers.find((p) => p.id === playerId);
       leaderboard.push({

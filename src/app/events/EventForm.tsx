@@ -40,6 +40,20 @@ interface EnrichedParticipant {
 
 const NO_PLAYER_SELECTED_VALUE = "_internal_no_player_selected_";
 
+const getPlayerDisplayName = (player: Player | undefined): string => {
+  if (!player) return "Unknown Player";
+  if (player.nickname && player.nickname.trim() !== '') {
+    return player.nickname;
+  }
+  if (player.firstName) {
+    return `${player.firstName}${player.lastName ? ' ' + player.lastName.charAt(0) + '.' : ''}`;
+  }
+  if (player.lastName) {
+    return player.lastName;
+  }
+  return "Unnamed";
+};
+
 
 export default function EventForm({ event, allPlayers, action, formTitle, formDescription, submitButtonText }: EventFormProps) {
   const initialState: ServerEventFormState = { message: null, errors: {} };
@@ -95,11 +109,11 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
           rebuys: resultForPlayer?.rebuys?.toString() || '0',
         };
       })
-      .sort((a, b) => a.player.firstName.localeCompare(b.player.firstName));
+      .sort((a, b) => getPlayerDisplayName(a.player).localeCompare(getPlayerDisplayName(b.player)));
 
     const initialAvailable = allPlayers
       .filter(p => !initialParticipantIds.has(p.id))
-      .sort((a, b) => a.firstName.localeCompare(b.firstName));
+      .sort((a, b) => getPlayerDisplayName(a).localeCompare(getPlayerDisplayName(b)));
 
     setEnrichedParticipants(initialEnriched);
     setAvailablePlayers(initialAvailable);
@@ -249,12 +263,12 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
 
 
   const handleAddPlayer = (player: Player) => {
-    setEnrichedParticipants(prev => [...prev, { player, rebuys: '0' }].sort((a,b) => a.player.firstName.localeCompare(b.player.firstName)));
+    setEnrichedParticipants(prev => [...prev, { player, rebuys: '0' }].sort((a,b) => getPlayerDisplayName(a.player).localeCompare(getPlayerDisplayName(b.player))));
     setAvailablePlayers(prev => prev.filter(p => p.id !== player.id));
   };
 
   const handleRemovePlayer = (participantToRemove: EnrichedParticipant) => {
-    setAvailablePlayers(prev => [...prev, participantToRemove.player].sort((a, b) => a.firstName.localeCompare(b.firstName)));
+    setAvailablePlayers(prev => [...prev, participantToRemove.player].sort((a, b) => getPlayerDisplayName(a).localeCompare(getPlayerDisplayName(b))));
     setEnrichedParticipants(prev => prev.filter(p => p.player.id !== participantToRemove.player.id));
     setPositionalResults(prev => prev.map(pr => pr.playerId === participantToRemove.player.id ? {...pr, playerId: null, prize: '0', bountiesWon: '0', mysteryKoWon: '0'} : pr ));
   };
@@ -276,7 +290,7 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
   };
 
   const filteredAvailablePlayers = availablePlayers.filter(player =>
-    `${player.firstName} ${player.lastName} ${player.nickname || ''}`.toLowerCase().includes(searchTerm.toLowerCase())
+    `${getPlayerDisplayName(player)} ${player.firstName} ${player.lastName}`.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const hiddenParticipantIds = enrichedParticipants.map(ep => ep.player.id).join(',');
@@ -452,7 +466,7 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
                 <ScrollArea className="h-72 w-full rounded-md border p-1.5">
                   {filteredAvailablePlayers.length > 0 ? filteredAvailablePlayers.map(player => (
                     <div key={player.id} className="flex items-center justify-between p-1.5 hover:bg-muted/50 rounded-md">
-                      <span>{player.firstName} {player.lastName} {player.nickname ? `(${player.nickname})` : ''}</span>
+                      <span>{getPlayerDisplayName(player)}</span>
                       <Button type="button" variant="outline" size="sm" onClick={() => handleAddPlayer(player)} title="Add player"
                         disabled={enrichedParticipants.some(ep => ep.player.id === player.id)}>
                         <PlusCircle className="h-4 w-4" />
@@ -466,7 +480,7 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
                 <ScrollArea className="h-72 w-full rounded-md border p-1.5">
                   {enrichedParticipants.length > 0 ? enrichedParticipants.map(ep => (
                     <div key={ep.player.id} className="flex items-center justify-between p-1.5 hover:bg-muted/50 rounded-md gap-2">
-                      <span className="flex-grow">{ep.player.firstName} {ep.player.lastName} {ep.player.nickname ? `(${ep.player.nickname})` : ''}</span>
+                      <span className="flex-grow">{getPlayerDisplayName(ep.player)}</span>
                        <div className="flex items-center gap-1 w-28">
                          <Label htmlFor={`rebuy-${ep.player.id}`} className="sr-only">Rebuys</Label>
                          <Input
@@ -546,7 +560,7 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
                                   <SelectItem key={ep.player.id} value={ep.player.id}
                                     disabled={positionalResults.some(pr => pr.playerId === ep.player.id && pr.position !== row.position)}
                                   >
-                                    {ep.player.firstName} {ep.player.lastName} {ep.player.nickname ? `(${ep.player.nickname})` : ''}
+                                    {getPlayerDisplayName(ep.player)}
                                   </SelectItem>
                                 ))}
                               </SelectContent>

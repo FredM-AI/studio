@@ -13,6 +13,20 @@ import { Separator } from "@/components/ui/separator";
 
 const AUTH_COOKIE_NAME = 'app_session_active';
 
+const getPlayerDisplayName = (player: Player | undefined): string => {
+  if (!player) return "Unknown Player";
+  if (player.nickname && player.nickname.trim() !== '') {
+    return player.nickname;
+  }
+  if (player.firstName) {
+    return `${player.firstName}${player.lastName ? ' ' + player.lastName.charAt(0) + '.' : ''}`;
+  }
+  if (player.lastName) {
+    return player.lastName;
+  }
+  return "Unnamed";
+};
+
 export default async function PlayersPage() {
   const cookieStore = cookies();
   const isAuthenticated = cookieStore.get(AUTH_COOKIE_NAME)?.value === 'true';
@@ -57,7 +71,7 @@ export default async function PlayersPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Name</TableHead>
-                  <TableHead>Nickname</TableHead>
+                  <TableHead>Full Name (for ref)</TableHead>
                   <TableHead>Email</TableHead>
                   <TableHead>Games Played</TableHead>
                   <TableHead>Status</TableHead>
@@ -67,8 +81,8 @@ export default async function PlayersPage() {
               <TableBody>
                 {players.map((player) => (
                   <TableRow key={player.id}>
-                    <TableCell className="font-medium">{player.firstName} {player.lastName}</TableCell>
-                    <TableCell>{player.nickname || "-"}</TableCell>
+                    <TableCell className="font-medium">{getPlayerDisplayName(player)}</TableCell>
+                    <TableCell className="text-xs text-muted-foreground">{player.firstName} {player.lastName}</TableCell>
                     <TableCell>{player.email}</TableCell>
                     <TableCell>{player.stats.gamesPlayed}</TableCell>
                     <TableCell>

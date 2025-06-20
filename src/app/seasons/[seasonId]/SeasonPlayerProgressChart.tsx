@@ -28,6 +28,20 @@ const generateColor = (index: number): string => {
   return colors[index % colors.length];
 };
 
+const getPlayerDisplayName = (player: Player | undefined): string => {
+  if (!player) return "Unknown Player";
+  if (player.nickname && player.nickname.trim() !== '') {
+    return player.nickname;
+  }
+  if (player.firstName) {
+    return `${player.firstName}${player.lastName ? ' ' + player.lastName.charAt(0) + '.' : ''}`;
+  }
+  if (player.lastName) {
+    return player.lastName;
+  }
+  return "Unnamed";
+};
+
 
 export default function SeasonPlayerProgressChart({ playerProgressData, players, seasonEvents }: SeasonPlayerProgressChartProps) {
   const [selectedPlayerIds, setSelectedPlayerIds] = React.useState<string[]>(() => {
@@ -52,9 +66,9 @@ export default function SeasonPlayerProgressChart({ playerProgressData, players,
     });
   };
   
-  const getPlayerName = (playerId: string) => {
+  const getPlayerNameForChart = (playerId: string) => {
     const player = players.find(p => p.id === playerId);
-    return player ? `${player.firstName} ${player.nickname ? `(${player.nickname})` : player.lastName.substring(0,1)}.` : 'Unknown';
+    return getPlayerDisplayName(player);
   };
 
   const chartData = React.useMemo(() => {
@@ -66,7 +80,7 @@ export default function SeasonPlayerProgressChart({ playerProgressData, players,
         eventName: "Start of Season",
     };
     selectedPlayerIds.forEach(playerId => {
-        initialDataPoint[getPlayerName(playerId)] = 0;
+        initialDataPoint[getPlayerNameForChart(playerId)] = 0;
     });
     data.push(initialDataPoint);
 
@@ -81,12 +95,12 @@ export default function SeasonPlayerProgressChart({ playerProgressData, players,
         const progressForPlayer = playerProgressData[playerId];
         const eventPoint = progressForPlayer?.find(p => p.eventDate === event.date);
         
-        const previousPointForPlayer = data.length > 0 ? data[data.length-1][getPlayerName(playerId)] : 0;
+        const previousPointForPlayer = data.length > 0 ? data[data.length-1][getPlayerNameForChart(playerId)] : 0;
 
         if (eventPoint) {
-          dataPoint[getPlayerName(playerId)] = eventPoint.cumulativeFinalResult;
+          dataPoint[getPlayerNameForChart(playerId)] = eventPoint.cumulativeFinalResult;
         } else {
-          dataPoint[getPlayerName(playerId)] = previousPointForPlayer;
+          dataPoint[getPlayerNameForChart(playerId)] = previousPointForPlayer;
         }
       });
       data.push(dataPoint);
@@ -101,7 +115,7 @@ export default function SeasonPlayerProgressChart({ playerProgressData, players,
 
   const participatingPlayersInSeason = players
     .filter(p => playerProgressData[p.id] && playerProgressData[p.id].length > 0)
-    .sort((a,b) => a.firstName.localeCompare(b.firstName));
+    .sort((a,b) => getPlayerDisplayName(a).localeCompare(getPlayerDisplayName(b)));
 
   return (
     <div className="space-y-6">
@@ -118,7 +132,7 @@ export default function SeasonPlayerProgressChart({ playerProgressData, players,
                     disabled={!selectedPlayerIds.includes(player.id) && selectedPlayerIds.length >= MAX_PLAYERS_TO_DISPLAY}
                     />
                     <Label htmlFor={`player-progress-${player.id}`} className="text-sm font-normal cursor-pointer hover:text-primary">
-                    {player.firstName} {player.lastName} {player.nickname ? `(${player.nickname})` : ''}
+                    {getPlayerDisplayName(player)}
                     </Label>
                 </div>
                 ))}
@@ -171,7 +185,7 @@ export default function SeasonPlayerProgressChart({ playerProgressData, players,
               <Line
                 key={playerId}
                 type="monotone"
-                dataKey={getPlayerName(playerId)}
+                dataKey={getPlayerNameForChart(playerId)}
                 stroke={generateColor(index)}
                 strokeWidth={2.5}
                 dot={{ r: 3, strokeWidth: 1, fill: generateColor(index) }}
@@ -192,5 +206,3 @@ export default function SeasonPlayerProgressChart({ playerProgressData, players,
     </div>
   );
 }
-
-    

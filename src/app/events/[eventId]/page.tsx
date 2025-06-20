@@ -49,9 +49,19 @@ export default async function EventDetailsPage({ params }: { params: { eventId: 
     );
   }
 
-  const getPlayerName = (playerId: string) => {
+  const getPlayerDisplayName = (playerId: string) => {
     const player = allPlayers.find(p => p.id === playerId);
-    return player ? `${player.firstName} ${player.lastName}` : "Unknown Player";
+    if (!player) return "Unknown Player";
+    if (player.nickname && player.nickname.trim() !== '') {
+      return player.nickname;
+    }
+    if (player.firstName) {
+      return `${player.firstName}${player.lastName ? ' ' + player.lastName.charAt(0) + '.' : ''}`;
+    }
+    if (player.lastName) {
+      return player.lastName;
+    }
+    return "Unnamed";
   };
   
   const sortedResults = event.results.sort((a, b) => a.position - b.position);
@@ -147,7 +157,7 @@ export default async function EventDetailsPage({ params }: { params: { eventId: 
                   {event.participants.map(playerId => (
                     <li key={playerId} className="text-sm p-1 hover:bg-muted/50 rounded-md">
                       <Link href={`/players/${playerId}`} className="hover:underline">
-                        {getPlayerName(playerId)}
+                        {getPlayerDisplayName(playerId)}
                       </Link>
                     </li>
                   ))}
@@ -190,7 +200,7 @@ export default async function EventDetailsPage({ params }: { params: { eventId: 
                           <td className="p-2">{result.position}</td>
                           <td className="p-2">
                             <Link href={`/players/${result.playerId}`} className="hover:underline">
-                              {getPlayerName(result.playerId)}
+                              {getPlayerDisplayName(result.playerId)}
                             </Link>
                           </td>
                           <td className="p-2 text-center">{result.rebuys ?? 0}</td>
@@ -226,5 +236,3 @@ export default async function EventDetailsPage({ params }: { params: { eventId: 
     </div>
   );
 }
-
-    
