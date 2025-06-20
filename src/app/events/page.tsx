@@ -1,22 +1,21 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { getEvents } from "@/lib/data-service";
-import type { Event } from "@/lib/definitions";
-import { PlusCircle, CalendarDays, Users, DollarSign, Edit, Eye } from "lucide-react";
+import { getEvents, getSeasons } from "@/lib/data-service"; // Added getSeasons
+import type { Event, Season } from "@/lib/definitions"; // Added Season
+import { PlusCircle, CalendarDays, Users, DollarSign, Edit, Eye, BarChart3 } from "lucide-react"; // Added BarChart3
 import Link from "next/link";
 import { cookies } from 'next/headers';
 
 const AUTH_COOKIE_NAME = 'app_session_active';
 
-// Placeholder EventCard component
-const EventCardPlaceholder = ({ event, isAuthenticated }: { event: Event, isAuthenticated: boolean }) => (
-  <Card className="hover:shadow-lg transition-shadow duration-300">
+const EventCard = ({ event, isAuthenticated, seasonName }: { event: Event, isAuthenticated: boolean, seasonName?: string }) => (
+  <Card className="hover:shadow-lg transition-shadow duration-300 flex flex-col">
     <CardHeader>
       <CardTitle className="font-headline text-xl">{event.name}</CardTitle>
       <CardDescription>{new Date(event.date).toLocaleDateString()}</CardDescription>
     </CardHeader>
-    <CardContent className="space-y-2">
+    <CardContent className="space-y-2 flex-grow">
       <div className="flex items-center text-sm text-muted-foreground">
         <DollarSign className="mr-2 h-4 w-4" />
         Buy-in: ${event.buyIn}
@@ -25,7 +24,13 @@ const EventCardPlaceholder = ({ event, isAuthenticated }: { event: Event, isAuth
         <Users className="mr-2 h-4 w-4" />
         Participants: {event.participants.length}
       </div>
-       <div className="flex items-center text-sm">
+      {seasonName && (
+        <div className="flex items-center text-sm text-muted-foreground">
+          <BarChart3 className="mr-2 h-4 w-4" />
+          Season: {seasonName}
+        </div>
+      )}
+       <div className="flex items-center text-sm pt-1">
         <span className={`px-2 py-1 text-xs rounded-full ${
             event.status === 'active' ? 'bg-green-100 text-green-700' :
             event.status === 'completed' ? 'bg-blue-100 text-blue-700' :
@@ -35,7 +40,7 @@ const EventCardPlaceholder = ({ event, isAuthenticated }: { event: Event, isAuth
         </span>
       </div>
     </CardContent>
-    <CardFooter className="flex justify-end gap-2">
+    <CardFooter className="flex justify-end gap-2 border-t pt-4 mt-auto">
       <Button variant="outline" size="sm" asChild title="View Event">
         <Link href={`/events/${event.id}`}>
           <Eye className="mr-1 h-4 w-4" /> View
@@ -56,7 +61,10 @@ const EventCardPlaceholder = ({ event, isAuthenticated }: { event: Event, isAuth
 export default async function EventsPage() {
   const cookieStore = cookies();
   const isAuthenticated = cookieStore.get(AUTH_COOKIE_NAME)?.value === 'true';
-  const events: Event[] = await getEvents();
+  const events: Event[] = (await getEvents()).sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  const seasons: Season[] = await getSeasons();
+  const seasonsMap = new Map(seasons.map(s => [s.id, s.name]));
+
 
   return (
     <div className="space-y-8">
@@ -90,9 +98,10 @@ export default async function EventsPage() {
         </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {events.map((event) => (
-            <EventCardPlaceholder key={event.id} event={event} isAuthenticated={isAuthenticated} />
-          ))}
+          {events.map((event) => {
+            const seasonName = event.seasonId ? seasonsMap.get(event.seasonId) : undefined;
+            return <EventCard key={event.id} event={event} isAuthenticated={isAuthenticated} seasonName={seasonName}/>;
+          })}
         </div>
       )}
     </div>

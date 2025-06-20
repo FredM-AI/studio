@@ -1,8 +1,8 @@
 
 import EventForm from '@/app/events/EventForm';
 import { updateEvent } from '@/app/events/actions';
-import { getEvents, getPlayers } from '@/lib/data-service';
-import type { Event, Player } from '@/lib/definitions';
+import { getEvents, getPlayers, getSeasons } from '@/lib/data-service'; // Added getSeasons
+import type { Event, Player, Season } from '@/lib/definitions'; // Added Season
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { ArrowLeft, Edit } from 'lucide-react';
@@ -17,6 +17,7 @@ async function getEvent(id: string): Promise<Event | undefined> {
 export default async function EditEventPage({ params }: { params: { eventId: string } }) {
   const event = await getEvent(params.eventId);
   const allPlayers: Player[] = await getPlayers();
+  const allSeasons: Season[] = await getSeasons(); // Fetch all seasons
 
   if (!event) {
     return (
@@ -42,7 +43,7 @@ export default async function EditEventPage({ params }: { params: { eventId: str
       </div>
     );
   }
-  
+
   return (
     <div className="space-y-6">
       <Button variant="outline" asChild>
@@ -53,7 +54,8 @@ export default async function EditEventPage({ params }: { params: { eventId: str
       <EventForm
         event={event}
         allPlayers={allPlayers}
-        action={updateEvent} // Pass the updateEvent action directly
+        allSeasons={allSeasons} // Pass seasons to the form
+        action={updateEvent}
         formTitle={`Edit Event: ${event.name}`}
         formDescription="Modify the details and results for this poker event."
         submitButtonText="Save Changes"

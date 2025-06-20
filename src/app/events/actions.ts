@@ -2,14 +2,12 @@
 'use server';
 
 import { z } from 'zod';
-import { db } from '@/lib/data-service'; 
-import { collection, doc, setDoc, getDoc, deleteDoc } from 'firebase/firestore';
+import { db } from '@/lib/data-service';
+import { doc, setDoc, getDoc, deleteDoc } from 'firebase/firestore';
 import type { Event, EventStatus } from '@/lib/definitions';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import type { EventFormState } from '@/lib/definitions';
-
-const EVENTS_COLLECTION = 'events';
 
 // Helper function to remove undefined properties from an object
 function cleanUndefinedProperties(obj: any): any {
@@ -31,6 +29,8 @@ const EventResultInputSchema = z.object({
   mysteryKoWon: z.coerce.number().int().nonnegative({ message: "Mystery KO won must be non-negative." }).optional().default(0),
 });
 
+const NO_SEASON_ID_VALUE = "NONE"; // Value for "No Season" option
+
 const EventFormSchema = z.object({
   id: z.string().optional(),
   name: z.string().min(3, { message: 'Event name must be at least 3 characters.' }),
@@ -41,6 +41,7 @@ const EventFormSchema = z.object({
   mysteryKo: z.coerce.number().int().nonnegative({ message: 'Mystery KO must be a non-negative integer.' }).optional(),
   maxPlayers: z.coerce.number().int().positive({ message: 'Max players must be a positive integer.' }).optional(),
   prizePoolTotal: z.coerce.number().int().nonnegative({ message: 'Prize pool total must be a non-negative integer.' }),
+  seasonId: z.string().optional(), // Optional season ID
   participantIds: z.preprocess(
     (val) => (typeof val === 'string' && val ? val.split(',').filter(id => id.trim() !== '') : Array.isArray(val) ? val : []),
     z.array(z.string()).optional().default([])
@@ -58,7 +59,6 @@ const EventFormSchema = z.object({
         });
         return z.NEVER;
       }
-      // Use a schema that matches EventResult (without eliminatedBy for now)
       const validatedResults = z.array(EventResultInputSchema).safeParse(parsed);
       if (!validatedResults.success) {
          ctx.addIssue({
@@ -129,8 +129,10 @@ export async function createEvent(prevState: EventFormState, formData: FormData)
 
   const data = validatedFields.data;
   const eventId = crypto.randomUUID();
+  const seasonIdValue = data.seasonId && data.seasonId !== NO_SEASON_ID_VALUE ? data.seasonId : undefined;
 
-  const eventDataForFirestore: Omit<Event, 'createdAt' | 'updatedAt'> & { createdAt?: string, updatedAt?: string } = {
+
+  const eventDataForFirestore: Omit<Event, 'createdAt' | 'updatedAt'> & { createdAt?: string, updatedAt?: string, seasonId?: string | null } = {
     id: eventId,
     name: data.name,
     date: new Date(data.date).toISOString(),
@@ -140,6 +142,7 @@ export async function createEvent(prevState: EventFormState, formData: FormData)
     mysteryKo: data.mysteryKo,
     maxPlayers: data.maxPlayers,
     status: data.status as EventStatus,
+    seasonId: seasonIdValue,
     prizePool: {
       total: data.prizePoolTotal,
       distributionType: 'automatic',
@@ -153,10 +156,9 @@ export async function createEvent(prevState: EventFormState, formData: FormData)
         rebuys: r.rebuys,
         bountiesWon: r.bountiesWon,
         mysteryKoWon: r.mysteryKoWon,
-        // eliminatedBy: undefined, // REMOVED: This was causing the "undefined" error
     })) || [],
   };
-  
+
   const finalEventPayload = {
       ...cleanUndefinedProperties(eventDataForFirestore),
       createdAt: new Date().toISOString(),
@@ -203,6 +205,9 @@ export async function updateEvent(prevState: EventFormState, formData: FormData)
     return { message: "Event ID is missing for update." };
   }
 
+  const seasonIdValue = data.seasonId && data.seasonId !== NO_SEASON_ID_VALUE ? data.seasonId : undefined;
+
+
   try {
     const eventRef = doc(db, EVENTS_COLLECTION, eventId);
     const eventSnap = await getDoc(eventRef);
@@ -212,7 +217,7 @@ export async function updateEvent(prevState: EventFormState, formData: FormData)
     }
     const existingEvent = eventSnap.data() as Event;
 
-    const eventDataToUpdate: Partial<Event> = {
+    const eventDataToUpdate: Partial<Event> & { seasonId?: string | null } = {
       name: data.name,
       date: new Date(data.date).toISOString(),
       buyIn: data.buyIn,
@@ -221,8 +226,9 @@ export async function updateEvent(prevState: EventFormState, formData: FormData)
       mysteryKo: data.mysteryKo,
       maxPlayers: data.maxPlayers,
       status: data.status as EventStatus,
+      seasonId: seasonIdValue,
       prizePool: {
-        ...existingEvent.prizePool, 
+        ...existingEvent.prizePool,
         total: data.prizePoolTotal,
       },
       participants: data.participantIds.filter(id => id.trim() !== ''),
@@ -233,10 +239,9 @@ export async function updateEvent(prevState: EventFormState, formData: FormData)
         rebuys: r.rebuys,
         bountiesWon: r.bountiesWon,
         mysteryKoWon: r.mysteryKoWon,
-        // eliminatedBy: undefined, // REMOVED: This was causing the "undefined" error
       })) || [],
     };
-    
+
     const finalEventPayload = {
         ...existingEvent,
         ...cleanUndefinedProperties(eventDataToUpdate),
@@ -263,7 +268,7 @@ export async function updateEvent(prevState: EventFormState, formData: FormData)
   revalidatePath(`/events/${eventId}`);
   revalidatePath(`/events/${eventId}/edit`);
   revalidatePath('/dashboard');
-  revalidatePath('/seasons');
+  revalidatePath('/seasons'); // Also revalidate seasons in case event association changes season stats
   redirect(`/events/${eventId}`);
 }
 
@@ -284,4 +289,3 @@ export async function deleteEvent(eventId: string): Promise<{ success: boolean; 
     return { success: false, message: 'Database Error: Failed to delete event.' };
   }
 }
-

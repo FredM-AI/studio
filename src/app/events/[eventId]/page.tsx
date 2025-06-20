@@ -1,28 +1,43 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { getEvents, getPlayers } from "@/lib/data-service";
-import type { Event, Player } from "@/lib/definitions";
-import { ArrowLeft, Edit, Users, DollarSign, CalendarDays, Trophy, Info, Tag, CheckCircle, XCircle, Trash2, Star, Gift } from "lucide-react";
+import { getEvents, getPlayers, getSeasons } from "@/lib/data-service"; // Added getSeasons
+import type { Event, Player, Season } from "@/lib/definitions"; // Added Season
+import { ArrowLeft, Edit, Users, DollarSign, CalendarDays, Trophy, Info, Tag, CheckCircle, XCircle, Trash2, Star, Gift, BarChart3 } from "lucide-react"; // Added BarChart3
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cookies } from 'next/headers';
-import DeleteEventButton from "./DeleteEventButton"; 
+import DeleteEventButton from "./DeleteEventButton";
 
 const AUTH_COOKIE_NAME = 'app_session_active';
 
-async function getEventDetails(id: string): Promise<{ event: Event | undefined, players: Player[] }> {
+async function getEventDetails(id: string): Promise<{ event: Event | undefined, players: Player[], seasons: Season[] }> {
   const events = await getEvents();
   const event = events.find(e => e.id === id);
   const players = await getPlayers();
-  return { event, players };
+  const seasons = await getSeasons();
+  return { event, players, seasons };
 }
+
+const getPlayerDisplayName = (player: Player | undefined): string => {
+  if (!player) return "Unknown Player";
+  if (player.nickname && player.nickname.trim() !== '') {
+    return player.nickname;
+  }
+  if (player.firstName) {
+    return `${player.firstName}${player.lastName ? ' ' + player.lastName.charAt(0) + '.' : ''}`;
+  }
+  if (player.lastName) {
+    return player.lastName;
+  }
+  return "Unnamed";
+};
 
 export default async function EventDetailsPage({ params }: { params: { eventId: string } }) {
   const cookieStore = cookies();
   const isAuthenticated = cookieStore.get(AUTH_COOKIE_NAME)?.value === 'true';
-  const { event, players: allPlayers } = await getEventDetails(params.eventId);
+  const { event, players: allPlayers, seasons: allSeasons } = await getEventDetails(params.eventId);
 
   if (!event) {
     return (
@@ -49,21 +64,7 @@ export default async function EventDetailsPage({ params }: { params: { eventId: 
     );
   }
 
-  const getPlayerDisplayName = (playerId: string) => {
-    const player = allPlayers.find(p => p.id === playerId);
-    if (!player) return "Unknown Player";
-    if (player.nickname && player.nickname.trim() !== '') {
-      return player.nickname;
-    }
-    if (player.firstName) {
-      return `${player.firstName}${player.lastName ? ' ' + player.lastName.charAt(0) + '.' : ''}`;
-    }
-    if (player.lastName) {
-      return player.lastName;
-    }
-    return "Unnamed";
-  };
-  
+  const linkedSeason = event.seasonId ? allSeasons.find(s => s.id === event.seasonId) : undefined;
   const sortedResults = event.results.sort((a, b) => a.position - b.position);
   const rebuysActive = event.rebuyPrice !== undefined && event.rebuyPrice > 0;
 
@@ -82,6 +83,11 @@ export default async function EventDetailsPage({ params }: { params: { eventId: 
               <CardDescription className="text-lg text-muted-foreground">
                 {new Date(event.date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
               </CardDescription>
+              {linkedSeason && (
+                <Link href={`/seasons/${linkedSeason.id}`} className="text-sm text-primary hover:underline flex items-center mt-1">
+                  <BarChart3 className="mr-1.5 h-4 w-4" /> Part of: {linkedSeason.name}
+                </Link>
+              )}
             </div>
             {isAuthenticated && (
               <div className="flex flex-col sm:flex-row gap-2 mt-4 md:mt-0">
@@ -117,13 +123,13 @@ export default async function EventDetailsPage({ params }: { params: { eventId: 
             </div>
             {(event.bounties !== undefined && event.bounties > 0) && (
                 <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground flex items-center"><Star className="mr-2 h-4 w-4 text-yellow-500"/>Bounty Value (per entry):</span>
+                    <span className="text-muted-foreground flex items-center"><Star className="mr-2 h-4 w-4 text-yellow-500"/>Bounty Value (per entry/rebuy):</span>
                     <span className="font-medium">${event.bounties}</span>
                 </div>
             )}
             {(event.mysteryKo !== undefined && event.mysteryKo > 0) && (
                 <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground flex items-center"><Gift className="mr-2 h-4 w-4 text-purple-500"/>Mystery KO Value (per entry):</span>
+                    <span className="text-muted-foreground flex items-center"><Gift className="mr-2 h-4 w-4 text-purple-500"/>Mystery KO Value (per entry/rebuy):</span>
                     <span className="font-medium">${event.mysteryKo}</span>
                 </div>
             )}
@@ -133,11 +139,11 @@ export default async function EventDetailsPage({ params }: { params: { eventId: 
             </div>
             <div className="flex items-center justify-between text-sm">
               <span className="text-muted-foreground flex items-center"><CalendarDays className="mr-2 h-4 w-4"/>Status:</span>
-              <Badge 
+              <Badge
                 variant={
-                  event.status === 'completed' ? 'default' : 
+                  event.status === 'completed' ? 'default' :
                   event.status === 'active' ? 'secondary' :
-                  event.status === 'cancelled' ? 'destructive' : 
+                  event.status === 'cancelled' ? 'destructive' :
                   'outline'
                 }
                 className={
@@ -157,7 +163,7 @@ export default async function EventDetailsPage({ params }: { params: { eventId: 
                   {event.participants.map(playerId => (
                     <li key={playerId} className="text-sm p-1 hover:bg-muted/50 rounded-md">
                       <Link href={`/players/${playerId}`} className="hover:underline">
-                        {getPlayerDisplayName(playerId)}
+                        {getPlayerDisplayName(allPlayers.find(p => p.id === playerId))}
                       </Link>
                     </li>
                   ))}
@@ -167,7 +173,7 @@ export default async function EventDetailsPage({ params }: { params: { eventId: 
               <p className="text-sm text-muted-foreground">No participants registered for this event yet.</p>
             )}
           </div>
-          
+
           {event.status === 'completed' && sortedResults.length > 0 && (
             <div className="md:col-span-2 space-y-4 pt-4 border-t mt-4">
               <h3 className="font-headline text-xl text-primary flex items-center"><Trophy className="mr-2 h-5 w-5"/>Results</h3>
@@ -189,21 +195,21 @@ export default async function EventDetailsPage({ params }: { params: { eventId: 
                       const prizeNum = result.prize || 0;
                       const bountiesWonNum = result.bountiesWon || 0;
                       const mysteryKoWonNum = result.mysteryKoWon || 0;
-                      
+
                       const mainBuyInNum = event.buyIn || 0;
                       const eventBountyValue = event.bounties || 0;
                       const eventMysteryKoValue = event.mysteryKo || 0;
                       const rebuysNum = result.rebuys || 0;
                       const rebuyPriceNum = event.rebuyPrice || 0;
-                      
+
                       const costOfInitialEntry = mainBuyInNum + eventBountyValue + eventMysteryKoValue;
                       let costOfAllRebuys = 0;
-                      if (rebuysNum > 0 && rebuyPriceNum > 0) { // Rebuys only if rebuyPrice is set
+                      if (rebuysNum > 0) {
                           const costOfOneFullRebuy = rebuyPriceNum + eventBountyValue + eventMysteryKoValue;
                           costOfAllRebuys = rebuysNum * costOfOneFullRebuy;
                       }
                       const totalPlayerInvestment = costOfInitialEntry + costOfAllRebuys;
-                      
+
                       const netResult = prizeNum + bountiesWonNum + mysteryKoWonNum - totalPlayerInvestment;
 
                       return (
@@ -211,7 +217,7 @@ export default async function EventDetailsPage({ params }: { params: { eventId: 
                           <td className="p-2">{result.position}</td>
                           <td className="p-2">
                             <Link href={`/players/${result.playerId}`} className="hover:underline">
-                              {getPlayerDisplayName(result.playerId)}
+                              {getPlayerDisplayName(allPlayers.find(p => p.id === result.playerId))}
                             </Link>
                           </td>
                           <td className="p-2 text-center">{result.rebuys ?? 0}</td>
@@ -247,5 +253,3 @@ export default async function EventDetailsPage({ params }: { params: { eventId: 
     </div>
   );
 }
-
-    

@@ -53,7 +53,7 @@ export type Event = {
   mysteryKo?: number; // Value of a single mystery KO for the event
   maxPlayers?: number; // Made optional
   status: EventStatus;
-  seasonId?: string;
+  seasonId?: string | null; // Changed to allow null for no season
   prizePool: {
     total: number;
     distributionType: "automatic" | "custom";
@@ -99,13 +99,14 @@ export type EventFormState = {
     rebuyPrice?: string[];
     bounties?: string[];
     mysteryKo?: string[];
-    maxPlayers?: string[]; 
+    maxPlayers?: string[];
     prizePoolTotal?: string[];
     participantIds?: string[];
     status?: string[];
-    results?: string[]; 
-    resultsJson?: string[]; 
-    _form?: string[]; 
+    seasonId?: string[]; // Added seasonId for form errors
+    results?: string[];
+    resultsJson?: string[];
+    _form?: string[];
   };
   message?: string | null;
 };
@@ -113,12 +114,12 @@ export type EventFormState = {
 // Helper type for EventForm to manage results input
 export type EventResultInput = {
   playerId: string;
-  playerName: string; 
-  position: string; 
-  prize: string;    
+  playerName: string;
+  position: string;
+  prize: string;
   rebuys: string;
-  bountiesWon: string; // New
-  mysteryKoWon: string; // New
+  bountiesWon: string;
+  mysteryKoWon: string;
 };
 
 // Type for EventForm to use in useActionState
@@ -132,7 +133,7 @@ export type PlayerFormState = {
     email?: string[];
     phone?: string[];
     avatar?: string[];
-    _form?: string[]; 
+    _form?: string[];
   };
   message?: string | null;
 };
@@ -153,7 +154,7 @@ export type LoginFormState = {
   errors?: {
     username?: string[];
     password?: string[];
-    _form?: string[]; 
+    _form?: string[];
   };
   message?: string | null;
 };
