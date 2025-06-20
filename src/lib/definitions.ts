@@ -47,6 +47,8 @@ export type Event = {
   date: string; // ISO Date string
   buyIn: number;
   rebuyPrice?: number;
+  bounties?: number; // New field
+  mysteryKo?: number; // New field
   maxPlayers?: number; // Made optional
   status: EventStatus;
   seasonId?: string;
@@ -93,6 +95,8 @@ export type EventFormState = {
     date?: string[];
     buyIn?: string[];
     rebuyPrice?: string[];
+    bounties?: string[];
+    mysteryKo?: string[];
     maxPlayers?: string[]; // Kept for potential future use if field is re-added
     prizePoolTotal?: string[];
     participantIds?: string[];

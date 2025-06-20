@@ -12,7 +12,7 @@ import { DatePicker } from '@/components/ui/date-picker';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Trophy, PlusCircle, MinusCircle, Users, DollarSign, CalendarDays, Settings, Info, Repeat } from 'lucide-react';
+import { Trophy, PlusCircle, MinusCircle, Users, DollarSign, CalendarDays, Settings, Info, Repeat, Star, Gift } from 'lucide-react';
 import Link from 'next/link';
 import { eventStatuses } from '@/lib/definitions';
 
@@ -46,12 +46,17 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
   const [selectedDate, setSelectedDate] = React.useState<Date | undefined>(undefined);
   const [currentStatus, setCurrentStatus] = React.useState<EventStatus>(event?.status || 'draft');
   
-  // Initialize with '20' for new events, otherwise use event data or '0'
   const [buyInValue, setBuyInValue] = React.useState<string>(
     event ? (event.buyIn?.toString() ?? '0') : '20'
   );
   const [rebuyPrice, setRebuyPrice] = React.useState<string>(
     event ? (event.rebuyPrice?.toString() ?? '0') : '20'
+  );
+  const [bountiesValue, setBountiesValue] = React.useState<string>(
+    event?.bounties?.toString() || '0'
+  );
+  const [mysteryKoValue, setMysteryKoValue] = React.useState<string>(
+    event?.mysteryKo?.toString() || '0'
   );
   const [totalPrizePoolValue, setTotalPrizePoolValue] = React.useState<string>(
     event?.prizePool.total?.toString() || '0'
@@ -320,7 +325,7 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
 
           <div className="space-y-4 p-4 border rounded-lg shadow-sm">
              <h3 className="font-headline text-lg flex items-center"><Settings className="mr-2 h-5 w-5 text-primary" />Event Configuration</h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               <div>
                 <Label htmlFor="buyIn">Buy-in ($)</Label>
                 <Input 
@@ -370,6 +375,38 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
                   placeholder="Auto-calculé"
                 />
                 {state.errors?.prizePoolTotal && <p id="prizePoolTotal-error" className="text-sm text-destructive mt-1">{state.errors.prizePoolTotal.join(', ')}</p>}
+              </div>
+              <div>
+                <Label htmlFor="bounties" className="flex items-center"><Star className="mr-1 h-4 w-4 text-yellow-500" />Bounties ($)</Label>
+                <Input
+                  id="bounties"
+                  name="bounties"
+                  type="number"
+                  step="1"
+                  min="0"
+                  placeholder="0"
+                  value={bountiesValue}
+                  onChange={(e) => setBountiesValue(e.target.value)}
+                  aria-describedby="bounties-error"
+                  className="h-9"
+                />
+                {state.errors?.bounties && <p id="bounties-error" className="text-sm text-destructive mt-1">{state.errors.bounties.join(', ')}</p>}
+              </div>
+              <div>
+                <Label htmlFor="mysteryKo" className="flex items-center"><Gift className="mr-1 h-4 w-4 text-purple-500" />Mystery KO ($)</Label>
+                <Input
+                  id="mysteryKo"
+                  name="mysteryKo"
+                  type="number"
+                  step="1"
+                  min="0"
+                  placeholder="0"
+                  value={mysteryKoValue}
+                  onChange={(e) => setMysteryKoValue(e.target.value)}
+                  aria-describedby="mysteryKo-error"
+                  className="h-9"
+                />
+                {state.errors?.mysteryKo && <p id="mysteryKo-error" className="text-sm text-destructive mt-1">{state.errors.mysteryKo.join(', ')}</p>}
               </div>
             </div>
           </div>

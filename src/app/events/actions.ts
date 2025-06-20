@@ -21,6 +21,8 @@ const EventFormSchema = z.object({
   date: z.string().min(1, { message: 'Date is required.' }),
   buyIn: z.coerce.number().int().positive({ message: 'Buy-in must be a positive integer.' }),
   rebuyPrice: z.coerce.number().int().nonnegative({ message: 'Rebuy price must be a non-negative integer.' }).optional(),
+  bounties: z.coerce.number().int().nonnegative({ message: 'Bounties must be a non-negative integer.' }).optional(),
+  mysteryKo: z.coerce.number().int().nonnegative({ message: 'Mystery KO must be a non-negative integer.' }).optional(),
   maxPlayers: z.coerce.number().int().positive({ message: 'Max players must be a positive integer.' }).optional(),
   prizePoolTotal: z.coerce.number().int().nonnegative({ message: 'Prize pool total must be a non-negative integer.' }),
   participantIds: z.preprocess(
@@ -116,6 +118,8 @@ export async function createEvent(prevState: EventFormState, formData: FormData)
     date: new Date(data.date).toISOString(),
     buyIn: data.buyIn,
     rebuyPrice: data.rebuyPrice,
+    bounties: data.bounties,
+    mysteryKo: data.mysteryKo,
     maxPlayers: data.maxPlayers, 
     status: data.status as EventStatus,
     prizePool: {
@@ -183,6 +187,8 @@ export async function updateEvent(prevState: EventFormState, formData: FormData)
       date: new Date(data.date).toISOString(),
       buyIn: data.buyIn,
       rebuyPrice: data.rebuyPrice,
+      bounties: data.bounties,
+      mysteryKo: data.mysteryKo,
       maxPlayers: data.maxPlayers, 
       status: data.status as EventStatus,
       prizePool: {

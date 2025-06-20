@@ -3,12 +3,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { getEvents, getPlayers } from "@/lib/data-service";
 import type { Event, Player } from "@/lib/definitions";
-import { ArrowLeft, Edit, Users, DollarSign, CalendarDays, Trophy, Info, Tag, CheckCircle, XCircle, Trash2 } from "lucide-react";
+import { ArrowLeft, Edit, Users, DollarSign, CalendarDays, Trophy, Info, Tag, CheckCircle, XCircle, Trash2, Star, Gift } from "lucide-react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cookies } from 'next/headers';
-import DeleteEventButton from "./DeleteEventButton"; // Import the new component
+import DeleteEventButton from "./DeleteEventButton"; 
 
 const AUTH_COOKIE_NAME = 'app_session_active';
 
@@ -105,6 +105,18 @@ export default async function EventDetailsPage({ params }: { params: { eventId: 
               </span>
               <span className="font-medium">{rebuysActive ? `Yes (Price: $${event.rebuyPrice})` : 'No'}</span>
             </div>
+            {(event.bounties !== undefined && event.bounties > 0) && (
+                <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground flex items-center"><Star className="mr-2 h-4 w-4 text-yellow-500"/>Bounties:</span>
+                    <span className="font-medium">${event.bounties}</span>
+                </div>
+            )}
+            {(event.mysteryKo !== undefined && event.mysteryKo > 0) && (
+                <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground flex items-center"><Gift className="mr-2 h-4 w-4 text-purple-500"/>Mystery KO:</span>
+                    <span className="font-medium">${event.mysteryKo}</span>
+                </div>
+            )}
             <div className="flex items-center justify-between text-sm">
               <span className="text-muted-foreground flex items-center"><DollarSign className="mr-2 h-4 w-4"/>Total Prize Pool:</span>
               <span className="font-medium">${event.prizePool.total}</span>
