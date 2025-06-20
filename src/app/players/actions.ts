@@ -41,7 +41,7 @@ export async function createPlayer(prevState: PlayerFormState, formData: FormDat
     if (!querySnapshot.empty) {
       return {
         errors: { email: ['Email already exists.'] },
-        message: 'Player creation failed.',
+        message: 'Player creation failed due to duplicate email.',
       };
     }
 
@@ -70,9 +70,17 @@ export async function createPlayer(prevState: PlayerFormState, formData: FormDat
 
     await setDoc(doc(db, PLAYERS_COLLECTION, playerId), newPlayer);
 
-  } catch (error) {
+  } catch (error: any) {
     console.error("Firestore Error creating player:", error);
-    return { message: 'Database Error: Failed to create player.' };
+    let errorMessage = 'Database Error: Failed to create player.';
+    if (error && error.message) {
+      // Append Firestore's error message if available
+      errorMessage += ` Details: ${error.message}`;
+    }
+    if (error && error.code) {
+      errorMessage += ` (Code: ${error.code})`;
+    }
+    return { message: errorMessage };
   }
   
   revalidatePath('/players');
@@ -111,7 +119,7 @@ export async function updatePlayer(prevState: PlayerFormState, formData: FormDat
       if (duplicateFound) {
         return {
           errors: { email: ['Email already exists for another player.'] },
-          message: 'Player update failed.',
+          message: 'Player update failed due to duplicate email.',
         };
       }
     }
@@ -125,7 +133,7 @@ export async function updatePlayer(prevState: PlayerFormState, formData: FormDat
     const existingPlayer = playerSnap.data() as Player;
 
     const updatedPlayer: Player = {
-      ...existingPlayer, // Preserve existing fields like stats and createdAt
+      ...existingPlayer, 
       firstName: data.firstName,
       lastName: data.lastName,
       nickname: data.nickname,
@@ -136,11 +144,18 @@ export async function updatePlayer(prevState: PlayerFormState, formData: FormDat
       updatedAt: new Date().toISOString(),
     };
 
-    await setDoc(playerRef, updatedPlayer); // setDoc will overwrite or create if not exists
+    await setDoc(playerRef, updatedPlayer); 
 
-  } catch (error) {
+  } catch (error: any) {
     console.error("Firestore Error updating player:", error);
-    return { message: 'Database Error: Failed to update player.' };
+    let errorMessage = 'Database Error: Failed to update player.';
+    if (error && error.message) {
+      errorMessage += ` Details: ${error.message}`;
+    }
+    if (error && error.code) {
+      errorMessage += ` (Code: ${error.code})`;
+    }
+    return { message: errorMessage };
   }
 
   revalidatePath('/players');
@@ -155,17 +170,19 @@ export async function deletePlayer(playerId: string): Promise<{ message?: string
   }
   try {
     const playerRef = doc(db, PLAYERS_COLLECTION, playerId);
-    // Optional: Check if document exists before deleting
-    // const playerSnap = await getDoc(playerRef);
-    // if (!playerSnap.exists()) {
-    //   return { message: 'Player not found or already deleted.', success: false };
-    // }
     await deleteDoc(playerRef);
 
     revalidatePath('/players');
     return { message: 'Player deleted successfully.', success: true };
-  } catch (error) {
+  } catch (error: any) {
     console.error('Delete Player Error:', error);
-    return { message: 'Database Error: Failed to delete player.', success: false };
+    let errorMessage = 'Database Error: Failed to delete player.';
+    if (error && error.message) {
+      errorMessage += ` Details: ${error.message}`;
+    }
+    if (error && error.code) {
+      errorMessage += ` (Code: ${error.code})`;
+    }
+    return { message: errorMessage, success: false };
   }
 }
