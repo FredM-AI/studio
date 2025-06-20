@@ -171,23 +171,38 @@ export default async function EventDetailsPage({ params }: { params: { eventId: 
                       <th className="p-2 text-right font-semibold">Prize ($)</th>
                       <th className="p-2 text-right font-semibold">Bounties ($)</th>
                       <th className="p-2 text-right font-semibold">MSKO ($)</th>
+                      <th className="p-2 text-right font-semibold">Net ($)</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {sortedResults.map((result, index) => (
-                      <tr key={index} className="border-b last:border-b-0 hover:bg-muted/50">
-                        <td className="p-2">{result.position}</td>
-                        <td className="p-2">
-                           <Link href={`/players/${result.playerId}`} className="hover:underline">
-                            {getPlayerName(result.playerId)}
-                           </Link>
-                        </td>
-                        <td className="p-2 text-center">{result.rebuys ?? 0}</td>
-                        <td className="p-2 text-right">${result.prize}</td>
-                        <td className="p-2 text-right">${result.bountiesWon || 0}</td>
-                        <td className="p-2 text-right">${result.mysteryKoWon || 0}</td>
-                      </tr>
-                    ))}
+                    {sortedResults.map((result, index) => {
+                      const prizeNum = result.prize || 0;
+                      const bountiesWonNum = result.bountiesWon || 0;
+                      const mysteryKoWonNum = result.mysteryKoWon || 0;
+                      const buyInNum = event.buyIn || 0;
+                      const rebuysNum = result.rebuys || 0;
+                      const rebuyPriceNum = event.rebuyPrice || 0;
+                      
+                      const netResult = prizeNum + bountiesWonNum + mysteryKoWonNum - (buyInNum + (rebuysNum * rebuyPriceNum));
+
+                      return (
+                        <tr key={index} className="border-b last:border-b-0 hover:bg-muted/50">
+                          <td className="p-2">{result.position}</td>
+                          <td className="p-2">
+                            <Link href={`/players/${result.playerId}`} className="hover:underline">
+                              {getPlayerName(result.playerId)}
+                            </Link>
+                          </td>
+                          <td className="p-2 text-center">{result.rebuys ?? 0}</td>
+                          <td className="p-2 text-right">${result.prize}</td>
+                          <td className="p-2 text-right">${result.bountiesWon || 0}</td>
+                          <td className="p-2 text-right">${result.mysteryKoWon || 0}</td>
+                          <td className={`p-2 text-right font-medium ${netResult >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                            ${netResult}
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
@@ -211,3 +226,5 @@ export default async function EventDetailsPage({ params }: { params: { eventId: 
     </div>
   );
 }
+
+    
