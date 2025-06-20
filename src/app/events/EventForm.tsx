@@ -204,7 +204,7 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
 
   React.useEffect(() => {
     const prizePoolNum = parseInt(totalPrizePoolValue) || 0;
-    const buyInNum = parseInt(buyInValue) || 0;
+    const buyInNum = parseInt(buyInValue) || 0; // This is the main prize pool part of buy-in
     const numParticipants = enrichedParticipants.length;
 
     setPositionalResults(prevResults => {
@@ -219,24 +219,24 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
       let thirdPrize = 0;
       let fourthPrize = 0;
 
-      if (numParticipants < 14) {
+      if (numParticipants < 14) { // Less than 14 players
         if (numParticipants >= 1) firstPrize = Math.round(prizePoolNum * 0.50);
         if (numParticipants >= 2) secondPrize = Math.round(prizePoolNum * 0.30);
         if (numParticipants >= 3) thirdPrize = Math.round(prizePoolNum * 0.20);
-      } else { 
-        if (buyInNum > 0) { 
-          if (prizePoolNum >= buyInNum) {
-            fourthPrize = buyInNum; 
+      } else { // 14 or more players
+        if (buyInNum > 0) { // Check if buyIn (main part) is set
+          if (prizePoolNum >= buyInNum) { // Ensure pool can cover the buy-in refund
+            fourthPrize = buyInNum; // 4th place gets their main buy-in back
             const remainingPool = prizePoolNum - fourthPrize;
             if (remainingPool > 0) {
               firstPrize = Math.round(remainingPool * 0.50);
               secondPrize = Math.round(remainingPool * 0.30);
               thirdPrize = Math.round(remainingPool * 0.20);
             }
-          } else { 
+          } else { // Pool is less than one main buy-in, 4th gets all of it
             fourthPrize = prizePoolNum; 
           }
-        } else { 
+        } else { // If main buy-in is 0, fall back to 3-place distribution
           if (numParticipants >= 1) firstPrize = Math.round(prizePoolNum * 0.50);
           if (numParticipants >= 2) secondPrize = Math.round(prizePoolNum * 0.30);
           if (numParticipants >= 3) thirdPrize = Math.round(prizePoolNum * 0.20);
@@ -247,15 +247,17 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
         const index = newDistributedResults.findIndex(r => r.position === pos);
         if (index !== -1 && amount > 0) {
           newDistributedResults[index].prize = amount.toString();
-        } else if (index !== -1) { 
+        } else if (index !== -1) { // Ensure prize is '0' if amount is not positive
           newDistributedResults[index].prize = '0';
         }
       };
       
+      // Assign prizes based on number of participants and calculated amounts
       if (numParticipants >= 1) assignPrize(1, firstPrize); else assignPrize(1,0);
       if (numParticipants >= 2) assignPrize(2, secondPrize); else assignPrize(2,0);
       if (numParticipants >= 3) assignPrize(3, thirdPrize); else assignPrize(3,0);
       if (numParticipants >= 4 && fourthPrize > 0) assignPrize(4, fourthPrize); else assignPrize(4,0);
+
 
       return newDistributedResults;
     });
@@ -358,7 +360,7 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
              <h3 className="font-headline text-lg flex items-center"><Settings className="mr-2 h-5 w-5 text-primary" />Event Configuration</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               <div>
-                <Label htmlFor="buyIn">Buy-in ($)</Label>
+                <Label htmlFor="buyIn">Buy-in (Main Prize Pool) ($)</Label>
                 <Input 
                   id="buyIn" 
                   name="buyIn" 
@@ -420,7 +422,7 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
                   onChange={(e) => setBountiesValue(e.target.value)}
                   aria-describedby="bounties-error"
                   className="h-9"
-                  title="Value of a single bounty for this event"
+                  title="Value of a single bounty for this event. Adds to total player cost."
                 />
                 {state.errors?.bounties && <p id="bounties-error" className="text-sm text-destructive mt-1">{state.errors.bounties.join(', ')}</p>}
               </div>
@@ -437,7 +439,7 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
                   onChange={(e) => setMysteryKoValue(e.target.value)}
                   aria-describedby="mysteryKo-error"
                   className="h-9"
-                  title="Value of a single Mystery KO for this event"
+                  title="Value of a single Mystery KO for this event. Adds to total player cost."
                 />
                 {state.errors?.mysteryKo && <p id="mysteryKo-error" className="text-sm text-destructive mt-1">{state.errors.mysteryKo.join(', ')}</p>}
               </div>
@@ -533,13 +535,20 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
                       const prizeNum = parseInt(row.prize) || 0;
                       const bountiesWonNum = parseInt(row.bountiesWon) || 0;
                       const mysteryKoWonNum = parseInt(row.mysteryKoWon) || 0;
-                      const buyInNum = parseInt(buyInValue) || 0;
+                      
+                      const mainBuyInNum = parseInt(buyInValue) || 0;
+                      const eventBountyValueNum = parseInt(bountiesValue) || 0; // Event-level bounty
+                      const eventMysteryKoValueNum = parseInt(mysteryKoValue) || 0; // Event-level Mystery KO
                       const rebuysNum = participant ? (parseInt(participant.rebuys) || 0) : 0;
                       const rebuyPriceNum = parseInt(rebuyPrice) || 0;
+                      
                       let calculatedFinalResult = 0;
 
                       if (row.playerId && row.playerId !== NO_PLAYER_SELECTED_VALUE) {
-                        calculatedFinalResult = prizeNum + bountiesWonNum + mysteryKoWonNum - (buyInNum + (rebuysNum * rebuyPriceNum));
+                        const costOfInitialEntry = mainBuyInNum + eventBountyValueNum + eventMysteryKoValueNum;
+                        const costOfRebuys = rebuysNum * rebuyPriceNum;
+                        const totalPlayerInvestment = costOfInitialEntry + costOfRebuys;
+                        calculatedFinalResult = prizeNum + bountiesWonNum + mysteryKoWonNum - totalPlayerInvestment;
                       }
                       const finalResultDisplay = calculatedFinalResult.toString();
 

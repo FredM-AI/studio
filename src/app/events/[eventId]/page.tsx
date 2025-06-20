@@ -99,7 +99,7 @@ export default async function EventDetailsPage({ params }: { params: { eventId: 
           <div className="space-y-4">
             <h3 className="font-headline text-xl text-primary flex items-center"><Info className="mr-2 h-5 w-5"/>Details</h3>
             <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground flex items-center"><DollarSign className="mr-2 h-4 w-4"/>Buy-in:</span>
+              <span className="text-muted-foreground flex items-center"><DollarSign className="mr-2 h-4 w-4"/>Buy-in (Main Pool):</span>
               <span className="font-medium">${event.buyIn}</span>
             </div>
             {event.maxPlayers && (
@@ -189,11 +189,18 @@ export default async function EventDetailsPage({ params }: { params: { eventId: 
                       const prizeNum = result.prize || 0;
                       const bountiesWonNum = result.bountiesWon || 0;
                       const mysteryKoWonNum = result.mysteryKoWon || 0;
-                      const buyInNum = event.buyIn || 0;
+                      
+                      const mainBuyInNum = event.buyIn || 0;
+                      const eventBountyValue = event.bounties || 0;
+                      const eventMysteryKoValue = event.mysteryKo || 0;
                       const rebuysNum = result.rebuys || 0;
                       const rebuyPriceNum = event.rebuyPrice || 0;
                       
-                      const netResult = prizeNum + bountiesWonNum + mysteryKoWonNum - (buyInNum + (rebuysNum * rebuyPriceNum));
+                      const costOfInitialEntry = mainBuyInNum + eventBountyValue + eventMysteryKoValue;
+                      const costOfRebuys = rebuysNum * rebuyPriceNum;
+                      const totalPlayerInvestment = costOfInitialEntry + costOfRebuys;
+                      
+                      const netResult = prizeNum + bountiesWonNum + mysteryKoWonNum - totalPlayerInvestment;
 
                       return (
                         <tr key={index} className="border-b last:border-b-0 hover:bg-muted/50">

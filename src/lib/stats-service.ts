@@ -26,7 +26,7 @@ export interface SeasonStats {
   completedSeasonEvents: Event[];
 }
 
-function getPlayerName(player: Player | undefined): string {
+function getPlayerDisplayName(player: Player | undefined): string {
   if (!player) return "Unknown Player";
   if (player.nickname && player.nickname.trim() !== '') {
     return player.nickname;
@@ -64,7 +64,7 @@ export async function calculatePlayerOverallStats(
   let wins = 0;
   let finalTables = 0;
   let totalWinnings = 0;
-  let totalBuyIns = 0;
+  let totalBuyInsCalculated = 0; // Renamed to avoid confusion with PlayerStats.totalBuyIns
   const positions: number[] = [];
 
   const completedEvents = allEvents.filter(event => event.status === 'completed');
@@ -74,17 +74,20 @@ export async function calculatePlayerOverallStats(
     if (!participated) continue;
 
     gamesPlayed++;
-    const buyIn = event.buyIn || 0;
+    
+    const mainBuyIn = event.buyIn || 0;
+    const eventBountyValue = event.bounties || 0;
+    const eventMysteryKoValue = event.mysteryKo || 0;
     const rebuyPrice = event.rebuyPrice || 0;
+    
     let playerRebuysInEvent = 0;
-
     const playerResultEntry = event.results.find(r => r.playerId === playerId);
 
     if (playerResultEntry) {
       playerRebuysInEvent = playerResultEntry.rebuys || 0;
-      totalWinnings += playerResultEntry.prize; // Assumed prize is net prize, not including bounty/msko
-      totalWinnings += playerResultEntry.bountiesWon || 0;
-      totalWinnings += playerResultEntry.mysteryKoWon || 0;
+      totalWinnings += (playerResultEntry.prize || 0);
+      totalWinnings += (playerResultEntry.bountiesWon || 0);
+      totalWinnings += (playerResultEntry.mysteryKoWon || 0);
       positions.push(playerResultEntry.position);
 
       if (playerResultEntry.position === 1) {
@@ -101,7 +104,10 @@ export async function calculatePlayerOverallStats(
         finalTables++;
       }
     }
-    totalBuyIns += buyIn + (playerRebuysInEvent * rebuyPrice);
+    
+    const costOfInitialEntry = mainBuyIn + eventBountyValue + eventMysteryKoValue;
+    const costOfRebuys = playerRebuysInEvent * rebuyPrice;
+    totalBuyInsCalculated += costOfInitialEntry + costOfRebuys;
   }
 
   const bestPosition = positions.length > 0 ? Math.min(...positions) : null;
@@ -112,7 +118,7 @@ export async function calculatePlayerOverallStats(
     wins,
     finalTables,
     totalWinnings,
-    totalBuyIns,
+    totalBuyIns: totalBuyInsCalculated, // Use the calculated value
     bestPosition,
     averagePosition,
   };
@@ -147,7 +153,9 @@ export async function calculateSeasonStats(
   });
 
   for (const event of completedSeasonEvents) {
-    const buyInForEvent = event.buyIn || 0;
+    const mainBuyInForEvent = event.buyIn || 0;
+    const eventBountyValue = event.bounties || 0;
+    const eventMysteryKoValue = event.mysteryKo || 0;
     const rebuyPriceForEvent = event.rebuyPrice || 0;
     const participantIdsInEvent = new Set(event.participants);
 
@@ -169,8 +177,11 @@ export async function calculateSeasonStats(
       const bountiesWon = playerResultEntry?.bountiesWon || 0;
       const mysteryKoWon = playerResultEntry?.mysteryKoWon || 0;
       
-      const costForEvent = buyInForEvent + (rebuysCount * rebuyPriceForEvent);
-      const eventNetResult = prizeWon + bountiesWon + mysteryKoWon - costForEvent;
+      const costOfInitialEntry = mainBuyInForEvent + eventBountyValue + eventMysteryKoValue;
+      const costOfRebuys = rebuysCount * rebuyPriceForEvent;
+      const totalPlayerInvestmentForEvent = costOfInitialEntry + costOfRebuys;
+      
+      const eventNetResult = prizeWon + bountiesWon + mysteryKoWon - totalPlayerInvestmentForEvent;
 
       if (summary.eventResults[event.id] !== undefined) { 
         summary.totalFinalResult -= summary.eventResults[event.id]!; 
@@ -201,7 +212,7 @@ export async function calculateSeasonStats(
       const player = allPlayers.find((p) => p.id === playerId);
       leaderboard.push({
         playerId,
-        playerName: getPlayerName(player),
+        playerName: getPlayerDisplayName(player),
         eventResults: summary.eventResults,
         totalFinalResult: summary.totalFinalResult,
       });
