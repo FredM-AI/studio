@@ -2,10 +2,14 @@
 'use server';
 
 import { z } from 'zod';
-import { getSeasons, saveSeasons, getEvents, saveEvents } from '@/lib/data-service';
+import { db } from '@/lib/data-service'; // Import db
+import { collection, doc, setDoc, getDoc, getDocs, writeBatch, query, where } from 'firebase/firestore';
 import type { Season, SeasonFormState, Event } from '@/lib/definitions';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
+
+const SEASONS_COLLECTION = 'seasons';
+const EVENTS_COLLECTION = 'events';
 
 const SeasonSchema = z.object({
   id: z.string().optional(),
@@ -39,42 +43,42 @@ export async function createSeason(prevState: SeasonFormState, formData: FormDat
   }
 
   const data = validatedFields.data;
+  const seasonId = crypto.randomUUID();
 
-  const newSeason: Season = {
-    id: crypto.randomUUID(),
+  const newSeasonData: Omit<Season, 'leaderboard'> = { // Leaderboard is calculated, not stored directly
+    id: seasonId,
     name: data.name,
     startDate: new Date(data.startDate).toISOString(),
     endDate: data.endDate ? new Date(data.endDate).toISOString() : undefined,
     isActive: data.isActive,
-    leaderboard: [], // Leaderboard will be calculated later
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   };
 
   try {
-    const seasons = await getSeasons();
-    seasons.push(newSeason);
-    await saveSeasons(seasons);
+    const seasonRef = doc(db, SEASONS_COLLECTION, seasonId);
+    await setDoc(seasonRef, newSeasonData);
 
-    // Handle event association (though typically done in update, good to be consistent if needed)
+    // Event association for new seasons:
+    // Typically, events are associated during season edit or event edit.
+    // If eventIdsToAssociate is populated for a new season, update those events.
     const eventIdsToAssociate = data.eventIdsToAssociate || [];
     if (eventIdsToAssociate.length > 0) {
-      const events = await getEvents();
-      const updatedEvents = events.map(event => {
-        if (eventIdsToAssociate.includes(event.id)) {
-          return { ...event, seasonId: newSeason.id };
-        }
-        return event;
+      const batch = writeBatch(db);
+      eventIdsToAssociate.forEach(eventId => {
+        const eventRef = doc(db, EVENTS_COLLECTION, eventId);
+        batch.update(eventRef, { seasonId: seasonId });
       });
-      await saveEvents(updatedEvents);
+      await batch.commit();
     }
 
   } catch (error) {
+    console.error("Firestore Error creating season:", error);
     return { message: 'Database Error: Failed to create season.' };
   }
   
   revalidatePath('/seasons');
-  revalidatePath('/events'); // Revalidate events in case their seasonId changed
+  revalidatePath('/events');
   redirect('/seasons');
 }
 
@@ -90,22 +94,23 @@ export async function updateSeason(prevState: SeasonFormState, formData: FormDat
   }
   
   const data = validatedFields.data;
-  if (!data.id) {
+  const seasonIdToUpdate = data.id;
+
+  if (!seasonIdToUpdate) {
     return { message: 'Season ID is missing for update.' };
   }
 
-  const seasonIdToUpdate = data.id;
-
   try {
-    const seasons = await getSeasons();
-    const seasonIndex = seasons.findIndex(s => s.id === seasonIdToUpdate);
+    const seasonRef = doc(db, SEASONS_COLLECTION, seasonIdToUpdate);
+    const seasonSnap = await getDoc(seasonRef);
 
-    if (seasonIndex === -1) {
-      return { message: 'Season not found.' };
+    if (!seasonSnap.exists()) {
+      return { message: 'Season not found in database.' };
     }
-    
-    const updatedSeason: Season = {
-        ...seasons[seasonIndex],
+    const existingSeason = seasonSnap.data() as Season;
+
+    const updatedSeasonData: Omit<Season, 'leaderboard'> = {
+        ...existingSeason,
         name: data.name,
         startDate: new Date(data.startDate).toISOString(),
         endDate: data.endDate ? new Date(data.endDate).toISOString() : undefined,
@@ -113,35 +118,35 @@ export async function updateSeason(prevState: SeasonFormState, formData: FormDat
         updatedAt: new Date().toISOString(),
     };
     
-    seasons[seasonIndex] = updatedSeason;
-    await saveSeasons(seasons);
+    // Prepare batch for Firestore updates
+    const batch = writeBatch(db);
+    batch.set(seasonRef, updatedSeasonData); // Update season document
 
-    // Handle event association
-    const eventIdsToAssociate = data.eventIdsToAssociate || [];
-    const allEvents = await getEvents();
-    let eventsModified = false;
+    // Handle event association changes
+    const eventIdsToAssociateInForm = new Set(data.eventIdsToAssociate || []);
+    
+    // Fetch events currently associated with this season
+    const qAssociatedEvents = query(collection(db, EVENTS_COLLECTION), where("seasonId", "==", seasonIdToUpdate));
+    const associatedEventsSnapshot = await getDocs(qAssociatedEvents);
+    const currentAssociatedEventIds = new Set(associatedEventsSnapshot.docs.map(d => d.id));
 
-    const updatedEvents = allEvents.map(event => {
-      const isAssociatedInForm = eventIdsToAssociate.includes(event.id);
-      const wasAssociatedToThisSeason = event.seasonId === seasonIdToUpdate;
-
-      if (isAssociatedInForm) {
-        if (event.seasonId !== seasonIdToUpdate) {
-          eventsModified = true;
-          return { ...event, seasonId: seasonIdToUpdate };
+    // Dissociate events: events currently associated but not in form's list
+    associatedEventsSnapshot.forEach(eventDoc => {
+        if (!eventIdsToAssociateInForm.has(eventDoc.id)) {
+            batch.update(eventDoc.ref, { seasonId: null }); // Or deleteField('seasonId')
         }
-      } else { // Not associated in form
-        if (wasAssociatedToThisSeason) { // Was associated to this season, now needs to be unlinked
-          eventsModified = true;
-          return { ...event, seasonId: undefined };
-        }
-      }
-      return event;
     });
-
-    if (eventsModified) {
-      await saveEvents(updatedEvents);
+    
+    // Associate new events: events in form's list not currently associated (or associated to another season)
+    for (const eventId of eventIdsToAssociateInForm) {
+        if (!currentAssociatedEventIds.has(eventId)) {
+            const eventRef = doc(db, EVENTS_COLLECTION, eventId);
+            // We could check if the event exists, but update will fail if it doesn't
+            batch.update(eventRef, { seasonId: seasonIdToUpdate });
+        }
     }
+    
+    await batch.commit(); // Commit all changes (season update and event updates)
 
   } catch (error) {
      console.error("Error updating season:", error);
@@ -149,7 +154,12 @@ export async function updateSeason(prevState: SeasonFormState, formData: FormDat
   }
 
   revalidatePath('/seasons');
+  revalidatePath(`/seasons/${seasonIdToUpdate}`);
   revalidatePath(`/seasons/${seasonIdToUpdate}/edit`);
-  revalidatePath('/events'); // Revalidate events in case their seasonId changed
-  redirect(`/seasons`); // Redirect to seasons list page for now
+  revalidatePath('/events'); 
+  redirect(`/seasons`);
 }
+
+// Note: deleteSeason functionality would also need to update associated events,
+// potentially unsetting their seasonId or deleting them if they are exclusively part of this season.
+// This is not implemented here but is a consideration for complete CRUD.
