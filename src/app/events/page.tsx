@@ -118,6 +118,8 @@ export default async function EventsPage() {
     }
   });
 
+  const activeSeasonIds = allSeasons.filter(season => season.isActive).map(season => season.id);
+
   return (
     <div className="space-y-8">
       <div className="flex items-center justify-between">
@@ -149,21 +151,20 @@ export default async function EventsPage() {
           </CardContent>
         </Card>
       ) : (
-        <Accordion type="multiple" className="w-full space-y-6">
+        <Accordion type="multiple" defaultValue={activeSeasonIds} className="w-full space-y-6">
           {allSeasons.map(season => {
             const seasonEvents = eventsBySeason.get(season.id) || [];
             if (seasonEvents.length === 0 && !isAuthenticated) return null; 
-            // ^ if not authenticated and no events, don't even show the season accordion item. 
-            // if authenticated, show it so they can add events to it if needed or see it's empty.
-
+            
             return (
               <AccordionItem value={season.id} key={season.id} className="border rounded-lg overflow-hidden">
-                <Card className="border-none rounded-none shadow-none"> {/* Remove Card default border/shadow */}
+                <Card className="border-none rounded-none shadow-none">
                   <AccordionTrigger className="p-0 hover:no-underline">
                     <CardHeader className="w-full text-left">
                       <CardTitle className="font-headline text-2xl flex items-center">
                         <BarChart3 className="mr-3 h-6 w-6 text-primary"/>
                         Season: {season.name}
+                        {season.isActive && <Badge className="ml-3 bg-green-500 text-white">Active</Badge>}
                       </CardTitle>
                       <CardDescription>
                         {new Date(season.startDate).toLocaleDateString()} - {season.endDate ? new Date(season.endDate).toLocaleDateString() : 'Ongoing'}
@@ -171,7 +172,7 @@ export default async function EventsPage() {
                     </CardHeader>
                   </AccordionTrigger>
                   <AccordionContent>
-                    <CardContent className="pt-0"> {/* Adjust padding if CardContent wraps AccordionContent */}
+                    <CardContent className="pt-0">
                       {seasonEvents.length > 0 ? (
                         <EventTable events={seasonEvents} isAuthenticated={isAuthenticated} />
                       ) : (
@@ -209,4 +210,3 @@ export default async function EventsPage() {
     </div>
   );
 }
-
