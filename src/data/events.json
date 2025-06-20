@@ -186,8 +186,10 @@
       }
     ],
     "createdAt": "2025-06-05T20:22:37.576Z",
-    "updatedAt": "2025-06-05T20:22:53.777Z",
-    "seasonId": "0b6e1799-f10c-4f4e-a4b9-04c45ac39e19"
+    "updatedAt": "2025-06-20T09:48:32.488Z",
+    "seasonId": "0b6e1799-f10c-4f4e-a4b9-04c45ac39e19",
+    "bounties": 5,
+    "mysteryKo": 5
   },
   {
     "id": "b0b15f3f-747a-4c0d-a7be-c1f8807abb3b",

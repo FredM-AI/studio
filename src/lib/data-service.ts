@@ -1,49 +1,104 @@
-import fs from 'fs/promises';
-import path from 'path';
+
+import { initializeApp, getApps, type FirebaseApp } from 'firebase/app';
+import { getFirestore, collection, getDocs, doc, getDoc, setDoc, type Firestore, query, where } from 'firebase/firestore';
 import type { Player, Event, Season, AppSettings } from './definitions';
 
-const dataDir = path.join(process.cwd(), 'src', 'data');
+// Your web app's Firebase configuration
+// It's highly recommended to use environment variables for this
+const firebaseConfig = {
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+};
 
-async function readFileData<T>(fileName: string, defaultValue: T): Promise<T> {
-  const filePath = path.join(dataDir, fileName);
-  try {
-    const data = await fs.readFile(filePath, 'utf-8');
-    return JSON.parse(data) as T;
-  } catch (error: any) {
-    if (error.code === 'ENOENT') {
-      // File doesn't exist, create it with default value
-      await fs.mkdir(dataDir, { recursive: true }); // Ensure data directory exists
-      await fs.writeFile(filePath, JSON.stringify(defaultValue, null, 2), 'utf-8');
-      return defaultValue;
-    }
-    console.error(`Error reading file ${fileName}:`, error);
-    throw new Error(`Could not read data from ${fileName}`);
-  }
+// Initialize Firebase
+let app: FirebaseApp;
+if (!getApps().length) {
+  app = initializeApp(firebaseConfig);
+} else {
+  app = getApps()[0];
 }
 
-async function writeFileData<T>(fileName: string, data: T): Promise<void> {
-  const filePath = path.join(dataDir, fileName);
-  try {
-    await fs.mkdir(dataDir, { recursive: true }); // Ensure data directory exists
-    await fs.writeFile(filePath, JSON.stringify(data, null, 2), 'utf-8');
-  } catch (error) {
-    console.error(`Error writing file ${fileName}:`, error);
-    throw new Error(`Could not write data to ${fileName}`);
-  }
-}
+const db: Firestore = getFirestore(app);
+
+// Export db for use in server actions
+export { db };
+
+const PLAYERS_COLLECTION = 'players';
+const EVENTS_COLLECTION = 'events';
+const SEASONS_COLLECTION = 'seasons';
+const SETTINGS_COLLECTION = 'settings';
+const GLOBAL_SETTINGS_DOC_ID = 'appGlobalSettings';
+
 
 // Player data functions
-export const getPlayers = (): Promise<Player[]> => readFileData<Player[]>('players.json', []);
-export const savePlayers = (players: Player[]): Promise<void> => writeFileData<Player[]>('players.json', players);
+export async function getPlayers(): Promise<Player[]> {
+  try {
+    const playersCol = collection(db, PLAYERS_COLLECTION);
+    const playerSnapshot = await getDocs(playersCol);
+    const playerList = playerSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Player));
+    return playerList;
+  } catch (error) {
+    console.error("Error fetching players:", error);
+    // For now, return empty array, consider more robust error handling for production
+    return [];
+  }
+}
 
 // Event data functions
-export const getEvents = (): Promise<Event[]> => readFileData<Event[]>('events.json', []);
-export const saveEvents = (events: Event[]): Promise<void> => writeFileData<Event[]>('events.json', events);
+export async function getEvents(): Promise<Event[]> {
+  try {
+    const eventsCol = collection(db, EVENTS_COLLECTION);
+    const eventSnapshot = await getDocs(eventsCol);
+    const eventList = eventSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Event));
+    return eventList;
+  } catch (error) {
+    console.error("Error fetching events:", error);
+    return [];
+  }
+}
 
 // Season data functions
-export const getSeasons = (): Promise<Season[]> => readFileData<Season[]>('seasons.json', []);
-export const saveSeasons = (seasons: Season[]): Promise<void> => writeFileData<Season[]>('seasons.json', seasons);
+export async function getSeasons(): Promise<Season[]> {
+  try {
+    const seasonsCol = collection(db, SEASONS_COLLECTION);
+    const seasonSnapshot = await getDocs(seasonsCol);
+    const seasonList = seasonSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Season));
+    return seasonList;
+  } catch (error) {
+    console.error("Error fetching seasons:", error);
+    return [];
+  }
+}
 
 // Settings data functions
-export const getSettings = (): Promise<AppSettings> => readFileData<AppSettings>('settings.json', { theme: 'light', defaultBuyIn: 50, defaultMaxPlayers: 90 });
-export const saveSettings = (settings: AppSettings): Promise<void> => writeFileData<AppSettings>('settings.json', settings);
+export async function getSettings(): Promise<AppSettings> {
+  const defaultSettings: AppSettings = { theme: 'light', defaultBuyIn: 20, defaultMaxPlayers: 90 };
+  try {
+    const settingsDocRef = doc(db, SETTINGS_COLLECTION, GLOBAL_SETTINGS_DOC_ID);
+    const settingsSnap = await getDoc(settingsDocRef);
+    if (settingsSnap.exists()) {
+      return settingsSnap.data() as AppSettings;
+    } else {
+      // Settings document doesn't exist, create it with default values
+      await setDoc(settingsDocRef, defaultSettings);
+      return defaultSettings;
+    }
+  } catch (error) {
+    console.error("Error fetching settings:", error);
+    return defaultSettings; // Return default settings on error
+  }
+}
+
+export async function saveSettings(settings: AppSettings): Promise<void> {
+  try {
+    const settingsDocRef = doc(db, SETTINGS_COLLECTION, GLOBAL_SETTINGS_DOC_ID);
+    await setDoc(settingsDocRef, settings);
+  } catch (error) {
+    console.error("Error saving settings:", error);
+    throw new Error('Could not save settings to Firestore');
+  }
+}
