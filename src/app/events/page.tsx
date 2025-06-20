@@ -1,70 +1,116 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { getEvents, getSeasons } from "@/lib/data-service"; // Added getSeasons
-import type { Event, Season } from "@/lib/definitions"; // Added Season
-import { PlusCircle, CalendarDays, Users, DollarSign, Edit, Eye, BarChart3 } from "lucide-react"; // Added BarChart3
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { getEvents, getSeasons } from "@/lib/data-service"; 
+import type { Event, Season } from "@/lib/definitions"; 
+import { PlusCircle, CalendarDays, Users, DollarSign, Edit, Eye, BarChart3, FolderOpen } from "lucide-react";
 import Link from "next/link";
 import { cookies } from 'next/headers';
+import { Badge } from "@/components/ui/badge";
 
 const AUTH_COOKIE_NAME = 'app_session_active';
 
-const EventCard = ({ event, isAuthenticated, seasonName }: { event: Event, isAuthenticated: boolean, seasonName?: string }) => (
-  <Card className="hover:shadow-lg transition-shadow duration-300 flex flex-col">
-    <CardHeader>
-      <CardTitle className="font-headline text-xl">{event.name}</CardTitle>
-      <CardDescription>{new Date(event.date).toLocaleDateString()}</CardDescription>
-    </CardHeader>
-    <CardContent className="space-y-2 flex-grow">
-      <div className="flex items-center text-sm text-muted-foreground">
-        <DollarSign className="mr-2 h-4 w-4" />
-        Buy-in: ${event.buyIn}
-      </div>
-      <div className="flex items-center text-sm text-muted-foreground">
-        <Users className="mr-2 h-4 w-4" />
-        Participants: {event.participants.length}
-      </div>
-      {seasonName && (
-        <div className="flex items-center text-sm text-muted-foreground">
-          <BarChart3 className="mr-2 h-4 w-4" />
-          Season: {seasonName}
-        </div>
-      )}
-       <div className="flex items-center text-sm pt-1">
-        <span className={`px-2 py-1 text-xs rounded-full ${
-            event.status === 'active' ? 'bg-green-100 text-green-700' :
-            event.status === 'completed' ? 'bg-blue-100 text-blue-700' :
-            event.status === 'draft' ? 'bg-yellow-100 text-yellow-700' :
-            'bg-red-100 text-red-700'}`}>
-            {event.status.charAt(0).toUpperCase() + event.status.slice(1)}
-        </span>
-      </div>
-    </CardContent>
-    <CardFooter className="flex justify-end gap-2 border-t pt-4 mt-auto">
-      <Button variant="outline" size="sm" asChild title="View Event">
+const getPlayerDisplayName = (player: Player | undefined): string => {
+  if (!player) return "Unknown Player";
+  if (player.nickname && player.nickname.trim() !== '') {
+    return player.nickname;
+  }
+  if (player.firstName) {
+    return `${player.firstName}${player.lastName ? ' ' + player.lastName.charAt(0) + '.' : ''}`;
+  }
+  if (player.lastName) {
+    return player.lastName;
+  }
+  return "Unnamed";
+};
+
+const EventTableRow = ({ event, isAuthenticated }: { event: Event, isAuthenticated: boolean }) => (
+  <TableRow>
+    <TableCell className="font-medium">{event.name}</TableCell>
+    <TableCell>{new Date(event.date).toLocaleDateString()}</TableCell>
+    <TableCell>${event.buyIn}</TableCell>
+    <TableCell>{event.participants.length}</TableCell>
+    <TableCell>
+      <Badge
+        variant={
+          event.status === 'completed' ? 'default' :
+          event.status === 'active' ? 'secondary' :
+          event.status === 'cancelled' ? 'destructive' :
+          'outline'
+        }
+        className={
+          event.status === 'active' ? 'bg-green-500 text-white' : 
+          event.status === 'draft' ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-700 dark:text-yellow-100' :
+          event.status === 'completed' ? 'bg-blue-100 text-blue-700 dark:bg-blue-700 dark:text-blue-100' :
+          event.status === 'cancelled' ? 'bg-red-100 text-red-700 dark:bg-red-700 dark:text-red-100' :
+          ''
+        }
+      >
+        {event.status.charAt(0).toUpperCase() + event.status.slice(1)}
+      </Badge>
+    </TableCell>
+    <TableCell className="text-right space-x-2">
+      <Button variant="outline" size="icon" asChild title="View Event">
         <Link href={`/events/${event.id}`}>
-          <Eye className="mr-1 h-4 w-4" /> View
+          <Eye className="h-4 w-4" />
         </Link>
       </Button>
       {isAuthenticated && (
-        <Button variant="outline" size="sm" asChild title="Edit Event">
+        <Button variant="outline" size="icon" asChild title="Edit Event">
           <Link href={`/events/${event.id}/edit`}>
-            <Edit className="mr-1 h-4 w-4" /> Edit
+            <Edit className="h-4 w-4" />
           </Link>
         </Button>
       )}
-    </CardFooter>
-  </Card>
+    </TableCell>
+  </TableRow>
 );
 
+const EventTable = ({ events, isAuthenticated }: { events: Event[], isAuthenticated: boolean }) => {
+  if (events.length === 0) {
+    return <p className="text-muted-foreground text-sm py-4">No events in this category.</p>;
+  }
+  return (
+    <Table>
+      <TableHeader>
+        <TableRow>
+          <TableHead>Name</TableHead>
+          <TableHead>Date</TableHead>
+          <TableHead>Buy-in</TableHead>
+          <TableHead>Participants</TableHead>
+          <TableHead>Status</TableHead>
+          <TableHead className="text-right">Actions</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {events.map((event) => (
+          <EventTableRow key={event.id} event={event} isAuthenticated={isAuthenticated} />
+        ))}
+      </TableBody>
+    </Table>
+  );
+};
 
 export default async function EventsPage() {
   const cookieStore = cookies();
   const isAuthenticated = cookieStore.get(AUTH_COOKIE_NAME)?.value === 'true';
-  const events: Event[] = (await getEvents()).sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-  const seasons: Season[] = await getSeasons();
-  const seasonsMap = new Map(seasons.map(s => [s.id, s.name]));
+  const allEvents: Event[] = (await getEvents()).sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  const allSeasons: Season[] = (await getSeasons()).sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime());
 
+  const eventsBySeason: Map<string, Event[]> = new Map();
+  const unassignedEvents: Event[] = [];
+
+  allEvents.forEach(event => {
+    if (event.seasonId) {
+      if (!eventsBySeason.has(event.seasonId)) {
+        eventsBySeason.set(event.seasonId, []);
+      }
+      eventsBySeason.get(event.seasonId)!.push(event);
+    } else {
+      unassignedEvents.push(event);
+    }
+  });
 
   return (
     <div className="space-y-8">
@@ -79,7 +125,7 @@ export default async function EventsPage() {
         )}
       </div>
 
-      {events.length === 0 ? (
+      {allEvents.length === 0 ? (
         <Card>
           <CardContent className="text-center py-20">
             <CalendarDays className="mx-auto h-16 w-16 text-muted-foreground mb-4" />
@@ -97,13 +143,45 @@ export default async function EventsPage() {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {events.map((event) => {
-            const seasonName = event.seasonId ? seasonsMap.get(event.seasonId) : undefined;
-            return <EventCard key={event.id} event={event} isAuthenticated={isAuthenticated} seasonName={seasonName}/>;
+        <div className="space-y-10">
+          {allSeasons.map(season => {
+            const seasonEvents = eventsBySeason.get(season.id) || [];
+            if (seasonEvents.length === 0) return null; // Don't render season if no events
+            return (
+              <Card key={season.id}>
+                <CardHeader>
+                  <CardTitle className="font-headline text-2xl flex items-center">
+                    <BarChart3 className="mr-3 h-6 w-6 text-primary"/>
+                    Season: {season.name}
+                  </CardTitle>
+                  <CardDescription>
+                    {new Date(season.startDate).toLocaleDateString()} - {season.endDate ? new Date(season.endDate).toLocaleDateString() : 'Ongoing'}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <EventTable events={seasonEvents} isAuthenticated={isAuthenticated} />
+                </CardContent>
+              </Card>
+            );
           })}
+
+          {unassignedEvents.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="font-headline text-2xl flex items-center">
+                    <FolderOpen className="mr-3 h-6 w-6 text-primary"/>
+                    Other Events
+                </CardTitle>
+                <CardDescription>Events not currently assigned to a specific season.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <EventTable events={unassignedEvents} isAuthenticated={isAuthenticated} />
+              </CardContent>
+            </Card>
+          )}
         </div>
       )}
     </div>
   );
 }
+
