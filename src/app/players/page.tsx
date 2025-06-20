@@ -4,9 +4,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { getPlayers } from "@/lib/data-service";
 import type { Player } from "@/lib/definitions";
-import { PlusCircle, Edit, Trash2, Eye } from "lucide-react";
+import { PlusCircle, Edit, Trash2, Eye, UploadCloud } from "lucide-react";
 import Link from "next/link";
 import { cookies } from 'next/headers';
+import PlayerImportForm from "@/components/PlayerImportForm"; // Import the new component
+import { Separator } from "@/components/ui/separator";
+
 
 const AUTH_COOKIE_NAME = 'app_session_active';
 
@@ -28,6 +31,14 @@ export default async function PlayersPage() {
         )}
       </div>
 
+      {isAuthenticated && (
+        <div className="my-6">
+          <PlayerImportForm />
+          <Separator className="my-8" />
+        </div>
+      )}
+
+
       <Card>
         <CardHeader>
           <CardTitle>Player Directory</CardTitle>
@@ -38,7 +49,7 @@ export default async function PlayersPage() {
             <div className="text-center py-10">
               <p className="text-muted-foreground text-lg">No players found.</p>
               <p className="mt-2">
-                {isAuthenticated ? "Get started by adding a new player." : "No players registered yet."}
+                {isAuthenticated ? "Get started by adding a new player or importing a JSON file." : "No players registered yet."}
               </p>
             </div>
           ) : (
