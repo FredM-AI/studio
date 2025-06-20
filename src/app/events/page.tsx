@@ -2,9 +2,9 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { getEvents, getSeasons } from "@/lib/data-service"; 
+import { getEvents, getSeasons, getPlayers } from "@/lib/data-service"; 
 import type { Event, Player, Season } from "@/lib/definitions"; 
-import { PlusCircle, CalendarDays, Users, DollarSign, Edit, Eye, BarChart3, FolderOpen } from "lucide-react";
+import { PlusCircle, CalendarDays, Users, DollarSign, Edit, Eye, BarChart3, FolderOpen, Trophy } from "lucide-react";
 import Link from "next/link";
 import { cookies } from 'next/headers';
 import { Badge } from "@/components/ui/badge";
@@ -18,7 +18,7 @@ import {
 const AUTH_COOKIE_NAME = 'app_session_active';
 
 const getPlayerDisplayName = (player: Player | undefined): string => {
-  if (!player) return "Unknown Player";
+  if (!player) return "N/A";
   if (player.nickname && player.nickname.trim() !== '') {
     return player.nickname;
   }
@@ -31,49 +31,70 @@ const getPlayerDisplayName = (player: Player | undefined): string => {
   return "Unnamed";
 };
 
-const EventTableRow = ({ event, isAuthenticated }: { event: Event, isAuthenticated: boolean }) => (
-  <TableRow>
-    <TableCell className="font-medium">{event.name}</TableCell>
-    <TableCell>{new Date(event.date).toLocaleDateString()}</TableCell>
-    <TableCell>${event.buyIn}</TableCell>
-    <TableCell>{event.participants.length}</TableCell>
-    <TableCell>
-      <Badge
-        variant={
-          event.status === 'completed' ? 'default' :
-          event.status === 'active' ? 'secondary' :
-          event.status === 'cancelled' ? 'destructive' :
-          'outline'
-        }
-        className={
-          event.status === 'active' ? 'bg-green-500 text-white' : 
-          event.status === 'draft' ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-700 dark:text-yellow-100' :
-          event.status === 'completed' ? 'bg-blue-100 text-blue-700 dark:bg-blue-700 dark:text-blue-100' :
-          event.status === 'cancelled' ? 'bg-red-100 text-red-700 dark:bg-red-700 dark:text-red-100' :
-          ''
-        }
-      >
-        {event.status.charAt(0).toUpperCase() + event.status.slice(1)}
-      </Badge>
-    </TableCell>
-    <TableCell className="text-right space-x-2">
-      <Button variant="outline" size="icon" asChild title="View Event">
-        <Link href={`/events/${event.id}`}>
-          <Eye className="h-4 w-4" />
-        </Link>
-      </Button>
-      {isAuthenticated && (
-        <Button variant="outline" size="icon" asChild title="Edit Event">
-          <Link href={`/events/${event.id}/edit`}>
-            <Edit className="h-4 w-4" />
+const EventTableRow = ({ event, isAuthenticated, allPlayers }: { event: Event, isAuthenticated: boolean, allPlayers: Player[] }) => {
+  let winnerName = "N/A";
+  if (event.status === 'completed' && event.results && event.results.length > 0) {
+    const winnerResult = event.results.find(r => r.position === 1);
+    if (winnerResult) {
+      const winnerPlayer = allPlayers.find(p => p.id === winnerResult.playerId);
+      winnerName = getPlayerDisplayName(winnerPlayer);
+    }
+  }
+
+  return (
+    <TableRow>
+      <TableCell className="font-medium">{event.name}</TableCell>
+      <TableCell>{new Date(event.date).toLocaleDateString()}</TableCell>
+      <TableCell>${event.buyIn}</TableCell>
+      <TableCell>{event.participants.length}</TableCell>
+      <TableCell>
+        {winnerName !== "N/A" ? (
+          <span className="flex items-center">
+            <Trophy className="h-4 w-4 mr-1.5 text-yellow-500" />
+            {winnerName}
+          </span>
+        ) : (
+          <span className="text-muted-foreground">{winnerName}</span>
+        )}
+      </TableCell>
+      <TableCell>
+        <Badge
+          variant={
+            event.status === 'completed' ? 'default' :
+            event.status === 'active' ? 'secondary' :
+            event.status === 'cancelled' ? 'destructive' :
+            'outline'
+          }
+          className={
+            event.status === 'active' ? 'bg-green-500 text-white' : 
+            event.status === 'draft' ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-700 dark:text-yellow-100' :
+            event.status === 'completed' ? 'bg-blue-100 text-blue-700 dark:bg-blue-700 dark:text-blue-100' :
+            event.status === 'cancelled' ? 'bg-red-100 text-red-700 dark:bg-red-700 dark:text-red-100' :
+            ''
+          }
+        >
+          {event.status.charAt(0).toUpperCase() + event.status.slice(1)}
+        </Badge>
+      </TableCell>
+      <TableCell className="text-right space-x-2">
+        <Button variant="outline" size="icon" asChild title="View Event">
+          <Link href={`/events/${event.id}`}>
+            <Eye className="h-4 w-4" />
           </Link>
         </Button>
-      )}
-    </TableCell>
-  </TableRow>
-);
+        {isAuthenticated && (
+          <Button variant="outline" size="icon" asChild title="Edit Event">
+            <Link href={`/events/${event.id}/edit`}>
+              <Edit className="h-4 w-4" />
+            </Link>
+          </Button>
+        )}
+      </TableCell>
+    </TableRow>
+  );
+};
 
-const EventTable = ({ events, isAuthenticated }: { events: Event[], isAuthenticated: boolean }) => {
+const EventTable = ({ events, isAuthenticated, allPlayers }: { events: Event[], isAuthenticated: boolean, allPlayers: Player[] }) => {
   if (events.length === 0) {
     return <p className="text-muted-foreground text-sm py-4">No events in this category.</p>;
   }
@@ -85,13 +106,14 @@ const EventTable = ({ events, isAuthenticated }: { events: Event[], isAuthentica
           <TableHead>Date</TableHead>
           <TableHead>Buy-in</TableHead>
           <TableHead>Participants</TableHead>
+          <TableHead>Winner</TableHead>
           <TableHead>Status</TableHead>
           <TableHead className="text-right">Actions</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
         {events.map((event) => (
-          <EventTableRow key={event.id} event={event} isAuthenticated={isAuthenticated} />
+          <EventTableRow key={event.id} event={event} isAuthenticated={isAuthenticated} allPlayers={allPlayers} />
         ))}
       </TableBody>
     </Table>
@@ -103,6 +125,7 @@ export default async function EventsPage() {
   const isAuthenticated = cookieStore.get(AUTH_COOKIE_NAME)?.value === 'true';
   const allEvents: Event[] = (await getEvents()).sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   const allSeasons: Season[] = (await getSeasons()).sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime());
+  const allPlayers: Player[] = await getPlayers();
 
   const eventsBySeason: Map<string, Event[]> = new Map();
   const unassignedEvents: Event[] = [];
@@ -154,7 +177,7 @@ export default async function EventsPage() {
         <Accordion type="multiple" defaultValue={activeSeasonIds} className="w-full space-y-6">
           {allSeasons.map(season => {
             const seasonEvents = eventsBySeason.get(season.id) || [];
-            if (seasonEvents.length === 0 && !isAuthenticated) return null; 
+            // if (seasonEvents.length === 0 && !isAuthenticated) return null; // Keep this line if you want to hide empty seasons for guests
             
             return (
               <AccordionItem value={season.id} key={season.id} className="border rounded-lg overflow-hidden">
@@ -174,7 +197,7 @@ export default async function EventsPage() {
                   <AccordionContent>
                     <CardContent className="pt-0">
                       {seasonEvents.length > 0 ? (
-                        <EventTable events={seasonEvents} isAuthenticated={isAuthenticated} />
+                        <EventTable events={seasonEvents} isAuthenticated={isAuthenticated} allPlayers={allPlayers} />
                       ) : (
                         <p className="text-muted-foreground text-sm py-4 text-center">No events scheduled for this season yet.</p>
                       )}
@@ -199,7 +222,7 @@ export default async function EventsPage() {
                 </AccordionTrigger>
                 <AccordionContent>
                   <CardContent className="pt-0">
-                    <EventTable events={unassignedEvents} isAuthenticated={isAuthenticated} />
+                    <EventTable events={unassignedEvents} isAuthenticated={isAuthenticated} allPlayers={allPlayers}/>
                   </CardContent>
                 </AccordionContent>
               </Card>
@@ -210,3 +233,4 @@ export default async function EventsPage() {
     </div>
   );
 }
+
