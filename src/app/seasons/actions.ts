@@ -4,7 +4,7 @@
 import { z } from 'zod';
 import { db } from '@/lib/data-service'; // Import db
 import { collection, doc, setDoc, getDoc, getDocs, writeBatch, query, where } from 'firebase/firestore';
-import type { Season, SeasonFormState } from '@/lib/definitions'; // Removed Event
+import type { SeasonFormState } from '@/lib/definitions'; // Removed Event, Season (as SeasonDocumentData is used internally)
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 
@@ -20,15 +20,17 @@ type SeasonDocumentData = {
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
+  // leaderboards are calculated, not stored directly in the season document
 };
 
 const SeasonSchema = z.object({
   id: z.string().optional(),
   name: z.string().min(3, { message: 'Season name must be at least 3 characters.' }),
-  startDate: z.string().min(1, { message: 'Start date is required.' }),
-  endDate: z.string().optional(),
-  // Correctly transform isActive: 'on' becomes true, undefined/other becomes false.
-  isActive: z.string().optional().transform(val => val === 'on'),
+  startDate: z.string().min(1, { message: 'Start date is required.' })
+    .refine(val => !isNaN(new Date(val).getTime()), { message: "Invalid start date format."}),
+  endDate: z.string().optional()
+    .refine(val => !val || val.trim() === '' || !isNaN(new Date(val).getTime()), { message: "Invalid end date format."}),
+  isActive: z.preprocess((val) => val === 'on' || val === true, z.boolean().default(false)),
   eventIdsToAssociate: z.preprocess(
     (val) => (typeof val === 'string' && val ? val.split(',').filter(id => id.trim() !== '') : Array.isArray(val) ? val : []),
     z.array(z.string()).optional().default([])
@@ -37,28 +39,13 @@ const SeasonSchema = z.object({
   if (data.startDate && data.endDate && data.endDate.trim() !== '') {
     try {
       return new Date(data.endDate) >= new Date(data.startDate);
-    } catch (e) { return false; } // Invalid date string
+    } catch (e) { return false; }
   }
   return true;
 }, {
-  message: 'End date must be on or after start date, and dates must be valid.',
+  message: 'End date must be on or after start date.',
   path: ['endDate'],
-})
-.refine(data => {
-    try {
-        new Date(data.startDate).toISOString();
-        return true;
-    } catch (e) { return false; }
-}, { message: 'Invalid start date format.', path: ['startDate']})
-.refine(data => {
-    if (data.endDate && data.endDate.trim() !== '') {
-        try {
-            new Date(data.endDate).toISOString();
-            return true;
-        } catch (e) { return false;}
-    }
-    return true;
-}, { message: 'Invalid end date format.', path: ['endDate']});
+});
 
 export async function createSeason(prevState: SeasonFormState, formData: FormData): Promise<SeasonFormState> {
   const rawFormData = Object.fromEntries(formData.entries());
@@ -78,14 +65,13 @@ export async function createSeason(prevState: SeasonFormState, formData: FormDat
   const seasonDocData: SeasonDocumentData = {
     id: seasonId,
     name: data.name,
-    startDate: new Date(data.startDate).toISOString(), // Assuming startDate is validated to be a valid date string by refine
-    isActive: data.isActive, // Already transformed to boolean by Zod
+    startDate: new Date(data.startDate).toISOString(),
+    isActive: data.isActive, // Correctly a boolean from Zod preprocess
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   };
 
   if (data.endDate && data.endDate.trim() !== '') {
-    // Assuming endDate is validated to be a valid date string by refine
     seasonDocData.endDate = new Date(data.endDate).toISOString();
   }
 
@@ -93,6 +79,7 @@ export async function createSeason(prevState: SeasonFormState, formData: FormDat
     const seasonRef = doc(db, SEASONS_COLLECTION, seasonId);
     await setDoc(seasonRef, seasonDocData);
 
+    // For a new season, eventIdsToAssociate is usually empty from the form
     const eventIdsToAssociate = data.eventIdsToAssociate || [];
     if (eventIdsToAssociate.length > 0) {
       const batch = writeBatch(db);
@@ -105,11 +92,12 @@ export async function createSeason(prevState: SeasonFormState, formData: FormDat
 
   } catch (error) {
     console.error("Firestore Error creating season:", error);
-    return { message: 'Database Error: Failed to create season.' };
+    // Check the server console for detailed Firestore error message
+    return { message: 'Database Error: Failed to create season. Check server logs and Firestore permissions.' };
   }
   
   revalidatePath('/seasons');
-  revalidatePath('/events');
+  revalidatePath('/events'); // if events might have been associated
   redirect('/seasons');
 }
 
@@ -139,23 +127,20 @@ export async function updateSeason(prevState: SeasonFormState, formData: FormDat
     if (!seasonSnap.exists()) {
       return { message: 'Season not found in database.' };
     }
-    const existingSeason = seasonSnap.data() as SeasonDocumentData; // Use SeasonDocumentData
+    const existingSeason = seasonSnap.data() as SeasonDocumentData;
 
     const updatedSeasonDocData: SeasonDocumentData = {
         ...existingSeason,
         name: data.name,
         startDate: new Date(data.startDate).toISOString(),
-        isActive: data.isActive, // Already transformed
+        isActive: data.isActive,
         updatedAt: new Date().toISOString(),
     };
 
     if (data.endDate && data.endDate.trim() !== '') {
         updatedSeasonDocData.endDate = new Date(data.endDate).toISOString();
     } else {
-        // If endDate was previously set and now is empty, we need to remove it
-        // Firestore's `deleteField()` is suitable for this, but `setDoc` with missing field also works.
-        // To be explicit with setDoc for overwriting, ensure it's not in the object.
-        delete updatedSeasonDocData.endDate;
+        delete updatedSeasonDocData.endDate; // Remove if it's now empty
     }
     
     const batch = writeBatch(db);
@@ -165,16 +150,18 @@ export async function updateSeason(prevState: SeasonFormState, formData: FormDat
     
     const qAssociatedEvents = query(collection(db, EVENTS_COLLECTION), where("seasonId", "==", seasonIdToUpdate));
     const associatedEventsSnapshot = await getDocs(qAssociatedEvents);
-    const currentAssociatedEventIds = new Set(associatedEventsSnapshot.docs.map(d => d.id));
+    const currentAssociatedEventIdsDB = new Set(associatedEventsSnapshot.docs.map(d => d.id));
 
+    // Dissociate events: events currently linked in DB but not in form's list
     associatedEventsSnapshot.forEach(eventDoc => {
         if (!eventIdsToAssociateInForm.has(eventDoc.id)) {
             batch.update(eventDoc.ref, { seasonId: null }); 
         }
     });
     
+    // Associate new events: events in form's list but not currently linked in DB
     for (const eventId of eventIdsToAssociateInForm) {
-        if (!currentAssociatedEventIds.has(eventId)) {
+        if (!currentAssociatedEventIdsDB.has(eventId)) {
             const eventRef = doc(db, EVENTS_COLLECTION, eventId);
             batch.update(eventRef, { seasonId: seasonIdToUpdate });
         }
@@ -184,12 +171,16 @@ export async function updateSeason(prevState: SeasonFormState, formData: FormDat
 
   } catch (error) {
      console.error("Error updating season:", error);
-     return { message: 'Database Error: Failed to update season.' };
+     return { message: 'Database Error: Failed to update season. Check server logs and Firestore permissions.' };
   }
 
   revalidatePath('/seasons');
   revalidatePath(`/seasons/${seasonIdToUpdate}`);
   revalidatePath(`/seasons/${seasonIdToUpdate}/edit`);
   revalidatePath('/events'); 
-  redirect(`/seasons`);
+  redirect(`/seasons`); // Redirect to seasons list page after successful update
 }
+
+// Note: A deleteSeason action would also need to handle dissociating events.
+// For now, focusing on create/update.
+
