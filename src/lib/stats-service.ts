@@ -64,7 +64,7 @@ export async function calculatePlayerOverallStats(
   let wins = 0;
   let finalTables = 0;
   let totalWinnings = 0;
-  let totalBuyInsCalculated = 0; // Renamed to avoid confusion with PlayerStats.totalBuyIns
+  let totalBuyInsCalculated = 0; 
   const positions: number[] = [];
 
   const completedEvents = allEvents.filter(event => event.status === 'completed');
@@ -76,9 +76,9 @@ export async function calculatePlayerOverallStats(
     gamesPlayed++;
     
     const mainBuyIn = event.buyIn || 0;
-    const eventBountyValue = event.bounties || 0;
-    const eventMysteryKoValue = event.mysteryKo || 0;
-    const rebuyPrice = event.rebuyPrice || 0;
+    const eventBountyValue = event.bounties || 0; // Event-level bounty cost
+    const eventMysteryKoValue = event.mysteryKo || 0; // Event-level mKO cost
+    const rebuyPrice = event.rebuyPrice || 0; // Prize pool part of rebuy
     
     let playerRebuysInEvent = 0;
     const playerResultEntry = event.results.find(r => r.playerId === playerId);
@@ -106,8 +106,12 @@ export async function calculatePlayerOverallStats(
     }
     
     const costOfInitialEntry = mainBuyIn + eventBountyValue + eventMysteryKoValue;
-    const costOfRebuys = playerRebuysInEvent * rebuyPrice;
-    totalBuyInsCalculated += costOfInitialEntry + costOfRebuys;
+    let costOfAllRebuysInEvent = 0;
+    if (playerRebuysInEvent > 0 && rebuyPrice > 0) { // Rebuys incur costs only if rebuyPrice is set
+        const costOfOneFullRebuy = rebuyPrice + eventBountyValue + eventMysteryKoValue;
+        costOfAllRebuysInEvent = playerRebuysInEvent * costOfOneFullRebuy;
+    }
+    totalBuyInsCalculated += costOfInitialEntry + costOfAllRebuysInEvent;
   }
 
   const bestPosition = positions.length > 0 ? Math.min(...positions) : null;
@@ -118,7 +122,7 @@ export async function calculatePlayerOverallStats(
     wins,
     finalTables,
     totalWinnings,
-    totalBuyIns: totalBuyInsCalculated, // Use the calculated value
+    totalBuyIns: totalBuyInsCalculated,
     bestPosition,
     averagePosition,
   };
@@ -154,9 +158,9 @@ export async function calculateSeasonStats(
 
   for (const event of completedSeasonEvents) {
     const mainBuyInForEvent = event.buyIn || 0;
-    const eventBountyValue = event.bounties || 0;
-    const eventMysteryKoValue = event.mysteryKo || 0;
-    const rebuyPriceForEvent = event.rebuyPrice || 0;
+    const eventBountyValue = event.bounties || 0; // Event-level bounty cost
+    const eventMysteryKoValue = event.mysteryKo || 0; // Event-level mKO cost
+    const rebuyPriceForEvent = event.rebuyPrice || 0; // Prize pool part of rebuy
     const participantIdsInEvent = new Set(event.participants);
 
     for (const playerId of participantIdsInEvent) {
@@ -178,8 +182,12 @@ export async function calculateSeasonStats(
       const mysteryKoWon = playerResultEntry?.mysteryKoWon || 0;
       
       const costOfInitialEntry = mainBuyInForEvent + eventBountyValue + eventMysteryKoValue;
-      const costOfRebuys = rebuysCount * rebuyPriceForEvent;
-      const totalPlayerInvestmentForEvent = costOfInitialEntry + costOfRebuys;
+      let costOfAllRebuysForPlayerInEvent = 0;
+      if (rebuysCount > 0 && rebuyPriceForEvent > 0) { // Rebuys incur costs only if rebuyPrice is set
+          const costOfOneFullRebuy = rebuyPriceForEvent + eventBountyValue + eventMysteryKoValue;
+          costOfAllRebuysForPlayerInEvent = rebuysCount * costOfOneFullRebuy;
+      }
+      const totalPlayerInvestmentForEvent = costOfInitialEntry + costOfAllRebuysForPlayerInEvent;
       
       const eventNetResult = prizeWon + bountiesWon + mysteryKoWon - totalPlayerInvestmentForEvent;
 
@@ -230,3 +238,5 @@ export async function calculateSeasonStats(
 
   return { leaderboard, playerProgress, completedSeasonEvents };
 }
+
+    

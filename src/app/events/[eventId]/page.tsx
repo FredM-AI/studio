@@ -111,24 +111,24 @@ export default async function EventDetailsPage({ params }: { params: { eventId: 
              <div className="flex items-center justify-between text-sm">
               <span className="text-muted-foreground flex items-center">
                 {rebuysActive ? <CheckCircle className="mr-2 h-4 w-4 text-green-500"/> : <XCircle className="mr-2 h-4 w-4 text-red-500"/>}
-                Rebuys:
+                Rebuys (Prize Pool part):
               </span>
               <span className="font-medium">{rebuysActive ? `Yes (Price: $${event.rebuyPrice})` : 'No'}</span>
             </div>
             {(event.bounties !== undefined && event.bounties > 0) && (
                 <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground flex items-center"><Star className="mr-2 h-4 w-4 text-yellow-500"/>Bounty Value:</span>
+                    <span className="text-muted-foreground flex items-center"><Star className="mr-2 h-4 w-4 text-yellow-500"/>Bounty Value (per entry):</span>
                     <span className="font-medium">${event.bounties}</span>
                 </div>
             )}
             {(event.mysteryKo !== undefined && event.mysteryKo > 0) && (
                 <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground flex items-center"><Gift className="mr-2 h-4 w-4 text-purple-500"/>Mystery KO Value:</span>
+                    <span className="text-muted-foreground flex items-center"><Gift className="mr-2 h-4 w-4 text-purple-500"/>Mystery KO Value (per entry):</span>
                     <span className="font-medium">${event.mysteryKo}</span>
                 </div>
             )}
             <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground flex items-center"><DollarSign className="mr-2 h-4 w-4"/>Total Prize Pool:</span>
+              <span className="text-muted-foreground flex items-center"><DollarSign className="mr-2 h-4 w-4"/>Total Main Prize Pool:</span>
               <span className="font-medium">${event.prizePool.total}</span>
             </div>
             <div className="flex items-center justify-between text-sm">
@@ -197,8 +197,12 @@ export default async function EventDetailsPage({ params }: { params: { eventId: 
                       const rebuyPriceNum = event.rebuyPrice || 0;
                       
                       const costOfInitialEntry = mainBuyInNum + eventBountyValue + eventMysteryKoValue;
-                      const costOfRebuys = rebuysNum * rebuyPriceNum;
-                      const totalPlayerInvestment = costOfInitialEntry + costOfRebuys;
+                      let costOfAllRebuys = 0;
+                      if (rebuysNum > 0 && rebuyPriceNum > 0) { // Rebuys only if rebuyPrice is set
+                          const costOfOneFullRebuy = rebuyPriceNum + eventBountyValue + eventMysteryKoValue;
+                          costOfAllRebuys = rebuysNum * costOfOneFullRebuy;
+                      }
+                      const totalPlayerInvestment = costOfInitialEntry + costOfAllRebuys;
                       
                       const netResult = prizeNum + bountiesWonNum + mysteryKoWonNum - totalPlayerInvestment;
 
@@ -243,3 +247,5 @@ export default async function EventDetailsPage({ params }: { params: { eventId: 
     </div>
   );
 }
+
+    

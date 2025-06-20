@@ -179,9 +179,11 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
   }, [enrichedParticipants, event?.results, event?.id]);
 
   React.useEffect(() => {
+    // This effect calculates the total prize pool based on buy-ins and rebuys (prize pool part only)
+    // It should NOT include bounties or mystery KOs as those are separate pots.
     const numParticipants = enrichedParticipants.length;
-    const currentBuyInNum = parseInt(buyInValue) || 0;
-    const currentRebuyPriceNum = parseInt(rebuyPrice) || 0;
+    const currentBuyInNum = parseInt(buyInValue) || 0; // Main prize pool part of buy-in
+    const currentRebuyPriceNum = parseInt(rebuyPrice) || 0; // Prize pool part of rebuy
   
     let calculatedTotal = 0;
   
@@ -189,6 +191,7 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
       calculatedTotal += numParticipants * currentBuyInNum;
     }
   
+    // Add only the prize pool portion of rebuys
     if (currentRebuyPriceNum > 0) {
       enrichedParticipants.forEach(participant => {
         const rebuys = parseInt(participant.rebuys) || 0;
@@ -197,9 +200,7 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
         }
       });
     }
-  
     setTotalPrizePoolValue(calculatedTotal.toString());
-  
   }, [enrichedParticipants, buyInValue, rebuyPrice]);
 
   React.useEffect(() => {
@@ -252,7 +253,6 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
         }
       };
       
-      // Assign prizes based on number of participants and calculated amounts
       if (numParticipants >= 1) assignPrize(1, firstPrize); else assignPrize(1,0);
       if (numParticipants >= 2) assignPrize(2, secondPrize); else assignPrize(2,0);
       if (numParticipants >= 3) assignPrize(3, thirdPrize); else assignPrize(3,0);
@@ -377,7 +377,7 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
                 {state.errors?.buyIn && <p id="buyIn-error" className="text-sm text-destructive mt-1">{state.errors.buyIn.join(', ')}</p>}
               </div>
               <div>
-                <Label htmlFor="rebuyPrice">Rebuy Price ($)</Label>
+                <Label htmlFor="rebuyPrice">Rebuy Price (to Prize Pool) ($)</Label>
                 <Input
                     id="rebuyPrice"
                     name="rebuyPrice"
@@ -393,7 +393,7 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
                 {state.errors?.rebuyPrice && <p id="rebuyPrice-error" className="text-sm text-destructive mt-1">{state.errors.rebuyPrice.join(', ')}</p>}
               </div>
               <div>
-                <Label htmlFor="prizePoolTotal">Total Prize Pool ($)</Label>
+                <Label htmlFor="prizePoolTotal">Total Main Prize Pool ($)</Label>
                 <Input 
                   id="prizePoolTotal" 
                   name="prizePoolTotal" 
@@ -406,11 +406,12 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
                   aria-describedby="prizePoolTotal-error" 
                   className="h-9"
                   placeholder="Auto-calculé"
+                  readOnly
                 />
                 {state.errors?.prizePoolTotal && <p id="prizePoolTotal-error" className="text-sm text-destructive mt-1">{state.errors.prizePoolTotal.join(', ')}</p>}
               </div>
               <div>
-                <Label htmlFor="bounties" className="flex items-center"><Star className="mr-1 h-4 w-4 text-yellow-500" />Bounty Value ($)</Label>
+                <Label htmlFor="bounties" className="flex items-center"><Star className="mr-1 h-4 w-4 text-yellow-500" />Bounty Value (per entry) ($)</Label>
                 <Input
                   id="bounties"
                   name="bounties"
@@ -422,12 +423,12 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
                   onChange={(e) => setBountiesValue(e.target.value)}
                   aria-describedby="bounties-error"
                   className="h-9"
-                  title="Value of a single bounty for this event. Adds to total player cost."
+                  title="Value of a single bounty. Adds to player cost for initial entry AND each rebuy."
                 />
                 {state.errors?.bounties && <p id="bounties-error" className="text-sm text-destructive mt-1">{state.errors.bounties.join(', ')}</p>}
               </div>
               <div>
-                <Label htmlFor="mysteryKo" className="flex items-center"><Gift className="mr-1 h-4 w-4 text-purple-500" />Mystery KO Value ($)</Label>
+                <Label htmlFor="mysteryKo" className="flex items-center"><Gift className="mr-1 h-4 w-4 text-purple-500" />Mystery KO Value (per entry) ($)</Label>
                 <Input
                   id="mysteryKo"
                   name="mysteryKo"
@@ -439,7 +440,7 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
                   onChange={(e) => setMysteryKoValue(e.target.value)}
                   aria-describedby="mysteryKo-error"
                   className="h-9"
-                  title="Value of a single Mystery KO for this event. Adds to total player cost."
+                  title="Value of a single Mystery KO. Adds to player cost for initial entry AND each rebuy."
                 />
                 {state.errors?.mysteryKo && <p id="mysteryKo-error" className="text-sm text-destructive mt-1">{state.errors.mysteryKo.join(', ')}</p>}
               </div>
@@ -536,18 +537,24 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
                       const bountiesWonNum = parseInt(row.bountiesWon) || 0;
                       const mysteryKoWonNum = parseInt(row.mysteryKoWon) || 0;
                       
-                      const mainBuyInNum = parseInt(buyInValue) || 0;
-                      const eventBountyValueNum = parseInt(bountiesValue) || 0; // Event-level bounty
-                      const eventMysteryKoValueNum = parseInt(mysteryKoValue) || 0; // Event-level Mystery KO
+                      const mainBuyInNum = parseInt(buyInValue) || 0; // Main prize pool part of buy-in
+                      const eventBountyValueNum = parseInt(bountiesValue) || 0; // Event-level bounty cost per entry
+                      const eventMysteryKoValueNum = parseInt(mysteryKoValue) || 0; // Event-level Mystery KO cost per entry
                       const rebuysNum = participant ? (parseInt(participant.rebuys) || 0) : 0;
-                      const rebuyPriceNum = parseInt(rebuyPrice) || 0;
+                      const rebuyPriceNum = parseInt(rebuyPrice) || 0; // Prize pool part of rebuy
                       
                       let calculatedFinalResult = 0;
 
                       if (row.playerId && row.playerId !== NO_PLAYER_SELECTED_VALUE) {
                         const costOfInitialEntry = mainBuyInNum + eventBountyValueNum + eventMysteryKoValueNum;
-                        const costOfRebuys = rebuysNum * rebuyPriceNum;
-                        const totalPlayerInvestment = costOfInitialEntry + costOfRebuys;
+                        
+                        let costOfAllRebuys = 0;
+                        if (rebuysNum > 0 && rebuyPriceNum > 0) { // Rebuys only if rebuyPrice is set
+                            const costOfOneFullRebuy = rebuyPriceNum + eventBountyValueNum + eventMysteryKoValueNum;
+                            costOfAllRebuys = rebuysNum * costOfOneFullRebuy;
+                        }
+                        
+                        const totalPlayerInvestment = costOfInitialEntry + costOfAllRebuys;
                         calculatedFinalResult = prizeNum + bountiesWonNum + mysteryKoWonNum - totalPlayerInvestment;
                       }
                       const finalResultDisplay = calculatedFinalResult.toString();
@@ -644,3 +651,5 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
     </Card>
   );
 }
+
+    
