@@ -3,11 +3,17 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { getEvents, getSeasons } from "@/lib/data-service"; 
-import type { Event, Season } from "@/lib/definitions"; 
+import type { Event, Player, Season } from "@/lib/definitions"; 
 import { PlusCircle, CalendarDays, Users, DollarSign, Edit, Eye, BarChart3, FolderOpen } from "lucide-react";
 import Link from "next/link";
 import { cookies } from 'next/headers';
 import { Badge } from "@/components/ui/badge";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion"
 
 const AUTH_COOKIE_NAME = 'app_session_active';
 
@@ -143,43 +149,62 @@ export default async function EventsPage() {
           </CardContent>
         </Card>
       ) : (
-        <div className="space-y-10">
+        <Accordion type="multiple" className="w-full space-y-6">
           {allSeasons.map(season => {
             const seasonEvents = eventsBySeason.get(season.id) || [];
-            if (seasonEvents.length === 0) return null; // Don't render season if no events
+            if (seasonEvents.length === 0 && !isAuthenticated) return null; 
+            // ^ if not authenticated and no events, don't even show the season accordion item. 
+            // if authenticated, show it so they can add events to it if needed or see it's empty.
+
             return (
-              <Card key={season.id}>
-                <CardHeader>
-                  <CardTitle className="font-headline text-2xl flex items-center">
-                    <BarChart3 className="mr-3 h-6 w-6 text-primary"/>
-                    Season: {season.name}
-                  </CardTitle>
-                  <CardDescription>
-                    {new Date(season.startDate).toLocaleDateString()} - {season.endDate ? new Date(season.endDate).toLocaleDateString() : 'Ongoing'}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <EventTable events={seasonEvents} isAuthenticated={isAuthenticated} />
-                </CardContent>
-              </Card>
+              <AccordionItem value={season.id} key={season.id} className="border rounded-lg overflow-hidden">
+                <Card className="border-none rounded-none shadow-none"> {/* Remove Card default border/shadow */}
+                  <AccordionTrigger className="p-0 hover:no-underline">
+                    <CardHeader className="w-full text-left">
+                      <CardTitle className="font-headline text-2xl flex items-center">
+                        <BarChart3 className="mr-3 h-6 w-6 text-primary"/>
+                        Season: {season.name}
+                      </CardTitle>
+                      <CardDescription>
+                        {new Date(season.startDate).toLocaleDateString()} - {season.endDate ? new Date(season.endDate).toLocaleDateString() : 'Ongoing'}
+                      </CardDescription>
+                    </CardHeader>
+                  </AccordionTrigger>
+                  <AccordionContent>
+                    <CardContent className="pt-0"> {/* Adjust padding if CardContent wraps AccordionContent */}
+                      {seasonEvents.length > 0 ? (
+                        <EventTable events={seasonEvents} isAuthenticated={isAuthenticated} />
+                      ) : (
+                        <p className="text-muted-foreground text-sm py-4 text-center">No events scheduled for this season yet.</p>
+                      )}
+                    </CardContent>
+                  </AccordionContent>
+                </Card>
+              </AccordionItem>
             );
           })}
 
           {unassignedEvents.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="font-headline text-2xl flex items-center">
-                    <FolderOpen className="mr-3 h-6 w-6 text-primary"/>
-                    Other Events
-                </CardTitle>
-                <CardDescription>Events not currently assigned to a specific season.</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <EventTable events={unassignedEvents} isAuthenticated={isAuthenticated} />
-              </CardContent>
-            </Card>
+            <AccordionItem value="unassigned-events" className="border rounded-lg overflow-hidden">
+              <Card className="border-none rounded-none shadow-none">
+                <AccordionTrigger className="p-0 hover:no-underline">
+                  <CardHeader className="w-full text-left">
+                    <CardTitle className="font-headline text-2xl flex items-center">
+                        <FolderOpen className="mr-3 h-6 w-6 text-primary"/>
+                        Other Events
+                    </CardTitle>
+                    <CardDescription>Events not currently assigned to a specific season.</CardDescription>
+                  </CardHeader>
+                </AccordionTrigger>
+                <AccordionContent>
+                  <CardContent className="pt-0">
+                    <EventTable events={unassignedEvents} isAuthenticated={isAuthenticated} />
+                  </CardContent>
+                </AccordionContent>
+              </Card>
+            </AccordionItem>
           )}
-        </div>
+        </Accordion>
       )}
     </div>
   );
