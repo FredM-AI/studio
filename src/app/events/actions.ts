@@ -2,14 +2,25 @@
 'use server';
 
 import { z } from 'zod';
-import { db, getEvents } from '@/lib/data-service'; // Import db, getEvents (pour la validation initiale si besoin)
-import { collection, doc, setDoc, updateDoc, deleteDoc, getDoc } from 'firebase/firestore';
+import { db } from '@/lib/data-service'; 
+import { collection, doc, setDoc, getDoc, deleteDoc } from 'firebase/firestore';
 import type { Event, EventStatus } from '@/lib/definitions';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import type { EventFormState } from '@/lib/definitions';
 
 const EVENTS_COLLECTION = 'events';
+
+// Helper function to remove undefined properties from an object
+function cleanUndefinedProperties(obj: any): any {
+  const newObj: any = {};
+  for (const key in obj) {
+    if (obj[key] !== undefined) {
+      newObj[key] = obj[key];
+    }
+  }
+  return newObj;
+}
 
 const EventResultInputSchema = z.object({
   playerId: z.string().min(1),
@@ -22,7 +33,7 @@ const EventFormSchema = z.object({
   id: z.string().optional(),
   name: z.string().min(3, { message: 'Event name must be at least 3 characters.' }),
   date: z.string().min(1, { message: 'Date is required.' }),
-  buyIn: z.coerce.number().int().min(0, { message: 'Buy-in must be a non-negative integer.' }), // Allow 0 for free events
+  buyIn: z.coerce.number().int().min(0, { message: 'Buy-in must be a non-negative integer.' }),
   rebuyPrice: z.coerce.number().int().nonnegative({ message: 'Rebuy price must be a non-negative integer.' }).optional(),
   bounties: z.coerce.number().int().nonnegative({ message: 'Bounties must be a non-negative integer.' }).optional(),
   mysteryKo: z.coerce.number().int().nonnegative({ message: 'Mystery KO must be a non-negative integer.' }).optional(),
@@ -101,7 +112,6 @@ const EventFormSchema = z.object({
 
 export async function createEvent(prevState: EventFormState, formData: FormData): Promise<EventFormState> {
   const rawFormData = Object.fromEntries(formData.entries());
-  // Ensure participantIds is an array even if empty or not provided.
   const participantIdsValue = rawFormData.participantIds;
   rawFormData.participantIds = typeof participantIdsValue === 'string' && participantIdsValue ? participantIdsValue.split(',').filter(id => id.trim() !== '') : (Array.isArray(participantIdsValue) ? participantIdsValue : []);
 
@@ -117,8 +127,8 @@ export async function createEvent(prevState: EventFormState, formData: FormData)
   const data = validatedFields.data;
   const eventId = crypto.randomUUID();
 
-  const newEvent: Event = {
-    id: eventId, // Use client-generated ID for Firestore document ID
+  const eventDataForFirestore: Omit<Event, 'createdAt' | 'updatedAt'> & { createdAt?: string, updatedAt?: string } = {
+    id: eventId,
     name: data.name,
     date: new Date(data.date).toISOString(),
     buyIn: data.buyIn,
@@ -138,23 +148,32 @@ export async function createEvent(prevState: EventFormState, formData: FormData)
         position: r.position,
         prize: r.prize,
         rebuys: r.rebuys,
-        eliminatedBy: undefined,
+        eliminatedBy: undefined, // Ensure this is present or correctly handled if optional
     })) || [],
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
   };
+  
+  const finalEventPayload = {
+      ...cleanUndefinedProperties(eventDataForFirestore),
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+  } as Event;
+
 
   try {
     const eventRef = doc(db, EVENTS_COLLECTION, eventId);
-    await setDoc(eventRef, newEvent);
-  } catch (error) {
+    await setDoc(eventRef, finalEventPayload);
+  } catch (error: any) {
     console.error("Firestore Error creating event:", error);
-    return { message: 'Database Error: Failed to create event.' };
+    let errorMessage = 'Database Error: Failed to create event.';
+    if (error && error.message) {
+      errorMessage += ` Details: ${error.message}`;
+    }
+    return { message: errorMessage };
   }
 
   revalidatePath('/events');
-  revalidatePath('/dashboard'); // if dashboard shows event info
-  revalidatePath('/seasons'); // if seasons show event info
+  revalidatePath('/dashboard');
+  revalidatePath('/seasons');
   redirect('/events');
 }
 
@@ -188,10 +207,7 @@ export async function updateEvent(prevState: EventFormState, formData: FormData)
     }
     const existingEvent = eventSnap.data() as Event;
 
-    // Construct the full updatedEvent object to ensure all fields are present
-    const updatedEventData: Event = {
-      ...existingEvent, // Spread existing data first
-      id: eventId,
+    const eventDataToUpdate: Partial<Event> = {
       name: data.name,
       date: new Date(data.date).toISOString(),
       buyIn: data.buyIn,
@@ -201,7 +217,7 @@ export async function updateEvent(prevState: EventFormState, formData: FormData)
       maxPlayers: data.maxPlayers,
       status: data.status as EventStatus,
       prizePool: {
-        ...existingEvent.prizePool, // Preserve existing prizePool fields if not updated
+        ...existingEvent.prizePool, 
         total: data.prizePoolTotal,
       },
       participants: data.participantIds.filter(id => id.trim() !== ''),
@@ -212,16 +228,24 @@ export async function updateEvent(prevState: EventFormState, formData: FormData)
         rebuys: r.rebuys,
         eliminatedBy: undefined,
       })) || [],
-      updatedAt: new Date().toISOString(),
-      // createdAt should remain from existingEvent
-      createdAt: existingEvent.createdAt,
     };
+    
+    const finalEventPayload = {
+        ...existingEvent,
+        ...cleanUndefinedProperties(eventDataToUpdate),
+        updatedAt: new Date().toISOString(),
+    } as Event;
 
-    await setDoc(eventRef, updatedEventData); // Use setDoc to overwrite the document with new complete data
 
-  } catch (error) {
+    await setDoc(eventRef, finalEventPayload);
+
+  } catch (error: any) {
     console.error("Firestore Error updating event:", error);
-    return { message: 'Database Error: Failed to update event.' };
+    let errorMessage = 'Database Error: Failed to update event.';
+    if (error && error.message) {
+      errorMessage += ` Details: ${error.message}`;
+    }
+    return { message: errorMessage };
   }
 
   revalidatePath('/events');
@@ -238,11 +262,6 @@ export async function deleteEvent(eventId: string): Promise<{ success: boolean; 
   }
   try {
     const eventRef = doc(db, EVENTS_COLLECTION, eventId);
-    // Optionally, check if document exists before deleting, though deleteDoc doesn't error if it doesn't.
-    // const eventSnap = await getDoc(eventRef);
-    // if (!eventSnap.exists()) {
-    //   return { success: false, message: 'Event not found or already deleted.' };
-    // }
     await deleteDoc(eventRef);
 
     revalidatePath('/events');
@@ -254,5 +273,3 @@ export async function deleteEvent(eventId: string): Promise<{ success: boolean; 
     return { success: false, message: 'Database Error: Failed to delete event.' };
   }
 }
-
-    
