@@ -450,7 +450,7 @@ export default function EventForm({ event, allPlayers, allSeasons, action, formT
                 {state.errors?.prizePoolTotal && <p id="prizePoolTotal-error" className="text-sm text-destructive mt-1">{state.errors.prizePoolTotal.join(', ')}</p>}
               </div>
               <div>
-                <Label htmlFor="bounties" className="flex items-center"><Star className="mr-1 h-4 w-4 text-yellow-500" />Bounty Value (per entry/rebuy) ($)</Label>
+                <Label htmlFor="bounties" className="flex items-center"><Star className="mr-1 h-4 w-4 text-yellow-500" />Bounty Value ($)</Label>
                 <Input
                   id="bounties"
                   name="bounties"
@@ -462,12 +462,12 @@ export default function EventForm({ event, allPlayers, allSeasons, action, formT
                   onChange={(e) => setBountiesValue(e.target.value)}
                   aria-describedby="bounties-error"
                   className="h-9"
-                  title="Value of a single bounty. Paid on initial entry AND each rebuy if set."
+                  title="Value of a single bounty."
                 />
                 {state.errors?.bounties && <p id="bounties-error" className="text-sm text-destructive mt-1">{state.errors.bounties.join(', ')}</p>}
               </div>
               <div>
-                <Label htmlFor="mysteryKo" className="flex items-center"><Gift className="mr-1 h-4 w-4 text-purple-500" />Mystery KO Value (per entry/rebuy) ($)</Label>
+                <Label htmlFor="mysteryKo" className="flex items-center"><Gift className="mr-1 h-4 w-4 text-purple-500" />Mystery KO Value ($)</Label>
                 <Input
                   id="mysteryKo"
                   name="mysteryKo"
@@ -479,7 +479,7 @@ export default function EventForm({ event, allPlayers, allSeasons, action, formT
                   onChange={(e) => setMysteryKoValue(e.target.value)}
                   aria-describedby="mysteryKo-error"
                   className="h-9"
-                  title="Value of a single Mystery KO. Paid on initial entry AND each rebuy if set."
+                  title="Value of a single Mystery KO."
                 />
                 {state.errors?.mysteryKo && <p id="mysteryKo-error" className="text-sm text-destructive mt-1">{state.errors.mysteryKo.join(', ')}</p>}
               </div>
@@ -535,7 +535,7 @@ export default function EventForm({ event, allPlayers, allSeasons, action, formT
                             onChange={(e) => handleParticipantRebuyChange(ep.player.id, e.target.value)}
                             className="h-8 w-16 text-center"
                             placeholder="Rebuys"
-                            disabled={!(parseInt(rebuyPrice) > 0 && (parseInt(bountiesValue) > 0 || parseInt(mysteryKoValue) > 0 || parseInt(rebuyPrice) > 0))}
+                            disabled={!(parseInt(rebuyPrice) > 0 || (parseInt(bountiesValue) > 0 || parseInt(mysteryKoValue) > 0 || parseInt(rebuyPrice) > 0))}
                          />
                          <Repeat className="h-3 w-3 text-muted-foreground" />
                        </div>
@@ -690,3 +690,5 @@ export default function EventForm({ event, allPlayers, allSeasons, action, formT
     </Card>
   );
 }
+
+    

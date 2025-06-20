@@ -123,13 +123,13 @@ export default async function EventDetailsPage({ params }: { params: { eventId: 
             </div>
             {(event.bounties !== undefined && event.bounties > 0) && (
                 <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground flex items-center"><Star className="mr-2 h-4 w-4 text-yellow-500"/>Bounty Value (per entry/rebuy):</span>
+                    <span className="text-muted-foreground flex items-center"><Star className="mr-2 h-4 w-4 text-yellow-500"/>Bounty Value:</span>
                     <span className="font-medium">${event.bounties}</span>
                 </div>
             )}
             {(event.mysteryKo !== undefined && event.mysteryKo > 0) && (
                 <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground flex items-center"><Gift className="mr-2 h-4 w-4 text-purple-500"/>Mystery KO Value (per entry/rebuy):</span>
+                    <span className="text-muted-foreground flex items-center"><Gift className="mr-2 h-4 w-4 text-purple-500"/>Mystery KO Value:</span>
                     <span className="font-medium">${event.mysteryKo}</span>
                 </div>
             )}
@@ -253,3 +253,5 @@ export default async function EventDetailsPage({ params }: { params: { eventId: 
     </div>
   );
 }
+
+    
