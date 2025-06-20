@@ -4,11 +4,22 @@
 import { z } from 'zod';
 import { db } from '@/lib/data-service'; // Import db
 import { collection, doc, setDoc, deleteDoc, getDocs, query, where, getDoc } from 'firebase/firestore';
-import type { Player, PlayerFormState } from '@/lib/definitions';
+import type { Player, PlayerFormState, PlayerStats } from '@/lib/definitions';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 
 const PLAYERS_COLLECTION = 'players';
+
+// Helper function to remove undefined properties from an object
+function cleanUndefinedProperties(obj: any): any {
+  const newObj = { ...obj };
+  for (const key in newObj) {
+    if (newObj[key] === undefined) {
+      delete newObj[key];
+    }
+  }
+  return newObj;
+}
 
 const PlayerSchema = z.object({
   id: z.string().optional(), // Present for updates, absent for creations
@@ -17,7 +28,7 @@ const PlayerSchema = z.object({
   nickname: z.string().optional(),
   email: z.string().email({ message: 'Invalid email address.' }),
   phone: z.string().optional(),
-  avatar: z.string().url({ message: 'Invalid URL for avatar.' }).optional().or(z.literal('')),
+  avatar: z.string().url({ message: 'Invalid URL for avatar.' }).or(z.literal('')).optional(),
   isActive: z.preprocess((val) => val === 'on' || val === true, z.boolean()).default(true),
 });
 
@@ -34,7 +45,6 @@ export async function createPlayer(prevState: PlayerFormState, formData: FormDat
   const data = validatedFields.data;
 
   try {
-    // Check for duplicate email in Firestore
     const playersRef = collection(db, PLAYERS_COLLECTION);
     const q = query(playersRef, where("email", "==", data.email));
     const querySnapshot = await getDocs(q);
@@ -46,14 +56,12 @@ export async function createPlayer(prevState: PlayerFormState, formData: FormDat
     }
 
     const playerId = crypto.randomUUID();
-    const newPlayer: Player = {
+    
+    const newPlayerDataForFirestore: any = {
       id: playerId,
       firstName: data.firstName,
       lastName: data.lastName,
-      nickname: data.nickname,
       email: data.email,
-      phone: data.phone,
-      avatar: data.avatar || undefined,
       isActive: data.isActive,
       stats: {
         gamesPlayed: 0,
@@ -63,18 +71,27 @@ export async function createPlayer(prevState: PlayerFormState, formData: FormDat
         totalBuyIns: 0,
         bestPosition: null,
         averagePosition: null,
-      },
+      } as PlayerStats,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
 
-    await setDoc(doc(db, PLAYERS_COLLECTION, playerId), newPlayer);
+    if (data.nickname && data.nickname.trim() !== '') {
+      newPlayerDataForFirestore.nickname = data.nickname.trim();
+    }
+    if (data.phone && data.phone.trim() !== '') {
+      newPlayerDataForFirestore.phone = data.phone.trim();
+    }
+    if (data.avatar && data.avatar.trim() !== '') {
+      newPlayerDataForFirestore.avatar = data.avatar.trim();
+    }
+
+    await setDoc(doc(db, PLAYERS_COLLECTION, playerId), newPlayerDataForFirestore);
 
   } catch (error: any) {
     console.error("Firestore Error creating player:", error);
     let errorMessage = 'Database Error: Failed to create player.';
     if (error && error.message) {
-      // Append Firestore's error message if available
       errorMessage += ` Details: ${error.message}`;
     }
     if (error && error.code) {
@@ -105,7 +122,6 @@ export async function updatePlayer(prevState: PlayerFormState, formData: FormDat
   }
 
   try {
-    // Check for duplicate email (excluding the current player)
     const playersRef = collection(db, PLAYERS_COLLECTION);
     const q = query(playersRef, where("email", "==", data.email));
     const querySnapshot = await getDocs(q);
@@ -132,19 +148,19 @@ export async function updatePlayer(prevState: PlayerFormState, formData: FormDat
     }
     const existingPlayer = playerSnap.data() as Player;
 
-    const updatedPlayer: Player = {
+    const playerToSave: Player = {
       ...existingPlayer, 
       firstName: data.firstName,
       lastName: data.lastName,
-      nickname: data.nickname,
+      nickname: (data.nickname && data.nickname.trim() !== '') ? data.nickname.trim() : undefined,
       email: data.email,
-      phone: data.phone,
-      avatar: data.avatar || undefined,
+      phone: (data.phone && data.phone.trim() !== '') ? data.phone.trim() : undefined,
+      avatar: (data.avatar && data.avatar.trim() !== '') ? data.avatar.trim() : undefined,
       isActive: data.isActive,
       updatedAt: new Date().toISOString(),
     };
 
-    await setDoc(playerRef, updatedPlayer); 
+    await setDoc(playerRef, cleanUndefinedProperties(playerToSave)); 
 
   } catch (error: any) {
     console.error("Firestore Error updating player:", error);
