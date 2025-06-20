@@ -27,6 +27,8 @@ const EventResultInputSchema = z.object({
   position: z.coerce.number().int().min(1, { message: "Position must be 1 or greater." }),
   prize: z.coerce.number().int().min(0, { message: "Prize must be 0 or greater." }),
   rebuys: z.coerce.number().int().min(0, {message: "Rebuys must be 0 or greater."}).optional().default(0),
+  bountiesWon: z.coerce.number().int().nonnegative({ message: "Bounties won must be non-negative." }).optional().default(0),
+  mysteryKoWon: z.coerce.number().int().nonnegative({ message: "Mystery KO won must be non-negative." }).optional().default(0),
 });
 
 const EventFormSchema = z.object({
@@ -148,7 +150,9 @@ export async function createEvent(prevState: EventFormState, formData: FormData)
         position: r.position,
         prize: r.prize,
         rebuys: r.rebuys,
-        eliminatedBy: undefined, // Ensure this is present or correctly handled if optional
+        bountiesWon: r.bountiesWon,
+        mysteryKoWon: r.mysteryKoWon,
+        eliminatedBy: undefined, 
     })) || [],
   };
   
@@ -226,6 +230,8 @@ export async function updateEvent(prevState: EventFormState, formData: FormData)
         position: r.position,
         prize: r.prize,
         rebuys: r.rebuys,
+        bountiesWon: r.bountiesWon,
+        mysteryKoWon: r.mysteryKoWon,
         eliminatedBy: undefined,
       })) || [],
     };

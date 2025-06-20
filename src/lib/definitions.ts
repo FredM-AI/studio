@@ -35,6 +35,8 @@ export type EventResult = {
   prize: number;
   rebuys?: number;
   eliminatedBy?: string; // Player ID or null
+  bountiesWon?: number;
+  mysteryKoWon?: number;
 };
 
 export type EventStatus = "draft" | "active" | "completed" | "cancelled";
@@ -47,8 +49,8 @@ export type Event = {
   date: string; // ISO Date string
   buyIn: number;
   rebuyPrice?: number;
-  bounties?: number; // New field
-  mysteryKo?: number; // New field
+  bounties?: number; // Value of a single bounty for the event
+  mysteryKo?: number; // Value of a single mystery KO for the event
   maxPlayers?: number; // Made optional
   status: EventStatus;
   seasonId?: string;
@@ -97,13 +99,13 @@ export type EventFormState = {
     rebuyPrice?: string[];
     bounties?: string[];
     mysteryKo?: string[];
-    maxPlayers?: string[]; // Kept for potential future use if field is re-added
+    maxPlayers?: string[]; 
     prizePoolTotal?: string[];
     participantIds?: string[];
     status?: string[];
-    results?: string[]; // For errors related to the results array as a whole
-    resultsJson?: string[]; // For errors related to the resultsJson field specifically
-    _form?: string[]; // General form errors
+    results?: string[]; 
+    resultsJson?: string[]; 
+    _form?: string[]; 
   };
   message?: string | null;
 };
@@ -111,10 +113,12 @@ export type EventFormState = {
 // Helper type for EventForm to manage results input
 export type EventResultInput = {
   playerId: string;
-  playerName: string; // For display purposes in the form
-  position: string; // Kept as string for input field binding
-  prize: string;    // Kept as string for input field binding
-  rebuys: string;   // Kept as string for input field binding, new field
+  playerName: string; 
+  position: string; 
+  prize: string;    
+  rebuys: string;
+  bountiesWon: string; // New
+  mysteryKoWon: string; // New
 };
 
 // Type for EventForm to use in useActionState
@@ -128,7 +132,7 @@ export type PlayerFormState = {
     email?: string[];
     phone?: string[];
     avatar?: string[];
-    _form?: string[]; // For general form errors
+    _form?: string[]; 
   };
   message?: string | null;
 };
@@ -149,7 +153,7 @@ export type LoginFormState = {
   errors?: {
     username?: string[];
     password?: string[];
-    _form?: string[]; // For general form errors
+    _form?: string[]; 
   };
   message?: string | null;
 };

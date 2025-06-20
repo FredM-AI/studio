@@ -29,6 +29,8 @@ type PositionalResultEntry = {
   position: number;
   playerId: string | null;
   prize: string;
+  bountiesWon: string;
+  mysteryKoWon: string;
 };
 
 interface EnrichedParticipant {
@@ -52,10 +54,10 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
   const [rebuyPrice, setRebuyPrice] = React.useState<string>(
     event ? (event.rebuyPrice?.toString() ?? '0') : '20'
   );
-  const [bountiesValue, setBountiesValue] = React.useState<string>(
+  const [bountiesValue, setBountiesValue] = React.useState<string>( // Event-level bounty value
     event?.bounties?.toString() || '0'
   );
-  const [mysteryKoValue, setMysteryKoValue] = React.useState<string>(
+  const [mysteryKoValue, setMysteryKoValue] = React.useState<string>( // Event-level Mystery KO value
     event?.mysteryKo?.toString() || '0'
   );
   const [totalPrizePoolValue, setTotalPrizePoolValue] = React.useState<string>(
@@ -117,6 +119,9 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
 
         let playerIdToSet: string | null = null;
         let prizeToSet = '0';
+        let bountiesWonToSet = '0';
+        let mysteryKoWonToSet = '0';
+
 
         if (existingRowInPrevState) {
           if (existingRowInPrevState.playerId && participantIdsSet.has(existingRowInPrevState.playerId)) {
@@ -125,10 +130,14 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
             playerIdToSet = null;
           }
           prizeToSet = existingRowInPrevState.prize || '0';
+          bountiesWonToSet = existingRowInPrevState.bountiesWon || '0';
+          mysteryKoWonToSet = existingRowInPrevState.mysteryKoWon || '0';
         } else if (savedResultFromEventProp) {
           if (participantIdsSet.has(savedResultFromEventProp.playerId)) {
             playerIdToSet = savedResultFromEventProp.playerId;
             prizeToSet = savedResultFromEventProp.prize?.toString() || '0';
+            bountiesWonToSet = savedResultFromEventProp.bountiesWon?.toString() || '0';
+            mysteryKoWonToSet = savedResultFromEventProp.mysteryKoWon?.toString() || '0';
           }
         }
         
@@ -136,12 +145,19 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
             playerIdToSet = null;
         }
         
-        if (playerIdToSet === null) prizeToSet = '0';
+        if (playerIdToSet === null) {
+            prizeToSet = '0';
+            bountiesWonToSet = '0';
+            mysteryKoWonToSet = '0';
+        }
+
 
         newTableData.push({
           position: i,
           playerId: playerIdToSet,
           prize: prizeToSet,
+          bountiesWon: bountiesWonToSet,
+          mysteryKoWon: mysteryKoWonToSet,
         });
       }
       return newTableData;
@@ -196,17 +212,17 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
       } else { 
         if (buyInNum > 0) { 
           if (prizePoolNum >= buyInNum) {
-            fourthPrize = buyInNum; // Prize is the buy-in amount
+            fourthPrize = buyInNum; 
             const remainingPool = prizePoolNum - fourthPrize;
             if (remainingPool > 0) {
               firstPrize = Math.round(remainingPool * 0.50);
               secondPrize = Math.round(remainingPool * 0.30);
               thirdPrize = Math.round(remainingPool * 0.20);
             }
-          } else { // Prize pool is less than one buy-in, so 4th gets whatever is left (or all if it's the only prize)
+          } else { 
             fourthPrize = prizePoolNum; 
           }
-        } else { // No buy-in, distribute based on 3 positions if possible
+        } else { 
           if (numParticipants >= 1) firstPrize = Math.round(prizePoolNum * 0.50);
           if (numParticipants >= 2) secondPrize = Math.round(prizePoolNum * 0.30);
           if (numParticipants >= 3) thirdPrize = Math.round(prizePoolNum * 0.20);
@@ -217,7 +233,7 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
         const index = newDistributedResults.findIndex(r => r.position === pos);
         if (index !== -1 && amount > 0) {
           newDistributedResults[index].prize = amount.toString();
-        } else if (index !== -1) { // Ensure prize is '0' if amount is not positive
+        } else if (index !== -1) { 
           newDistributedResults[index].prize = '0';
         }
       };
@@ -226,7 +242,6 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
       if (numParticipants >= 2) assignPrize(2, secondPrize); else assignPrize(2,0);
       if (numParticipants >= 3) assignPrize(3, thirdPrize); else assignPrize(3,0);
       if (numParticipants >= 4 && fourthPrize > 0) assignPrize(4, fourthPrize); else assignPrize(4,0);
-
 
       return newDistributedResults;
     });
@@ -241,7 +256,7 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
   const handleRemovePlayer = (participantToRemove: EnrichedParticipant) => {
     setAvailablePlayers(prev => [...prev, participantToRemove.player].sort((a, b) => a.firstName.localeCompare(b.firstName)));
     setEnrichedParticipants(prev => prev.filter(p => p.player.id !== participantToRemove.player.id));
-    setPositionalResults(prev => prev.map(pr => pr.playerId === participantToRemove.player.id ? {...pr, playerId: null, prize: '0'} : pr ));
+    setPositionalResults(prev => prev.map(pr => pr.playerId === participantToRemove.player.id ? {...pr, playerId: null, prize: '0', bountiesWon: '0', mysteryKoWon: '0'} : pr ));
   };
   
   const handleParticipantRebuyChange = (playerId: string, rebuyValue: string) => {
@@ -252,7 +267,7 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
     );
   };
 
-  const handlePositionalResultChange = (position: number, field: 'playerId' | 'prize', value: string | null) => {
+  const handlePositionalResultChange = (position: number, field: 'playerId' | 'prize' | 'bountiesWon' | 'mysteryKoWon', value: string | null) => {
     setPositionalResults(prev =>
       prev.map(row =>
         row.position === position ? { ...row, [field]: value === NO_PLAYER_SELECTED_VALUE ? null : value } : row
@@ -276,6 +291,8 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
         position: row.position,
         prize: parseInt(row.prize) || 0,
         rebuys: rebuysCount,
+        bountiesWon: parseInt(row.bountiesWon) || 0,
+        mysteryKoWon: parseInt(row.mysteryKoWon) || 0,
       };
     });
   const resultsJson = JSON.stringify(finalResultsForJson);
@@ -377,7 +394,7 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
                 {state.errors?.prizePoolTotal && <p id="prizePoolTotal-error" className="text-sm text-destructive mt-1">{state.errors.prizePoolTotal.join(', ')}</p>}
               </div>
               <div>
-                <Label htmlFor="bounties" className="flex items-center"><Star className="mr-1 h-4 w-4 text-yellow-500" />Bounties ($)</Label>
+                <Label htmlFor="bounties" className="flex items-center"><Star className="mr-1 h-4 w-4 text-yellow-500" />Bounty Value ($)</Label>
                 <Input
                   id="bounties"
                   name="bounties"
@@ -389,11 +406,12 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
                   onChange={(e) => setBountiesValue(e.target.value)}
                   aria-describedby="bounties-error"
                   className="h-9"
+                  title="Value of a single bounty for this event"
                 />
                 {state.errors?.bounties && <p id="bounties-error" className="text-sm text-destructive mt-1">{state.errors.bounties.join(', ')}</p>}
               </div>
               <div>
-                <Label htmlFor="mysteryKo" className="flex items-center"><Gift className="mr-1 h-4 w-4 text-purple-500" />Mystery KO ($)</Label>
+                <Label htmlFor="mysteryKo" className="flex items-center"><Gift className="mr-1 h-4 w-4 text-purple-500" />Mystery KO Value ($)</Label>
                 <Input
                   id="mysteryKo"
                   name="mysteryKo"
@@ -405,6 +423,7 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
                   onChange={(e) => setMysteryKoValue(e.target.value)}
                   aria-describedby="mysteryKo-error"
                   className="h-9"
+                  title="Value of a single Mystery KO for this event"
                 />
                 {state.errors?.mysteryKo && <p id="mysteryKo-error" className="text-sm text-destructive mt-1">{state.errors.mysteryKo.join(', ')}</p>}
               </div>
@@ -479,15 +498,17 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
               <h3 className="font-headline text-lg flex items-center"><Trophy className="mr-2 h-5 w-5 text-primary" />Event Results</h3>
               {state.errors?.results && <p className="text-sm text-destructive mt-1">{state.errors.results.join(', ')}</p>}
               {state.errors?.resultsJson && <p className="text-sm text-destructive mt-1">{typeof state.errors.resultsJson === 'string' ? state.errors.resultsJson : state.errors.resultsJson.join(', ')}</p>}
-              <ScrollArea className="max-h-56 w-full rounded-md border overflow-y-auto">
+              <ScrollArea className="max-h-96 w-full rounded-md border overflow-y-auto">
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="w-[10%] text-center">Position</TableHead>
-                      <TableHead className="w-[30%]">Player</TableHead>
-                      <TableHead className="w-[15%] text-center">Rebuys</TableHead>
-                      <TableHead className="w-[20%] text-right">Prize ($)</TableHead>
-                      <TableHead className="w-[25%] text-right">Final Result ($)</TableHead>
+                      <TableHead className="w-[8%] text-center">Pos</TableHead>
+                      <TableHead className="w-[25%]">Player</TableHead>
+                      <TableHead className="w-[12%] text-center">Rebuys</TableHead>
+                      <TableHead className="w-[15%] text-right">Prize ($)</TableHead>
+                      <TableHead className="w-[15%] text-right">Bounty ($)</TableHead>
+                      <TableHead className="w-[15%] text-right">MSKO ($)</TableHead>
+                      <TableHead className="w-[15%] text-right">Net ($)</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -496,13 +517,15 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
                       const rebuysDisplay = participant ? participant.rebuys : '0';
                       
                       const prizeNum = parseInt(row.prize) || 0;
+                      const bountiesWonNum = parseInt(row.bountiesWon) || 0;
+                      const mysteryKoWonNum = parseInt(row.mysteryKoWon) || 0;
                       const buyInNum = parseInt(buyInValue) || 0;
                       const rebuysNum = participant ? (parseInt(participant.rebuys) || 0) : 0;
                       const rebuyPriceNum = parseInt(rebuyPrice) || 0;
                       let calculatedFinalResult = 0;
 
                       if (row.playerId && row.playerId !== NO_PLAYER_SELECTED_VALUE) {
-                        calculatedFinalResult = prizeNum - (buyInNum + (rebuysNum * rebuyPriceNum));
+                        calculatedFinalResult = prizeNum + bountiesWonNum + mysteryKoWonNum - (buyInNum + (rebuysNum * rebuyPriceNum));
                       }
                       const finalResultDisplay = calculatedFinalResult.toString();
 
@@ -539,13 +562,30 @@ export default function EventForm({ event, allPlayers, action, formTitle, formDe
                           </TableCell>
                           <TableCell className="py-1">
                             <Input
-                              id={`prize-pos-${row.position}`}
                               type="number"
-                              step="1"
-                              min="0"
-                              placeholder="0"
+                              step="1" min="0" placeholder="0"
                               value={row.prize}
                               onChange={(e) => handlePositionalResultChange(row.position, 'prize', e.target.value)}
+                              className="text-right h-9"
+                              disabled={!row.playerId || row.playerId === NO_PLAYER_SELECTED_VALUE}
+                            />
+                          </TableCell>
+                          <TableCell className="py-1">
+                            <Input
+                              type="number"
+                              step="1" min="0" placeholder="0"
+                              value={row.bountiesWon}
+                              onChange={(e) => handlePositionalResultChange(row.position, 'bountiesWon', e.target.value)}
+                              className="text-right h-9"
+                              disabled={!row.playerId || row.playerId === NO_PLAYER_SELECTED_VALUE}
+                            />
+                          </TableCell>
+                          <TableCell className="py-1">
+                            <Input
+                              type="number"
+                              step="1" min="0" placeholder="0"
+                              value={row.mysteryKoWon}
+                              onChange={(e) => handlePositionalResultChange(row.position, 'mysteryKoWon', e.target.value)}
                               className="text-right h-9"
                               disabled={!row.playerId || row.playerId === NO_PLAYER_SELECTED_VALUE}
                             />

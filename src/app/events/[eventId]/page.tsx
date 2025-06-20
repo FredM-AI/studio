@@ -107,13 +107,13 @@ export default async function EventDetailsPage({ params }: { params: { eventId: 
             </div>
             {(event.bounties !== undefined && event.bounties > 0) && (
                 <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground flex items-center"><Star className="mr-2 h-4 w-4 text-yellow-500"/>Bounties:</span>
+                    <span className="text-muted-foreground flex items-center"><Star className="mr-2 h-4 w-4 text-yellow-500"/>Bounty Value:</span>
                     <span className="font-medium">${event.bounties}</span>
                 </div>
             )}
             {(event.mysteryKo !== undefined && event.mysteryKo > 0) && (
                 <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground flex items-center"><Gift className="mr-2 h-4 w-4 text-purple-500"/>Mystery KO:</span>
+                    <span className="text-muted-foreground flex items-center"><Gift className="mr-2 h-4 w-4 text-purple-500"/>Mystery KO Value:</span>
                     <span className="font-medium">${event.mysteryKo}</span>
                 </div>
             )}
@@ -167,8 +167,10 @@ export default async function EventDetailsPage({ params }: { params: { eventId: 
                     <tr>
                       <th className="p-2 text-left font-semibold">Position</th>
                       <th className="p-2 text-left font-semibold">Player</th>
-                       <th className="p-2 text-center font-semibold">Rebuys</th>
-                      <th className="p-2 text-right font-semibold">Prize</th>
+                      <th className="p-2 text-center font-semibold">Rebuys</th>
+                      <th className="p-2 text-right font-semibold">Prize ($)</th>
+                      <th className="p-2 text-right font-semibold">Bounties ($)</th>
+                      <th className="p-2 text-right font-semibold">MSKO ($)</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -182,6 +184,8 @@ export default async function EventDetailsPage({ params }: { params: { eventId: 
                         </td>
                         <td className="p-2 text-center">{result.rebuys ?? 0}</td>
                         <td className="p-2 text-right">${result.prize}</td>
+                        <td className="p-2 text-right">${result.bountiesWon || 0}</td>
+                        <td className="p-2 text-right">${result.mysteryKoWon || 0}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -207,5 +211,3 @@ export default async function EventDetailsPage({ params }: { params: { eventId: 
     </div>
   );
 }
-
-    
