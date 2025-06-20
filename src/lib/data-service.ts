@@ -39,11 +39,25 @@ export async function getPlayers(): Promise<Player[]> {
   try {
     const playersCol = collection(db, PLAYERS_COLLECTION);
     const playerSnapshot = await getDocs(playersCol);
-    const playerList = playerSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Player));
+    const playerList = playerSnapshot.docs.map(doc => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        firstName: data.firstName,
+        lastName: data.lastName,
+        nickname: data.nickname,
+        email: data.email,
+        phone: data.phone,
+        avatar: data.avatar,
+        stats: data.stats || { gamesPlayed: 0, wins: 0, finalTables: 0, totalWinnings: 0, totalBuyIns: 0, bestPosition: null, averagePosition: null },
+        isActive: data.isActive !== undefined ? data.isActive : true,
+        createdAt: data.createdAt,
+        updatedAt: data.updatedAt,
+      } as Player;
+    });
     return playerList;
   } catch (error) {
     console.error("Error fetching players:", error);
-    // For now, return empty array, consider more robust error handling for production
     return [];
   }
 }
@@ -53,7 +67,26 @@ export async function getEvents(): Promise<Event[]> {
   try {
     const eventsCol = collection(db, EVENTS_COLLECTION);
     const eventSnapshot = await getDocs(eventsCol);
-    const eventList = eventSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Event));
+    const eventList = eventSnapshot.docs.map(doc => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        name: data.name,
+        date: data.date,
+        buyIn: data.buyIn,
+        rebuyPrice: data.rebuyPrice,
+        bounties: data.bounties,
+        mysteryKo: data.mysteryKo,
+        maxPlayers: data.maxPlayers,
+        status: data.status,
+        seasonId: data.seasonId,
+        prizePool: data.prizePool || { total: 0, distributionType: 'automatic', distribution: [] },
+        participants: data.participants || [],
+        results: data.results || [],
+        createdAt: data.createdAt,
+        updatedAt: data.updatedAt,
+      } as Event;
+    });
     return eventList;
   } catch (error) {
     console.error("Error fetching events:", error);
@@ -66,7 +99,19 @@ export async function getSeasons(): Promise<Season[]> {
   try {
     const seasonsCol = collection(db, SEASONS_COLLECTION);
     const seasonSnapshot = await getDocs(seasonsCol);
-    const seasonList = seasonSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Season));
+    const seasonList = seasonSnapshot.docs.map(doc => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        name: data.name,
+        startDate: data.startDate,
+        endDate: data.endDate,
+        isActive: data.isActive,
+        leaderboard: data.leaderboard || [], // Ensure leaderboard is always an array
+        createdAt: data.createdAt,
+        updatedAt: data.updatedAt,
+      } as Season;
+    });
     return seasonList;
   } catch (error) {
     console.error("Error fetching seasons:", error);
@@ -83,13 +128,12 @@ export async function getSettings(): Promise<AppSettings> {
     if (settingsSnap.exists()) {
       return settingsSnap.data() as AppSettings;
     } else {
-      // Settings document doesn't exist, create it with default values
       await setDoc(settingsDocRef, defaultSettings);
       return defaultSettings;
     }
   } catch (error) {
     console.error("Error fetching settings:", error);
-    return defaultSettings; // Return default settings on error
+    return defaultSettings;
   }
 }
 
