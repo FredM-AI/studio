@@ -58,6 +58,7 @@ const EventFormSchema = z.object({
         });
         return z.NEVER;
       }
+      // Use a schema that matches EventResult (without eliminatedBy for now)
       const validatedResults = z.array(EventResultInputSchema).safeParse(parsed);
       if (!validatedResults.success) {
          ctx.addIssue({
@@ -67,7 +68,7 @@ const EventFormSchema = z.object({
         });
         return z.NEVER;
       }
-      return validatedResults.data.map(r => ({ ...r, eliminatedBy: undefined }));
+      return validatedResults.data;
     } catch (e) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
@@ -76,7 +77,7 @@ const EventFormSchema = z.object({
       });
       return z.NEVER;
     }
-  }).pipe(z.array(EventResultInputSchema.extend({ eliminatedBy: z.string().optional() })).optional().default([])),
+  }).pipe(z.array(EventResultInputSchema).optional().default([])),
 }).refine(data => {
   if (data.status === 'completed' && data.participantIds.length > 0 && (!data.resultsJson || data.resultsJson.length === 0)) {
     // This validation might need adjustment based on exact requirements
@@ -152,7 +153,7 @@ export async function createEvent(prevState: EventFormState, formData: FormData)
         rebuys: r.rebuys,
         bountiesWon: r.bountiesWon,
         mysteryKoWon: r.mysteryKoWon,
-        eliminatedBy: undefined, 
+        // eliminatedBy: undefined, // REMOVED: This was causing the "undefined" error
     })) || [],
   };
   
@@ -232,7 +233,7 @@ export async function updateEvent(prevState: EventFormState, formData: FormData)
         rebuys: r.rebuys,
         bountiesWon: r.bountiesWon,
         mysteryKoWon: r.mysteryKoWon,
-        eliminatedBy: undefined,
+        // eliminatedBy: undefined, // REMOVED: This was causing the "undefined" error
       })) || [],
     };
     
@@ -245,11 +246,15 @@ export async function updateEvent(prevState: EventFormState, formData: FormData)
 
     await setDoc(eventRef, finalEventPayload);
 
-  } catch (error: any) {
+  } catch (error: any)
+{
     console.error("Firestore Error updating event:", error);
     let errorMessage = 'Database Error: Failed to update event.';
     if (error && error.message) {
       errorMessage += ` Details: ${error.message}`;
+    }
+     if (error.code) {
+        errorMessage += ` Code: ${error.code}`;
     }
     return { message: errorMessage };
   }
@@ -279,3 +284,4 @@ export async function deleteEvent(eventId: string): Promise<{ success: boolean; 
     return { success: false, message: 'Database Error: Failed to delete event.' };
   }
 }
+
