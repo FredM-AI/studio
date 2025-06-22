@@ -9,14 +9,13 @@ import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import * as React from 'react';
 import { format } from 'date-fns';
+import { Button } from '@/components/ui/button';
 
 interface SeasonPlayerProgressChartProps {
   playerProgressData: { [playerId: string]: PlayerProgressPoint[] };
   players: Player[];
   seasonEvents: EventType[]; 
 }
-
-const MAX_PLAYERS_TO_DISPLAY = 6; 
 
 const generateColor = (index: number): string => {
   const colors = [
@@ -46,26 +45,43 @@ const getPlayerDisplayName = (player: Player | undefined): string => {
 export default function SeasonPlayerProgressChart({ playerProgressData, players, seasonEvents }: SeasonPlayerProgressChartProps) {
   const [selectedPlayerIds, setSelectedPlayerIds] = React.useState<string[]>(() => {
     const sortedPlayerIdsByCurrentStanding = Object.keys(playerProgressData)
-    .map(playerId => ({
-        playerId,
-        finalCumulative: playerProgressData[playerId]?.[playerProgressData[playerId].length-1]?.cumulativeFinalResult || -Infinity
-    }))
+    .map(playerId => {
+        const player = players.find(p => p.id === playerId);
+        return {
+            playerId,
+            isGuest: player?.isGuest || false,
+            finalCumulative: playerProgressData[playerId]?.[playerProgressData[playerId].length-1]?.cumulativeFinalResult || -Infinity
+        }
+    })
+    .filter(p => !p.isGuest) // Exclude guests from initial selection
     .sort((a,b) => b.finalCumulative - a.finalCumulative)
     .map(p => p.playerId);
-    return sortedPlayerIdsByCurrentStanding.slice(0, MAX_PLAYERS_TO_DISPLAY);
+
+    return sortedPlayerIdsByCurrentStanding.slice(0, 6); // Keep a sensible default of top 6 players
   });
 
   const handlePlayerSelectionChange = (playerId: string) => {
     setSelectedPlayerIds(prev => {
       if (prev.includes(playerId)) {
         return prev.filter(id => id !== playerId);
-      } else if (prev.length < MAX_PLAYERS_TO_DISPLAY) {
+      } else {
         return [...prev, playerId];
       }
-      return prev; 
     });
   };
   
+  const participatingPlayersInSeason = players
+    .filter(p => playerProgressData[p.id] && playerProgressData[p.id].length > 0 && !p.isGuest)
+    .sort((a,b) => getPlayerDisplayName(a).localeCompare(getPlayerDisplayName(b)));
+
+  const handleSelectAll = () => {
+    setSelectedPlayerIds(participatingPlayersInSeason.map(p => p.id));
+  };
+
+  const handleDeselectAll = () => {
+    setSelectedPlayerIds([]);
+  };
+
   const getPlayerNameForChart = (playerId: string) => {
     const player = players.find(p => p.id === playerId);
     return getPlayerDisplayName(player);
@@ -113,14 +129,17 @@ export default function SeasonPlayerProgressChart({ playerProgressData, players,
     return <p className="text-muted-foreground">No player progress data to display.</p>;
   }
 
-  const participatingPlayersInSeason = players
-    .filter(p => playerProgressData[p.id] && playerProgressData[p.id].length > 0)
-    .sort((a,b) => getPlayerDisplayName(a).localeCompare(getPlayerDisplayName(b)));
 
   return (
     <div className="space-y-6">
       <div>
-        <Label className="font-medium">Select Players to Display (Max {MAX_PLAYERS_TO_DISPLAY}):</Label>
+        <div className="flex justify-between items-center mb-1">
+          <Label className="font-medium">Select Players to Display:</Label>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={handleSelectAll}>Select All</Button>
+            <Button variant="outline" size="sm" onClick={handleDeselectAll}>Deselect All</Button>
+          </div>
+        </div>
         <ScrollArea className="h-32 mt-1 rounded-md border p-2">
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-2">
                 {participatingPlayersInSeason.map(player => (
@@ -129,7 +148,6 @@ export default function SeasonPlayerProgressChart({ playerProgressData, players,
                     id={`player-progress-${player.id}`}
                     checked={selectedPlayerIds.includes(player.id)}
                     onCheckedChange={() => handlePlayerSelectionChange(player.id)}
-                    disabled={!selectedPlayerIds.includes(player.id) && selectedPlayerIds.length >= MAX_PLAYERS_TO_DISPLAY}
                     />
                     <Label htmlFor={`player-progress-${player.id}`} className="text-sm font-normal cursor-pointer hover:text-primary">
                     {getPlayerDisplayName(player)}
@@ -137,7 +155,7 @@ export default function SeasonPlayerProgressChart({ playerProgressData, players,
                 </div>
                 ))}
             </div>
-            {participatingPlayersInSeason.length === 0 && <p className="text-sm text-muted-foreground">No players with progress in this season.</p>}
+            {participatingPlayersInSeason.length === 0 && <p className="text-sm text-muted-foreground">No non-guest players with progress in this season.</p>}
         </ScrollArea>
       </div>
 
