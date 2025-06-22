@@ -79,7 +79,7 @@ export default function EventForm({ event, allPlayers, allSeasons, action, formT
      event?.seasonId || defaultSeasonId || NO_SEASON_SELECTED_VALUE
   );
 
-  const [includeBounties, setIncludeBounties] = React.useState<boolean>(event?.includeBountiesInNet ?? false);
+  const [includeBounties, setIncludeBounties] = React.useState<boolean>(false);
 
 
   const [buyInValue, setBuyInValue] = React.useState<string>(
@@ -160,13 +160,13 @@ export default function EventForm({ event, allPlayers, allSeasons, action, formT
       const newTableData: PositionalResultEntry[] = [];
       for (let i = 1; i <= numPositions; i++) {
         const existingRowInPrevState = prevPositionalResults.find(row => row.position === i);
-        const savedResultFromEventProp = event?.results.find(r => r.playerId === i);
+        // Correctly find the saved result for the current position
+        const savedResultFromEventProp = event?.results.find(r => r.position === i);
 
         let playerIdToSet: string | null = null;
         let prizeToSet = '0';
         let bountiesWonToSet = '0';
         let mysteryKoWonToSet = '0';
-
 
         if (existingRowInPrevState) {
           if (existingRowInPrevState.playerId && participantIdsSet.has(existingRowInPrevState.playerId)) {
@@ -195,7 +195,6 @@ export default function EventForm({ event, allPlayers, allSeasons, action, formT
             bountiesWonToSet = '0';
             mysteryKoWonToSet = '0';
         }
-
 
         newTableData.push({
           position: i,
@@ -714,3 +713,5 @@ export default function EventForm({ event, allPlayers, allSeasons, action, formT
     </Card>
   );
 }
+
+    
