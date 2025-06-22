@@ -12,7 +12,8 @@ import { DatePicker } from '@/components/ui/date-picker';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Trophy, PlusCircle, MinusCircle, Users, DollarSign, CalendarDays, Settings, Info, Repeat, Star, Gift, BarChart3 } from 'lucide-react'; 
+import { Switch } from '@/components/ui/switch';
+import { Trophy, PlusCircle, MinusCircle, Users, DollarSign, CalendarDays, Settings, Info, Repeat, Star, Gift, BarChart3, HelpCircle } from 'lucide-react'; 
 import Link from 'next/link';
 import { eventStatuses } from '@/lib/definitions';
 
@@ -78,6 +79,8 @@ export default function EventForm({ event, allPlayers, allSeasons, action, formT
      event?.seasonId || defaultSeasonId || NO_SEASON_SELECTED_VALUE
   );
 
+  const [includeBounties, setIncludeBounties] = React.useState<boolean>(event?.includeBountiesInNet ?? true);
+
 
   const [buyInValue, setBuyInValue] = React.useState<string>(
     event ? (event.buyIn?.toString() ?? '0') : '20'
@@ -116,12 +119,15 @@ export default function EventForm({ event, allPlayers, allSeasons, action, formT
     // Update selectedSeasonId if event.seasonId or defaultSeasonId changes
     if (event?.id) { // Editing an existing event
       setSelectedSeasonId(event.seasonId || NO_SEASON_SELECTED_VALUE);
+      setIncludeBounties(event.includeBountiesInNet ?? true);
     } else if (defaultSeasonId) { // Creating a new event with a default season
       setSelectedSeasonId(defaultSeasonId);
+      setIncludeBounties(true);
     } else { // Creating a new event without a default
       setSelectedSeasonId(NO_SEASON_SELECTED_VALUE);
+      setIncludeBounties(true);
     }
-  }, [event?.id, event?.date, event?.seasonId, defaultSeasonId]);
+  }, [event, defaultSeasonId]);
 
   React.useEffect(() => {
     const initialParticipantIds = new Set(event?.participants || []);
@@ -346,8 +352,6 @@ export default function EventForm({ event, allPlayers, allSeasons, action, formT
         <CardContent className="space-y-6">
           {event?.id && <input type="hidden" name="id" defaultValue={event.id} />}
           <input type="hidden" name="resultsJson" value={resultsJson} />
-          {/* This input is now primarily for display and state management; the form action will use its value */}
-          {/* The name "seasonId" here is critical for FormData to pick it up for the server action */}
           <input type="hidden" name="seasonId" value={selectedSeasonId === NO_SEASON_SELECTED_VALUE ? "" : selectedSeasonId} />
 
 
@@ -385,7 +389,6 @@ export default function EventForm({ event, allPlayers, allSeasons, action, formT
                 <Select 
                     value={selectedSeasonId} 
                     onValueChange={setSelectedSeasonId}
-                    // The name attribute is removed from Select; the hidden input above handles form submission
                 >
                   <SelectTrigger id="seasonId-select" aria-describedby="seasonId-error" className="h-9">
                     <SelectValue placeholder="-- Select a Season --" />
@@ -492,6 +495,19 @@ export default function EventForm({ event, allPlayers, allSeasons, action, formT
                 />
                 {state.errors?.mysteryKo && <p id="mysteryKo-error" className="text-sm text-destructive mt-1">{state.errors.mysteryKo.join(', ')}</p>}
               </div>
+              <div className="md:col-span-1 lg:col-span-3">
+                 <Label htmlFor="includeBountiesInNet" className="flex items-center space-x-2 pt-2">
+                    <Switch
+                        id="includeBountiesInNet"
+                        name="includeBountiesInNet"
+                        checked={includeBounties}
+                        onCheckedChange={setIncludeBounties}
+                    />
+                    <span>Include Bounties & MSKO in Net Calculation</span>
+                    {state.errors?.includeBountiesInNet && <p className="text-sm text-destructive">{state.errors.includeBountiesInNet.join(', ')}</p>}
+                </Label>
+                <p className="text-xs text-muted-foreground mt-1 ml-12">If disabled, bounty/MSKO costs are not subtracted from player net results for this event.</p>
+              </div>
             </div>
           </div>
 
@@ -594,11 +610,12 @@ export default function EventForm({ event, allPlayers, allSeasons, action, formT
                       let calculatedFinalResult = 0;
 
                       if (row.playerId && row.playerId !== NO_PLAYER_SELECTED_VALUE) {
-                        const costOfInitialEntry = mainBuyInNum + eventBountyValueNum + eventMysteryKoValueNum;
+                        const bountyAndMkoCosts = includeBounties ? (eventBountyValueNum + eventMysteryKoValueNum) : 0;
+                        const costOfInitialEntry = mainBuyInNum + bountyAndMkoCosts;
 
                         let costOfAllRebuys = 0;
                         if (rebuysNum > 0) {
-                            const costOfOneFullRebuy = rebuyPriceNum + eventBountyValueNum + eventMysteryKoValueNum;
+                            const costOfOneFullRebuy = rebuyPriceNum + bountyAndMkoCosts;
                             costOfAllRebuys = rebuysNum * costOfOneFullRebuy;
                         }
 
@@ -699,7 +716,3 @@ export default function EventForm({ event, allPlayers, allSeasons, action, formT
     </Card>
   );
 }
-
-    
-
-    

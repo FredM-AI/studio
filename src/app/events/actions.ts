@@ -41,6 +41,7 @@ const EventFormSchema = z.object({
   rebuyPrice: z.coerce.number().int().nonnegative({ message: 'Rebuy price must be a non-negative integer.' }).optional(),
   bounties: z.coerce.number().int().nonnegative({ message: 'Bounties must be a non-negative integer.' }).optional(),
   mysteryKo: z.coerce.number().int().nonnegative({ message: 'Mystery KO must be a non-negative integer.' }).optional(),
+  includeBountiesInNet: z.preprocess((val) => val === 'on' || val === true, z.boolean()).default(true),
   maxPlayers: z.coerce.number().int().positive({ message: 'Max players must be a positive integer.' }).optional(),
   prizePoolTotal: z.coerce.number().int().nonnegative({ message: 'Prize pool total must be a non-negative integer.' }),
   seasonId: z.string().optional(), // Optional season ID
@@ -142,6 +143,7 @@ export async function createEvent(prevState: EventFormState, formData: FormData)
     rebuyPrice: data.rebuyPrice,
     bounties: data.bounties,
     mysteryKo: data.mysteryKo,
+    includeBountiesInNet: data.includeBountiesInNet,
     maxPlayers: data.maxPlayers,
     status: data.status as EventStatus,
     seasonId: seasonIdValue,
@@ -226,6 +228,7 @@ export async function updateEvent(prevState: EventFormState, formData: FormData)
       rebuyPrice: data.rebuyPrice,
       bounties: data.bounties,
       mysteryKo: data.mysteryKo,
+      includeBountiesInNet: data.includeBountiesInNet,
       maxPlayers: data.maxPlayers,
       status: data.status as EventStatus,
       seasonId: seasonIdValue,
@@ -291,4 +294,3 @@ export async function deleteEvent(eventId: string): Promise<{ success: boolean; 
     return { success: false, message: 'Database Error: Failed to delete event.' };
   }
 }
-

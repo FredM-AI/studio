@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { getEvents, getPlayers, getSeasons } from "@/lib/data-service"; // Added getSeasons
 import type { Event, Player, Season } from "@/lib/definitions"; // Added Season
-import { ArrowLeft, Edit, Users, DollarSign, CalendarDays, Trophy, Info, Tag, CheckCircle, XCircle, Trash2, Star, Gift, BarChart3 } from "lucide-react"; // Added BarChart3
+import { ArrowLeft, Edit, Users, DollarSign, CalendarDays, Trophy, Info, Tag, CheckCircle, XCircle, Trash2, Star, Gift, BarChart3, HelpCircle } from "lucide-react"; // Added BarChart3
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -67,6 +67,7 @@ export default async function EventDetailsPage({ params }: { params: { eventId: 
   const linkedSeason = event.seasonId ? allSeasons.find(s => s.id === event.seasonId) : undefined;
   const sortedResults = event.results.sort((a, b) => a.position - b.position);
   const rebuysActive = event.rebuyPrice !== undefined && event.rebuyPrice > 0;
+  const includeBountiesInNetCalc = event.includeBountiesInNet ?? true;
 
   return (
     <div className="space-y-6">
@@ -153,6 +154,10 @@ export default async function EventDetailsPage({ params }: { params: { eventId: 
                 {event.status.charAt(0).toUpperCase() + event.status.slice(1)}
               </Badge>
             </div>
+            <div className="flex items-center justify-between text-sm pt-2 border-t">
+              <span className="text-muted-foreground flex items-center"><HelpCircle className="mr-2 h-4 w-4"/>Bounties in Net Calc:</span>
+              <span className="font-medium">{includeBountiesInNetCalc ? "Yes" : "No"}</span>
+            </div>
           </div>
 
           <div className="space-y-4">
@@ -202,10 +207,11 @@ export default async function EventDetailsPage({ params }: { params: { eventId: 
                       const rebuysNum = result.rebuys || 0;
                       const rebuyPriceNum = event.rebuyPrice || 0;
 
-                      const costOfInitialEntry = mainBuyInNum + eventBountyValue + eventMysteryKoValue;
+                      const bountyAndMkoCosts = includeBountiesInNetCalc ? (eventBountyValue + eventMysteryKoValue) : 0;
+                      const costOfInitialEntry = mainBuyInNum + bountyAndMkoCosts;
                       let costOfAllRebuys = 0;
                       if (rebuysNum > 0) {
-                          const costOfOneFullRebuy = rebuyPriceNum + eventBountyValue + eventMysteryKoValue;
+                          const costOfOneFullRebuy = rebuyPriceNum + bountyAndMkoCosts;
                           costOfAllRebuys = rebuysNum * costOfOneFullRebuy;
                       }
                       const totalPlayerInvestment = costOfInitialEntry + costOfAllRebuys;
@@ -253,5 +259,4 @@ export default async function EventDetailsPage({ params }: { params: { eventId: 
     </div>
   );
 }
-
     

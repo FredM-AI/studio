@@ -52,6 +52,7 @@ export type Event = {
   rebuyPrice?: number;
   bounties?: number; // Value of a single bounty for the event
   mysteryKo?: number; // Value of a single mystery KO for the event
+  includeBountiesInNet?: boolean; // If true, bounty/mko costs are part of investment
   maxPlayers?: number; // Made optional
   status: EventStatus;
   seasonId?: string | null; // Changed to allow null for no season
@@ -100,6 +101,7 @@ export type EventFormState = {
     rebuyPrice?: string[];
     bounties?: string[];
     mysteryKo?: string[];
+    includeBountiesInNet?: string[];
     maxPlayers?: string[];
     prizePoolTotal?: string[];
     participantIds?: string[];

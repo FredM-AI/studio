@@ -77,9 +77,10 @@ export async function calculatePlayerOverallStats(
     gamesPlayed++;
     
     const mainBuyIn = event.buyIn || 0;
-    const eventBountyValue = event.bounties || 0; // Event-level bounty cost
-    const eventMysteryKoValue = event.mysteryKo || 0; // Event-level mKO cost
-    const rebuyPrice = event.rebuyPrice || 0; // Prize pool part of rebuy
+    const eventBountyValue = event.bounties || 0;
+    const eventMysteryKoValue = event.mysteryKo || 0;
+    const rebuyPrice = event.rebuyPrice || 0;
+    const includeBountiesInNetCalc = event.includeBountiesInNet ?? true;
     
     let playerRebuysInEvent = 0;
     const playerResultEntry = event.results.find(r => r.playerId === playerId);
@@ -106,10 +107,11 @@ export async function calculatePlayerOverallStats(
       }
     }
     
-    const costOfInitialEntry = mainBuyIn + eventBountyValue + eventMysteryKoValue;
+    const bountyAndMkoCosts = includeBountiesInNetCalc ? (eventBountyValue + eventMysteryKoValue) : 0;
+    const costOfInitialEntry = mainBuyIn + bountyAndMkoCosts;
     let costOfAllRebuysInEvent = 0;
     if (playerRebuysInEvent > 0) {
-        const costOfOneFullRebuy = rebuyPrice + eventBountyValue + eventMysteryKoValue;
+        const costOfOneFullRebuy = rebuyPrice + bountyAndMkoCosts;
         costOfAllRebuysInEvent = playerRebuysInEvent * costOfOneFullRebuy;
     }
     totalBuyInsCalculated += costOfInitialEntry + costOfAllRebuysInEvent;
@@ -159,9 +161,10 @@ export async function calculateSeasonStats(
 
   for (const event of completedSeasonEvents) {
     const mainBuyInForEvent = event.buyIn || 0;
-    const eventBountyValue = event.bounties || 0; // Event-level bounty cost
-    const eventMysteryKoValue = event.mysteryKo || 0; // Event-level mKO cost
-    const rebuyPriceForEvent = event.rebuyPrice || 0; // Prize pool part of rebuy
+    const eventBountyValue = event.bounties || 0;
+    const eventMysteryKoValue = event.mysteryKo || 0;
+    const rebuyPriceForEvent = event.rebuyPrice || 0;
+    const includeBountiesInNetCalc = event.includeBountiesInNet ?? true;
     const participantIdsInEvent = new Set(event.participants);
 
     for (const playerId of participantIdsInEvent) {
@@ -182,10 +185,11 @@ export async function calculateSeasonStats(
       const bountiesWon = playerResultEntry?.bountiesWon || 0;
       const mysteryKoWon = playerResultEntry?.mysteryKoWon || 0;
       
-      const costOfInitialEntry = mainBuyInForEvent + eventBountyValue + eventMysteryKoValue;
+      const bountyAndMkoCosts = includeBountiesInNetCalc ? (eventBountyValue + eventMysteryKoValue) : 0;
+      const costOfInitialEntry = mainBuyInForEvent + bountyAndMkoCosts;
       let costOfAllRebuysForPlayerInEvent = 0;
       if (rebuysCount > 0) {
-          const costOfOneFullRebuy = rebuyPriceForEvent + eventBountyValue + eventMysteryKoValue;
+          const costOfOneFullRebuy = rebuyPriceForEvent + bountyAndMkoCosts;
           costOfAllRebuysForPlayerInEvent = rebuysCount * costOfOneFullRebuy;
       }
       const totalPlayerInvestmentForEvent = costOfInitialEntry + costOfAllRebuysForPlayerInEvent;
@@ -288,8 +292,10 @@ export async function calculateHallOfFameStats(
 
       const winnings = prize + bountiesWon + mkoWon;
       
-      const costOfInitialEntry = (event.buyIn || 0) + (event.bounties || 0) + (event.mysteryKo || 0);
-      const costOfOneFullRebuy = (event.rebuyPrice || 0) + (event.bounties || 0) + (event.mysteryKo || 0);
+      const includeBountiesInNetCalc = event.includeBountiesInNet ?? true;
+      const bountyAndMkoCosts = includeBountiesInNetCalc ? ((event.bounties || 0) + (event.mysteryKo || 0)) : 0;
+      const costOfInitialEntry = (event.buyIn || 0) + bountyAndMkoCosts;
+      const costOfOneFullRebuy = (event.rebuyPrice || 0) + bountyAndMkoCosts;
       const costOfAllRebuys = rebuys * costOfOneFullRebuy;
       const investment = costOfInitialEntry + costOfAllRebuys;
       
