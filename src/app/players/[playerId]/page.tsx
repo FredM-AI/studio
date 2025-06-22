@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { ArrowLeft, Edit, Mail, Phone, CheckCircle, XCircle, TrendingUp, TrendingDown, Minus } from "lucide-react";
+import { ArrowLeft, Edit, Mail, Phone, CheckCircle, XCircle, TrendingUp, TrendingDown, Minus, UserCheck } from "lucide-react";
 import Image from "next/image";
 import { cookies } from 'next/headers';
 
@@ -75,13 +75,20 @@ export default async function PlayerDetailPage({ params }: { params: { playerId:
           <div className="flex-grow">
             <CardTitle className="font-headline text-3xl mb-1">{player.firstName} {player.lastName}</CardTitle>
             {player.nickname && <CardDescription className="text-lg text-accent font-medium">"{player.nickname}"</CardDescription>}
-            <div className={`mt-2 inline-flex items-center gap-2 px-3 py-1 text-sm rounded-full font-medium ${
-                player.isActive 
-                ? 'bg-green-100 text-green-700 dark:bg-green-700 dark:text-green-100' 
-                : 'bg-red-100 text-red-700 dark:bg-red-700 dark:text-red-100'
-            }`}>
-                {player.isActive ? <CheckCircle className="h-4 w-4" /> : <XCircle className="h-4 w-4" />}
-                {player.isActive ? "Active" : "Inactive"}
+            <div className="flex items-center gap-2 mt-2">
+                <div className={`inline-flex items-center gap-2 px-3 py-1 text-sm rounded-full font-medium ${
+                    player.isActive 
+                    ? 'bg-green-100 text-green-700 dark:bg-green-700 dark:text-green-100' 
+                    : 'bg-red-100 text-red-700 dark:bg-red-700 dark:text-red-100'
+                }`}>
+                    {player.isActive ? <CheckCircle className="h-4 w-4" /> : <XCircle className="h-4 w-4" />}
+                    {player.isActive ? "Active" : "Inactive"}
+                </div>
+                 {player.isGuest && (
+                    <div className="inline-flex items-center gap-2 px-3 py-1 text-sm rounded-full font-medium bg-blue-100 text-blue-700 dark:bg-blue-700 dark:text-blue-100">
+                        <UserCheck className="h-4 w-4" /> Guest
+                    </div>
+                )}
             </div>
           </div>
           {isAuthenticated && (
@@ -160,5 +167,3 @@ export default async function PlayerDetailPage({ params }: { params: { playerId:
     </div>
   );
 }
-
-    

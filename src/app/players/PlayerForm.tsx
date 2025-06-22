@@ -128,6 +128,15 @@ export default function PlayerForm({ player, action, formTitle, formDescription,
 
           <div className="flex items-center space-x-2">
             <Switch 
+              id="isGuest" 
+              name="isGuest" 
+              defaultChecked={player ? player.isGuest : false}
+            />
+            <Label htmlFor="isGuest">Guest Player</Label>
+          </div>
+
+          <div className="flex items-center space-x-2">
+            <Switch 
               id="isActive" 
               name="isActive" 
               defaultChecked={player ? player.isActive : true}

@@ -86,13 +86,20 @@ export default async function PlayersPage() {
                     <TableCell>{player.email}</TableCell>
                     <TableCell>{player.stats.gamesPlayed}</TableCell>
                     <TableCell>
-                      <span className={`px-2 py-1 text-xs rounded-full ${
-                        player.isActive 
-                          ? 'bg-green-100 text-green-700 dark:bg-green-700 dark:text-green-100' 
-                          : 'bg-red-100 text-red-700 dark:bg-red-700 dark:text-red-100'
-                      }`}>
-                        {player.isActive ? "Active" : "Inactive"}
-                      </span>
+                       <div className="flex items-center gap-2">
+                        <span className={`px-2 py-1 text-xs rounded-full ${
+                          player.isActive 
+                            ? 'bg-green-100 text-green-700 dark:bg-green-700 dark:text-green-100' 
+                            : 'bg-red-100 text-red-700 dark:bg-red-700 dark:text-red-100'
+                        }`}>
+                          {player.isActive ? "Active" : "Inactive"}
+                        </span>
+                        {player.isGuest && (
+                          <span className="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-700 dark:bg-blue-700 dark:text-blue-100">
+                            Guest
+                          </span>
+                        )}
+                      </div>
                     </TableCell>
                     <TableCell className="text-right space-x-2">
                        <Button variant="outline" size="icon" asChild title="View Player">

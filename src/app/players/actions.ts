@@ -30,6 +30,7 @@ const PlayerSchema = z.object({
   phone: z.string().optional(),
   avatar: z.string().url({ message: 'Invalid URL for avatar.' }).or(z.literal('')).optional(),
   isActive: z.preprocess((val) => val === 'on' || val === true, z.boolean()).default(true),
+  isGuest: z.preprocess((val) => val === 'on' || val === true, z.boolean()).default(false),
 });
 
 export async function createPlayer(prevState: PlayerFormState, formData: FormData): Promise<PlayerFormState> {
@@ -63,6 +64,7 @@ export async function createPlayer(prevState: PlayerFormState, formData: FormDat
       lastName: data.lastName,
       email: data.email,
       isActive: data.isActive,
+      isGuest: data.isGuest,
       stats: {
         gamesPlayed: 0,
         wins: 0,
@@ -157,6 +159,7 @@ export async function updatePlayer(prevState: PlayerFormState, formData: FormDat
       phone: (data.phone && data.phone.trim() !== '') ? data.phone.trim() : undefined,
       avatar: (data.avatar && data.avatar.trim() !== '') ? data.avatar.trim() : undefined,
       isActive: data.isActive,
+      isGuest: data.isGuest,
       updatedAt: new Date().toISOString(),
     };
 
@@ -224,6 +227,7 @@ const PlayerImportEntrySchema = z.object({
   phone: z.string().optional(),
   avatar: z.string().url({ message: 'Invalid URL for avatar.' }).or(z.literal('')).optional(),
   isActive: z.boolean().default(true),
+  isGuest: z.boolean().default(false),
   stats: PlayerStatsImportSchema,
   createdAt: z.string().refine((val) => !isNaN(new Date(val).getTime()), { message: "Invalid createdAt date string." }),
   updatedAt: z.string().refine((val) => !isNaN(new Date(val).getTime()), { message: "Invalid updatedAt date string." }),
@@ -335,6 +339,7 @@ export async function importPlayersFromJson(prevState: PlayerImportFormState, fo
         phone: (playerJson.phone && playerJson.phone.trim() !== '') ? playerJson.phone.trim() : undefined,
         avatar: (playerJson.avatar && playerJson.avatar.trim() !== '') ? playerJson.avatar.trim() : undefined,
         isActive: playerJson.isActive,
+        isGuest: playerJson.isGuest,
         stats: playerJson.stats, // Assume stats from JSON are complete
         createdAt: new Date(playerJson.createdAt).toISOString(), // Ensure it's a valid ISO string
         updatedAt: new Date(playerJson.updatedAt).toISOString(), // Ensure it's a valid ISO string

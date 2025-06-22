@@ -8,6 +8,7 @@
     "email": "olivier.garcia@example.com",
     "phone": "",
     "avatar": "",
+    "isGuest": false,
     "isActive": true,
     "stats": {
       "gamesPlayed": 0,
@@ -29,6 +30,7 @@
     "email": "regis.mahe@example.com",
     "phone": "",
     "avatar": "",
+    "isGuest": false,
     "isActive": true,
     "stats": {
       "gamesPlayed": 0,
@@ -50,6 +52,7 @@
     "email": "damien.heckman@example.com",
     "phone": "",
     "avatar": "",
+    "isGuest": false,
     "isActive": true,
     "stats": {
       "gamesPlayed": 0,
@@ -71,6 +74,7 @@
     "email": "hubert.faucher@example.com",
     "phone": "",
     "avatar": "",
+    "isGuest": false,
     "isActive": true,
     "stats": {
       "gamesPlayed": 0,
@@ -92,6 +96,7 @@
     "email": "tanguy.feugier@example.com",
     "phone": "",
     "avatar": "",
+    "isGuest": false,
     "isActive": true,
     "stats": {
       "gamesPlayed": 0,
@@ -113,6 +118,7 @@
     "email": "frederic.chuimert@example.com",
     "phone": "",
     "avatar": "",
+    "isGuest": false,
     "isActive": true,
     "stats": {
       "gamesPlayed": 0,
@@ -134,6 +140,7 @@
     "email": "eric.vernhes@example.com",
     "phone": "",
     "avatar": "",
+    "isGuest": false,
     "isActive": true,
     "stats": {
       "gamesPlayed": 0,
@@ -155,6 +162,7 @@
     "email": "jerome.ernzen@example.com",
     "phone": "",
     "avatar": "",
+    "isGuest": false,
     "isActive": true,
     "stats": {
       "gamesPlayed": 0,
@@ -176,6 +184,7 @@
     "email": "greg.szulc@example.com",
     "phone": "",
     "avatar": "",
+    "isGuest": false,
     "isActive": true,
     "stats": {
       "gamesPlayed": 0,
@@ -197,6 +206,7 @@
     "email": "sebastien.royon@example.com",
     "phone": "",
     "avatar": "",
+    "isGuest": false,
     "isActive": true,
     "stats": {
       "gamesPlayed": 0,
@@ -218,6 +228,7 @@
     "email": "olivier.boynard@example.com",
     "phone": "",
     "avatar": "",
+    "isGuest": false,
     "isActive": true,
     "stats": {
       "gamesPlayed": 0,
@@ -239,6 +250,7 @@
     "email": "simon.moisson@example.com",
     "phone": "",
     "avatar": "",
+    "isGuest": false,
     "isActive": true,
     "stats": {
       "gamesPlayed": 0,
@@ -260,6 +272,7 @@
     "email": "yann.blaize@example.com",
     "phone": "",
     "avatar": "",
+    "isGuest": false,
     "isActive": true,
     "stats": {
       "gamesPlayed": 0,
@@ -281,6 +294,7 @@
     "email": "francois.degryse@example.com",
     "phone": "",
     "avatar": "",
+    "isGuest": false,
     "isActive": true,
     "stats": {
       "gamesPlayed": 0,
@@ -302,6 +316,7 @@
     "email": "philippe.coudray@example.com",
     "phone": "",
     "avatar": "",
+    "isGuest": false,
     "isActive": true,
     "stats": {
       "gamesPlayed": 0,
@@ -323,6 +338,7 @@
     "email": "nicolas.merceron@example.com",
     "phone": "",
     "avatar": "",
+    "isGuest": false,
     "isActive": true,
     "stats": {
       "gamesPlayed": 0,
@@ -344,6 +360,7 @@
     "email": "romarin.billong@example.com",
     "phone": "",
     "avatar": "",
+    "isGuest": true,
     "isActive": true,
     "stats": {
       "gamesPlayed": 0,
@@ -365,6 +382,7 @@
     "email": "jeanchristophe.keib@example.com",
     "phone": "",
     "avatar": "",
+    "isGuest": false,
     "isActive": true,
     "stats": {
       "gamesPlayed": 0,
@@ -386,6 +404,7 @@
     "email": "mika.bouillu@example.com",
     "phone": "",
     "avatar": "",
+    "isGuest": true,
     "isActive": true,
     "stats": {
       "gamesPlayed": 0,

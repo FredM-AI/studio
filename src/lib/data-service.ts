@@ -49,6 +49,7 @@ export async function getPlayers(): Promise<Player[]> {
         email: data.email,
         phone: data.phone,
         avatar: data.avatar,
+        isGuest: data.isGuest || false,
         stats: data.stats || { gamesPlayed: 0, wins: 0, finalTables: 0, totalWinnings: 0, totalBuyIns: 0, bestPosition: null, averagePosition: null },
         isActive: data.isActive !== undefined ? data.isActive : true,
         createdAt: data.createdAt,

@@ -17,6 +17,7 @@ export type Player = {
   email: string; // Should be unique
   phone?: string;
   avatar?: string; // URL or path to image
+  isGuest?: boolean;
   stats: PlayerStats;
   isActive: boolean; // Default true
   createdAt: string; // ISO Date string
