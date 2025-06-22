@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { Event, Player, EventStatus, ServerEventFormState, Season } from '@/lib/definitions'; 
@@ -78,7 +79,7 @@ export default function EventForm({ event, allPlayers, allSeasons, action, formT
      event?.seasonId || defaultSeasonId || NO_SEASON_SELECTED_VALUE
   );
 
-  const [includeBounties, setIncludeBounties] = React.useState<boolean>(event?.includeBountiesInNet ?? true);
+  const [includeBounties, setIncludeBounties] = React.useState<boolean>(event?.includeBountiesInNet ?? false);
 
 
   const [buyInValue, setBuyInValue] = React.useState<string>(
@@ -118,13 +119,13 @@ export default function EventForm({ event, allPlayers, allSeasons, action, formT
     // Update selectedSeasonId if event.seasonId or defaultSeasonId changes
     if (event?.id) { // Editing an existing event
       setSelectedSeasonId(event.seasonId || NO_SEASON_SELECTED_VALUE);
-      setIncludeBounties(event.includeBountiesInNet ?? true);
+      setIncludeBounties(event.includeBountiesInNet ?? false);
     } else if (defaultSeasonId) { // Creating a new event with a default season
       setSelectedSeasonId(defaultSeasonId);
-      setIncludeBounties(true);
+      setIncludeBounties(false);
     } else { // Creating a new event without a default
       setSelectedSeasonId(NO_SEASON_SELECTED_VALUE);
-      setIncludeBounties(true);
+      setIncludeBounties(false);
     }
   }, [event, defaultSeasonId]);
 
@@ -159,7 +160,7 @@ export default function EventForm({ event, allPlayers, allSeasons, action, formT
       const newTableData: PositionalResultEntry[] = [];
       for (let i = 1; i <= numPositions; i++) {
         const existingRowInPrevState = prevPositionalResults.find(row => row.position === i);
-        const savedResultFromEventProp = event?.results.find(r => r.position === i);
+        const savedResultFromEventProp = event?.results.find(r => r.playerId === i);
 
         let playerIdToSet: string | null = null;
         let prizeToSet = '0';
