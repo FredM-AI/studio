@@ -57,6 +57,15 @@ const getPlayerDisplayName = (player: Player | undefined): string => {
   return "Unnamed";
 };
 
+const sortPlayersWithGuestsLast = (a: Player, b: Player): number => {
+    const aIsGuest = a.isGuest || false;
+    const bIsGuest = b.isGuest || false;
+    if (aIsGuest !== bIsGuest) {
+      return aIsGuest ? 1 : -1;
+    }
+    return getPlayerDisplayName(a).localeCompare(getPlayerDisplayName(b));
+};
+
 
 export default function EventForm({ event, allPlayers, allSeasons, action, formTitle, formDescription, submitButtonText, defaultSeasonId }: EventFormProps) {
   const initialState: ServerEventFormState = { message: null, errors: {} };
@@ -129,7 +138,7 @@ export default function EventForm({ event, allPlayers, allSeasons, action, formT
 
     const initialAvailable = allPlayers
       .filter(p => !initialParticipantIds.has(p.id))
-      .sort((a, b) => getPlayerDisplayName(a).localeCompare(getPlayerDisplayName(b)));
+      .sort(sortPlayersWithGuestsLast);
 
     setEnrichedParticipants(initialEnriched);
     setAvailablePlayers(initialAvailable);
@@ -283,7 +292,7 @@ export default function EventForm({ event, allPlayers, allSeasons, action, formT
   };
 
   const handleRemovePlayer = (participantToRemove: EnrichedParticipant) => {
-    setAvailablePlayers(prev => [...prev, participantToRemove.player].sort((a, b) => getPlayerDisplayName(a).localeCompare(getPlayerDisplayName(b))));
+    setAvailablePlayers(prev => [...prev, participantToRemove.player].sort(sortPlayersWithGuestsLast));
     setEnrichedParticipants(prev => prev.filter(p => p.player.id !== participantToRemove.player.id));
     setPositionalResults(prev => prev.map(pr => pr.playerId === participantToRemove.player.id ? {...pr, playerId: null, prize: '0', bountiesWon: '0', mysteryKoWon: '0'} : pr ));
   };
@@ -690,5 +699,7 @@ export default function EventForm({ event, allPlayers, allSeasons, action, formT
     </Card>
   );
 }
+
+    
 
     
