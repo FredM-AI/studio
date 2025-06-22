@@ -7,6 +7,7 @@ import type { Season, Event, Player, PlayerStats, EventResult } from './definiti
 export interface LeaderboardEntry {
   playerId: string;
   playerName: string;
+  isGuest: boolean;
   eventResults: { [eventId: string]: number }; // eventId -> netResultForPlayerInEvent
   totalFinalResult: number;
   // eventsPlayed: number; // On peut le déduire de eventResults ou le calculer si besoin ailleurs
@@ -107,7 +108,7 @@ export async function calculatePlayerOverallStats(
     
     const costOfInitialEntry = mainBuyIn + eventBountyValue + eventMysteryKoValue;
     let costOfAllRebuysInEvent = 0;
-    if (playerRebuysInEvent > 0 && rebuyPrice > 0) { // Rebuys incur costs only if rebuyPrice is set
+    if (playerRebuysInEvent > 0) {
         const costOfOneFullRebuy = rebuyPrice + eventBountyValue + eventMysteryKoValue;
         costOfAllRebuysInEvent = playerRebuysInEvent * costOfOneFullRebuy;
     }
@@ -183,7 +184,7 @@ export async function calculateSeasonStats(
       
       const costOfInitialEntry = mainBuyInForEvent + eventBountyValue + eventMysteryKoValue;
       let costOfAllRebuysForPlayerInEvent = 0;
-      if (rebuysCount > 0 && rebuyPriceForEvent > 0) { // Rebuys incur costs only if rebuyPrice is set
+      if (rebuysCount > 0) {
           const costOfOneFullRebuy = rebuyPriceForEvent + eventBountyValue + eventMysteryKoValue;
           costOfAllRebuysForPlayerInEvent = rebuysCount * costOfOneFullRebuy;
       }
@@ -221,13 +222,21 @@ export async function calculateSeasonStats(
       leaderboard.push({
         playerId,
         playerName: getPlayerDisplayName(player),
+        isGuest: player?.isGuest || false,
         eventResults: summary.eventResults,
         totalFinalResult: summary.totalFinalResult,
       });
     }
   });
 
-  leaderboard.sort((a, b) => b.totalFinalResult - a.totalFinalResult);
+  leaderboard.sort((a, b) => {
+    // Sort guests to the bottom
+    if (a.isGuest !== b.isGuest) {
+      return a.isGuest ? 1 : -1;
+    }
+    // Then sort by total final result
+    return b.totalFinalResult - a.totalFinalResult;
+  });
   
   const playerProgress: { [playerId: string]: PlayerProgressPoint[] } = {};
   playerSeasonSummaries.forEach((summary, playerId) => {
@@ -238,5 +247,3 @@ export async function calculateSeasonStats(
 
   return { leaderboard, playerProgress, completedSeasonEvents };
 }
-
-    
