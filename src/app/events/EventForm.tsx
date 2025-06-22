@@ -79,7 +79,7 @@ export default function EventForm({ event, allPlayers, allSeasons, action, formT
      event?.seasonId || defaultSeasonId || NO_SEASON_SELECTED_VALUE
   );
 
-  const [includeBounties, setIncludeBounties] = React.useState<boolean>(false);
+  const [includeBounties, setIncludeBounties] = React.useState<boolean>(true);
 
 
   const [buyInValue, setBuyInValue] = React.useState<string>(
@@ -116,16 +116,16 @@ export default function EventForm({ event, allPlayers, allSeasons, action, formT
     } else {
       setSelectedDate(undefined);
     }
-    // Update selectedSeasonId if event.seasonId or defaultSeasonId changes
+    
     if (event?.id) { // Editing an existing event
       setSelectedSeasonId(event.seasonId || NO_SEASON_SELECTED_VALUE);
-      setIncludeBounties(event.includeBountiesInNet ?? false);
+      setIncludeBounties(event.includeBountiesInNet ?? true); // Set from event, default to true for old events
     } else if (defaultSeasonId) { // Creating a new event with a default season
       setSelectedSeasonId(defaultSeasonId);
-      setIncludeBounties(false);
+      setIncludeBounties(true); // Default ON
     } else { // Creating a new event without a default
       setSelectedSeasonId(NO_SEASON_SELECTED_VALUE);
-      setIncludeBounties(false);
+      setIncludeBounties(true); // Default ON
     }
   }, [event, defaultSeasonId]);
 
