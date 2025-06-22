@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { getEvents, getPlayers, getSeasons } from "@/lib/data-service"; // Added getSeasons
@@ -206,17 +205,19 @@ export default async function EventDetailsPage({ params }: { params: { eventId: 
                       const eventMysteryKoValue = event.mysteryKo || 0;
                       const rebuysNum = result.rebuys || 0;
                       const rebuyPriceNum = event.rebuyPrice || 0;
+                      
+                      const investmentInMainPot = mainBuyInNum + (rebuysNum * rebuyPriceNum);
+                      let netResult = 0;
 
-                      const bountyAndMkoCosts = includeBountiesInNetCalc ? (eventBountyValue + eventMysteryKoValue) : 0;
-                      const costOfInitialEntry = mainBuyInNum + bountyAndMkoCosts;
-                      let costOfAllRebuys = 0;
-                      if (rebuysNum > 0) {
-                          const costOfOneFullRebuy = rebuyPriceNum + bountyAndMkoCosts;
-                          costOfAllRebuys = rebuysNum * costOfOneFullRebuy;
+                      if (includeBountiesInNetCalc) {
+                        const bountyAndMkoCostsPerEntry = eventBountyValue + eventMysteryKoValue;
+                        const totalInvestmentInExtras = (1 + rebuysNum) * bountyAndMkoCostsPerEntry;
+                        const totalInvestment = investmentInMainPot + totalInvestmentInExtras;
+                        const totalWinnings = prizeNum + bountiesWonNum + mysteryKoWonNum;
+                        netResult = totalWinnings - totalInvestment;
+                      } else {
+                        netResult = prizeNum - investmentInMainPot;
                       }
-                      const totalPlayerInvestment = costOfInitialEntry + costOfAllRebuys;
-
-                      const netResult = prizeNum + bountiesWonNum + mysteryKoWonNum - totalPlayerInvestment;
 
                       return (
                         <tr key={index} className="border-b last:border-b-0 hover:bg-muted/50">

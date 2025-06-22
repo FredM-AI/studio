@@ -1,4 +1,3 @@
-
 'use client';
 
 import type { Event, Player, EventStatus, ServerEventFormState, Season } from '@/lib/definitions'; 
@@ -503,7 +502,7 @@ export default function EventForm({ event, allPlayers, allSeasons, action, formT
                         checked={includeBounties}
                         onCheckedChange={setIncludeBounties}
                     />
-                    <span>Include Bounties & MSKO in Net Calculation</span>
+                    <span>Include Bounties &amp; MSKO in Net Calculation</span>
                     {state.errors?.includeBountiesInNet && <p className="text-sm text-destructive">{state.errors.includeBountiesInNet.join(', ')}</p>}
                 </Label>
                 <p className="text-xs text-muted-foreground mt-1 ml-12">If disabled, bounty/MSKO costs are not subtracted from player net results for this event.</p>
@@ -600,7 +599,7 @@ export default function EventForm({ event, allPlayers, allSeasons, action, formT
                       const prizeNum = parseInt(row.prize) || 0;
                       const bountiesWonNum = parseInt(row.bountiesWon) || 0;
                       const mysteryKoWonNum = parseInt(row.mysteryKoWon) || 0;
-
+                      
                       const mainBuyInNum = parseInt(buyInValue) || 0;
                       const eventBountyValueNum = parseInt(bountiesValue) || 0;
                       const eventMysteryKoValueNum = parseInt(mysteryKoValue) || 0;
@@ -608,19 +607,17 @@ export default function EventForm({ event, allPlayers, allSeasons, action, formT
                       const rebuyPriceNum = parseInt(rebuyPrice) || 0;
 
                       let calculatedFinalResult = 0;
-
                       if (row.playerId && row.playerId !== NO_PLAYER_SELECTED_VALUE) {
-                        const bountyAndMkoCosts = includeBounties ? (eventBountyValueNum + eventMysteryKoValueNum) : 0;
-                        const costOfInitialEntry = mainBuyInNum + bountyAndMkoCosts;
-
-                        let costOfAllRebuys = 0;
-                        if (rebuysNum > 0) {
-                            const costOfOneFullRebuy = rebuyPriceNum + bountyAndMkoCosts;
-                            costOfAllRebuys = rebuysNum * costOfOneFullRebuy;
+                        const investmentInMainPot = mainBuyInNum + (rebuysNum * rebuyPriceNum);
+                        if (includeBounties) {
+                          const bountyAndMkoCostsPerEntry = eventBountyValueNum + eventMysteryKoValueNum;
+                          const totalInvestmentInExtras = (1 + rebuysNum) * bountyAndMkoCostsPerEntry;
+                          const totalInvestment = investmentInMainPot + totalInvestmentInExtras;
+                          const totalWinnings = prizeNum + bountiesWonNum + mysteryKoWonNum;
+                          calculatedFinalResult = totalWinnings - totalInvestment;
+                        } else {
+                          calculatedFinalResult = prizeNum - investmentInMainPot;
                         }
-
-                        const totalPlayerInvestment = costOfInitialEntry + costOfAllRebuys;
-                        calculatedFinalResult = prizeNum + bountiesWonNum + mysteryKoWonNum - totalPlayerInvestment;
                       }
                       const finalResultDisplay = calculatedFinalResult.toString();
 

@@ -1,4 +1,3 @@
-
 'use server';
 
 import type { Season, Event, Player, PlayerStats, EventResult, HallOfFameStats, HofPlayerStat, HofEventStat } from './definitions';
@@ -164,7 +163,6 @@ export async function calculateSeasonStats(
     const eventBountyValue = event.bounties || 0;
     const eventMysteryKoValue = event.mysteryKo || 0;
     const rebuyPriceForEvent = event.rebuyPrice || 0;
-    const includeBountiesInNetCalc = event.includeBountiesInNet ?? true;
     const participantIdsInEvent = new Set(event.participants);
 
     for (const playerId of participantIdsInEvent) {
@@ -185,17 +183,20 @@ export async function calculateSeasonStats(
       const bountiesWon = playerResultEntry?.bountiesWon || 0;
       const mysteryKoWon = playerResultEntry?.mysteryKoWon || 0;
       
-      const bountyAndMkoCosts = includeBountiesInNetCalc ? (eventBountyValue + eventMysteryKoValue) : 0;
-      const costOfInitialEntry = mainBuyInForEvent + bountyAndMkoCosts;
-      let costOfAllRebuysForPlayerInEvent = 0;
-      if (rebuysCount > 0) {
-          const costOfOneFullRebuy = rebuyPriceForEvent + bountyAndMkoCosts;
-          costOfAllRebuysForPlayerInEvent = rebuysCount * costOfOneFullRebuy;
-      }
-      const totalPlayerInvestmentForEvent = costOfInitialEntry + costOfAllRebuysForPlayerInEvent;
-      
-      const eventNetResult = prizeWon + bountiesWon + mysteryKoWon - totalPlayerInvestmentForEvent;
+      const investmentInMainPot = mainBuyInForEvent + (rebuysCount * rebuyPriceForEvent);
+      const includeBountiesInNetCalc = event.includeBountiesInNet ?? true;
+      let eventNetResult = 0;
 
+      if (includeBountiesInNetCalc) {
+        const bountyAndMkoCostsPerEntry = eventBountyValue + eventMysteryKoValue;
+        const totalInvestmentInExtras = (1 + rebuysCount) * bountyAndMkoCostsPerEntry;
+        const totalInvestment = investmentInMainPot + totalInvestmentInExtras;
+        const totalWinnings = prizeWon + bountiesWon + mysteryKoWon;
+        eventNetResult = totalWinnings - totalInvestment;
+      } else {
+        eventNetResult = prizeWon - investmentInMainPot;
+      }
+      
       if (summary.eventResults[event.id] !== undefined) { 
         summary.totalFinalResult -= summary.eventResults[event.id]!; 
         summary.lastCumulative -= summary.eventResults[event.id]!;
@@ -290,22 +291,27 @@ export async function calculateHallOfFameStats(
       const bountiesWon = result?.bountiesWon || 0;
       const mkoWon = result?.mysteryKoWon || 0;
 
-      const winnings = prize + bountiesWon + mkoWon;
-      
-      const includeBountiesInNetCalc = event.includeBountiesInNet ?? true;
-      const bountyAndMkoCosts = includeBountiesInNetCalc ? ((event.bounties || 0) + (event.mysteryKo || 0)) : 0;
-      const costOfInitialEntry = (event.buyIn || 0) + bountyAndMkoCosts;
-      const costOfOneFullRebuy = (event.rebuyPrice || 0) + bountyAndMkoCosts;
-      const costOfAllRebuys = rebuys * costOfOneFullRebuy;
-      const investment = costOfInitialEntry + costOfAllRebuys;
-      
-      const netGain = winnings - investment;
+      // Calculate total investment FOR SPENDING STATS (always includes everything)
+      const investmentInMainPot = (event.buyIn || 0) + (rebuys * (event.rebuyPrice || 0));
+      const bountyAndMkoCostsPerEntry = (event.bounties || 0) + (event.mysteryKo || 0);
+      const totalInvestmentInExtras = (1 + rebuys) * bountyAndMkoCostsPerEntry;
+      const totalInvestmentForSpending = investmentInMainPot + totalInvestmentInExtras;
+      stats.totalSpent += totalInvestmentForSpending;
 
+      // Calculate net gain FOR RANKING STATS (respects the flag)
+      const includeBountiesInNetCalc = event.includeBountiesInNet ?? true;
+      let netGain;
+      if (includeBountiesInNetCalc) {
+          const totalWinnings = prize + bountiesWon + mkoWon;
+          netGain = totalWinnings - totalInvestmentForSpending;
+      } else {
+          netGain = prize - investmentInMainPot;
+      }
+      
       if (!stats.biggestWin || netGain > stats.biggestWin.value) {
         stats.biggestWin = { event, value: netGain };
       }
 
-      stats.totalSpent += investment;
       stats.totalNet += netGain;
       
       if(result) {
