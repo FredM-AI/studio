@@ -1,7 +1,7 @@
 
 'use server';
 
-import type { Season, Event, Player, PlayerStats, EventResult } from './definitions';
+import type { Season, Event, Player, PlayerStats, EventResult, HallOfFameStats, HofPlayerStat, HofEventStat } from './definitions';
 
 // Modifiée pour inclure les résultats par événement
 export interface LeaderboardEntry {
@@ -246,4 +246,104 @@ export async function calculateSeasonStats(
   });
 
   return { leaderboard, playerProgress, completedSeasonEvents };
+}
+
+export async function calculateHallOfFameStats(
+  allPlayers: Player[],
+  allEvents: Event[]
+): Promise<HallOfFameStats> {
+  const completedEvents = allEvents.filter(e => e.status === 'completed');
+  const nonGuestPlayers = allPlayers.filter(p => !p.isGuest);
+
+  if (nonGuestPlayers.length === 0 || completedEvents.length === 0) {
+    return { mostWins: null, mostPodiums: null, highestNet: null, mostGamesPlayed: null, mostSpent: null, biggestSingleWin: null };
+  }
+  
+  const playerStatsMap = new Map<string, {
+    wins: number;
+    podiums: number;
+    gamesPlayed: number;
+    totalNet: number;
+    totalSpent: number;
+    biggestWin: { event: Event, value: number } | null
+  }>();
+
+  for (const player of nonGuestPlayers) {
+    playerStatsMap.set(player.id, { wins: 0, podiums: 0, gamesPlayed: 0, totalNet: 0, totalSpent: 0, biggestWin: null });
+  }
+
+  for (const event of completedEvents) {
+    for(const participantId of event.participants) {
+      if(!playerStatsMap.has(participantId)) continue; // skip guests
+
+      const stats = playerStatsMap.get(participantId)!;
+      stats.gamesPlayed += 1;
+
+      const result = event.results.find(r => r.playerId === participantId);
+
+      const rebuys = result?.rebuys || 0;
+      const prize = result?.prize || 0;
+      const bountiesWon = result?.bountiesWon || 0;
+      const mkoWon = result?.mysteryKoWon || 0;
+
+      const winnings = prize + bountiesWon + mkoWon;
+      if (!stats.biggestWin || winnings > stats.biggestWin.value) {
+        stats.biggestWin = { event, value: winnings };
+      }
+
+      const costOfInitialEntry = (event.buyIn || 0) + (event.bounties || 0) + (event.mysteryKo || 0);
+      const costOfOneFullRebuy = (event.rebuyPrice || 0) + (event.bounties || 0) + (event.mysteryKo || 0);
+      const costOfAllRebuys = rebuys * costOfOneFullRebuy;
+      const investment = costOfInitialEntry + costOfAllRebuys;
+
+      stats.totalSpent += investment;
+      stats.totalNet += (winnings - investment);
+      
+      if(result) {
+          if (result.position === 1) stats.wins += 1;
+          if (result.position <= 3) stats.podiums += 1;
+      }
+
+      playerStatsMap.set(participantId, stats);
+    }
+  }
+
+  let mostWins: HofPlayerStat | null = null;
+  let mostPodiums: HofPlayerStat | null = null;
+  let highestNet: HofPlayerStat | null = null;
+  let mostGamesPlayed: HofPlayerStat | null = null;
+  let mostSpent: HofPlayerStat | null = null;
+  let biggestSingleWin: HofEventStat | null = null;
+
+  for (const [playerId, stats] of playerStatsMap.entries()) {
+    const player = nonGuestPlayers.find(p => p.id === playerId)!;
+
+    if (!mostWins || stats.wins > mostWins.value) {
+      mostWins = { player, value: stats.wins };
+    }
+    if (!mostPodiums || stats.podiums > mostPodiums.value) {
+      mostPodiums = { player, value: stats.podiums };
+    }
+    if (!highestNet || stats.totalNet > highestNet.value) {
+      highestNet = { player, value: stats.totalNet };
+    }
+    if (!mostGamesPlayed || stats.gamesPlayed > mostGamesPlayed.value) {
+      mostGamesPlayed = { player, value: stats.gamesPlayed };
+    }
+    if (!mostSpent || stats.totalSpent > mostSpent.value) {
+      mostSpent = { player, value: stats.totalSpent };
+    }
+    if (stats.biggestWin && (!biggestSingleWin || stats.biggestWin.value > biggestSingleWin.value)) {
+      biggestSingleWin = { player, event: stats.biggestWin.event, value: stats.biggestWin.value };
+    }
+  }
+
+  return {
+    mostWins: mostWins && mostWins.value > 0 ? mostWins : null,
+    mostPodiums: mostPodiums && mostPodiums.value > 0 ? mostPodiums : null,
+    highestNet: highestNet && highestNet.value > 0 ? highestNet : null,
+    mostGamesPlayed: mostGamesPlayed && mostGamesPlayed.value > 0 ? mostGamesPlayed : null,
+    mostSpent: mostSpent && mostSpent.value > 0 ? mostSpent : null,
+    biggestSingleWin: biggestSingleWin && biggestSingleWin.value > 0 ? biggestSingleWin : null,
+  };
 }

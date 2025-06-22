@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import Logo from './Logo';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { Menu, LogOut, Home, MessageSquare, CalendarDays, Users, BarChart3, LogIn } from 'lucide-react';
+import { Menu, LogOut, Home, MessageSquare, CalendarDays, Users, BarChart3, LogIn, Trophy } from 'lucide-react';
 import { logoutUser } from '@/app/login/actions';
 import { usePathname } from 'next/navigation'; // Import usePathname
 
@@ -15,6 +15,7 @@ const Header = ({ isAuthenticated }: { isAuthenticated: boolean }) => {
 
   const navItems = [
     { href: '/dashboard', label: 'Dashboard', icon: Home },
+    { href: '/hall-of-fame', label: 'HOF', icon: Trophy },
     { href: '/events', label: 'Events', icon: CalendarDays },
     { href: '/players', label: 'Players', icon: Users },
     { href: '/seasons', label: 'Seasons', icon: BarChart3 },

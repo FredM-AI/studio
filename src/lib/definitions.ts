@@ -159,3 +159,24 @@ export type LoginFormState = {
   };
   message?: string | null;
 };
+
+// Hall of Fame types
+export interface HofPlayerStat {
+  player: Player;
+  value: number;
+}
+
+export interface HofEventStat {
+  player: Player;
+  event: Event;
+  value: number;
+}
+
+export interface HallOfFameStats {
+  mostWins: HofPlayerStat | null;
+  mostPodiums: HofPlayerStat | null;
+  highestNet: HofPlayerStat | null;
+  mostGamesPlayed: HofPlayerStat | null;
+  mostSpent: HofPlayerStat | null;
+  biggestSingleWin: HofEventStat | null;
+}
