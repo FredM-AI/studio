@@ -135,7 +135,7 @@ export default async function HallOfFamePage() {
                  <StatCard 
                     icon={<Gem className="h-10 w-10 text-purple-500" />}
                     title="Biggest Single Win"
-                    description="Largest prize won in a single event."
+                    description="Largest net gain in a single event."
                     stat={stats.biggestSingleWin}
                     formatValue={(v) => `$${v.toLocaleString()}`}
                 />

@@ -287,17 +287,20 @@ export async function calculateHallOfFameStats(
       const mkoWon = result?.mysteryKoWon || 0;
 
       const winnings = prize + bountiesWon + mkoWon;
-      if (!stats.biggestWin || winnings > stats.biggestWin.value) {
-        stats.biggestWin = { event, value: winnings };
-      }
-
+      
       const costOfInitialEntry = (event.buyIn || 0) + (event.bounties || 0) + (event.mysteryKo || 0);
       const costOfOneFullRebuy = (event.rebuyPrice || 0) + (event.bounties || 0) + (event.mysteryKo || 0);
       const costOfAllRebuys = rebuys * costOfOneFullRebuy;
       const investment = costOfInitialEntry + costOfAllRebuys;
+      
+      const netGain = winnings - investment;
+
+      if (!stats.biggestWin || netGain > stats.biggestWin.value) {
+        stats.biggestWin = { event, value: netGain };
+      }
 
       stats.totalSpent += investment;
-      stats.totalNet += (winnings - investment);
+      stats.totalNet += netGain;
       
       if(result) {
           if (result.position === 1) stats.wins += 1;
