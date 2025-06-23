@@ -3,6 +3,13 @@ import { initializeApp, getApps, type FirebaseApp } from 'firebase/app';
 import { getFirestore, collection, getDocs, doc, getDoc, setDoc, type Firestore, query, where } from 'firebase/firestore';
 import type { Player, Event, Season, AppSettings } from './definitions';
 
+// Constants for collection names
+const PLAYERS_COLLECTION = 'players';
+const EVENTS_COLLECTION = 'events';
+const SEASONS_COLLECTION = 'seasons';
+const SETTINGS_COLLECTION = 'settings';
+const GLOBAL_SETTINGS_DOC_ID = 'global';
+
 // Your web app's Firebase configuration
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
