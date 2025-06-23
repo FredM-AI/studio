@@ -20,7 +20,7 @@ let db: Firestore;
 try {
   const serviceAccountString = process.env.FIREBASE_SERVICE_ACCOUNT;
   if (!serviceAccountString) {
-    throw new Error("The FIREBASE_SERVICE_ACCOUNT environment variable is not set. This is required for server-side authentication with Firestore. Go to your hosting provider (e.g., Vercel, App Hosting) and set this variable with the JSON content of your service account key.");
+    throw new Error("The FIREBASE_SERVICE_ACCOUNT environment variable is not set. This is required for server-side authentication with Firestore. On Vercel or Firebase App Hosting, this must be set in the project settings, not in a file.");
   }
 
   const serviceAccount = JSON.parse(serviceAccountString);
@@ -29,7 +29,6 @@ try {
     app = initializeApp({
       credential: cert(serviceAccount),
     });
-    console.log("✅ Firebase Admin SDK initialized successfully.");
   } else {
     app = getApps()[0];
   }
@@ -42,21 +41,24 @@ try {
   } else {
     console.error("➡️", error.message);
   }
-  // If initialization fails, db will be undefined, and subsequent calls will fail.
-  // @ts-ignore
-  db = undefined;
+  // db remains undefined, subsequent calls will throw an error.
 }
 
 
 // Export db for use in server actions
 export { db };
 
+function checkDb() {
+    if (!db) {
+        // This is the user-facing error. It will be shown on the Next.js error page.
+        throw new Error("Database connection failed. The 'FIREBASE_SERVICE_ACCOUNT' environment variable is likely missing or misconfigured. Please check your hosting provider's settings and review the server logs for detailed initialization errors.");
+    }
+}
+
+
 // Player data functions
 export async function getPlayers(): Promise<Player[]> {
-  if (!db) {
-    console.error("⚠️ Firestore not initialized. Players cannot be fetched. Check server logs for initialization errors.");
-    return [];
-  }
+  checkDb();
   try {
     const playersCol = collection(db, PLAYERS_COLLECTION);
     const playerSnapshot = await getDocs(playersCol);
@@ -80,16 +82,13 @@ export async function getPlayers(): Promise<Player[]> {
     return playerList;
   } catch (error) {
     console.error("Error fetching players:", error);
-    return [];
+    throw new Error("Failed to fetch players from Firestore.");
   }
 }
 
 // Event data functions
 export async function getEvents(): Promise<Event[]> {
-  if (!db) {
-    console.error("⚠️ Firestore not initialized. Events cannot be fetched. Check server logs for initialization errors.");
-    return [];
-  }
+  checkDb();
   try {
     const eventsCol = collection(db, EVENTS_COLLECTION);
     const eventSnapshot = await getDocs(eventsCol);
@@ -117,16 +116,13 @@ export async function getEvents(): Promise<Event[]> {
     return eventList;
   } catch (error) {
     console.error("Error fetching events:", error);
-    return [];
+    throw new Error("Failed to fetch events from Firestore.");
   }
 }
 
 // Season data functions
 export async function getSeasons(): Promise<Season[]> {
-  if (!db) {
-     console.error("⚠️ Firestore not initialized. Seasons cannot be fetched. Check server logs for initialization errors.");
-    return [];
-  }
+  checkDb();
   try {
     const seasonsCol = collection(db, SEASONS_COLLECTION);
     const seasonSnapshot = await getDocs(seasonsCol);
@@ -146,17 +142,14 @@ export async function getSeasons(): Promise<Season[]> {
     return seasonList;
   } catch (error) {
     console.error("Error fetching seasons:", error);
-    return [];
+    throw new Error("Failed to fetch seasons from Firestore.");
   }
 }
 
 // Settings data functions
 export async function getSettings(): Promise<AppSettings> {
   const defaultSettings: AppSettings = { theme: 'light', defaultBuyIn: 20, defaultMaxPlayers: 90 };
-  if (!db) {
-    console.error("⚠️ Firestore not initialized. Settings cannot be fetched. Returning defaults. Check server logs for initialization errors.");
-    return defaultSettings;
-  }
+  checkDb();
   try {
     const settingsDocRef = doc(db, SETTINGS_COLLECTION, GLOBAL_SETTINGS_DOC_ID);
     const settingsSnap = await getDoc(settingsDocRef);
@@ -168,15 +161,13 @@ export async function getSettings(): Promise<AppSettings> {
     }
   } catch (error) {
     console.error("Error fetching settings:", error);
+    // It's safer to return defaults for settings than to crash the app
     return defaultSettings;
   }
 }
 
 export async function saveSettings(settings: AppSettings): Promise<void> {
-  if (!db) {
-    console.warn("⚠️ Firestore not initialized. Settings cannot be saved. Check server logs for initialization errors.");
-    return;
-  }
+  checkDb();
   try {
     const settingsDocRef = doc(db, SETTINGS_COLLECTION, GLOBAL_SETTINGS_DOC_ID);
     await setDoc(settingsDocRef, settings);
