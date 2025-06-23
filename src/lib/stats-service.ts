@@ -1,3 +1,4 @@
+
 'use server';
 
 import type { Season, Event, Player, PlayerStats, EventResult, HallOfFameStats, HofPlayerStat, HofEventStat } from './definitions';
@@ -259,9 +260,11 @@ export async function calculateHallOfFameStats(
 ): Promise<HallOfFameStats> {
   const completedEvents = allEvents.filter(e => e.status === 'completed');
   const nonGuestPlayers = allPlayers.filter(p => !p.isGuest);
+  
+  const totalPrizePools = completedEvents.reduce((sum, event) => sum + (event.prizePool.total || 0), 0);
 
   if (nonGuestPlayers.length === 0 || completedEvents.length === 0) {
-    return { mostWins: null, mostPodiums: null, highestNet: null, mostGamesPlayed: null, mostSpent: null, biggestSingleWin: null };
+    return { mostWins: null, mostPodiums: null, highestNet: null, mostGamesPlayed: null, mostSpent: null, biggestSingleWin: null, totalPrizePools };
   }
   
   const playerStatsMap = new Map<string, {
@@ -360,5 +363,6 @@ export async function calculateHallOfFameStats(
     mostGamesPlayed: mostGamesPlayed && mostGamesPlayed.value > 0 ? mostGamesPlayed : null,
     mostSpent: mostSpent && mostSpent.value > 0 ? mostSpent : null,
     biggestSingleWin: biggestSingleWin && biggestSingleWin.value > 0 ? biggestSingleWin : null,
+    totalPrizePools,
   };
 }

@@ -181,4 +181,5 @@ export interface HallOfFameStats {
   mostGamesPlayed: HofPlayerStat | null;
   mostSpent: HofPlayerStat | null;
   biggestSingleWin: HofEventStat | null;
+  totalPrizePools: number;
 }
