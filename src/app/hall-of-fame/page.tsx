@@ -141,9 +141,9 @@ export default async function HallOfFamePage() {
                     <StatCard 
                         icon={<Crosshair className="h-10 w-10 text-orange-500" />}
                         title="Bounty Hunter"
-                        description="The player with the most bounties collected."
+                        description="Player with the highest total value from bounties."
                         stat={stats.mostBountiesWon}
-                        unit="bounties"
+                        formatValue={(v) => `€${v.toLocaleString()}`}
                     />
                     <StatCard 
                         icon={<TrendingUp className="h-10 w-10 text-green-500" />}
