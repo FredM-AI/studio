@@ -7,8 +7,7 @@ runConfig:
   # more instances in response to increased traffic.
   maxInstances: 2
   # Make the service account secret available to the app.
-  # Create a secret in Google Secret Manager named "FIREBASE_SERVICE_ACCOUNT_BASE64"
-  # and paste the Base64-encoded content of your service account JSON key as the value.
+  # Create a secret in Google Secret Manager named "FIREBASE_SERVICE_ACCOUNT"
+  # and paste the content of your service account JSON key as the value.
   secrets:
-    - FIREBASE_SERVICE_ACCOUNT_BASE64
-
+    - FIREBASE_SERVICE_ACCOUNT
