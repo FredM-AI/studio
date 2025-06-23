@@ -32,6 +32,18 @@ export default async function PlayersPage() {
   const isAuthenticated = cookieStore.get(AUTH_COOKIE_NAME)?.value === 'true';
   const players: Player[] = await getPlayers();
 
+  // Sort players: alphabetical by display name (which prioritizes nickname), with guests at the end.
+  const sortedPlayers = players.sort((a, b) => {
+    const aIsGuest = a.isGuest || false;
+    const bIsGuest = b.isGuest || false;
+
+    if (aIsGuest !== bIsGuest) {
+      return aIsGuest ? 1 : -1;
+    }
+    
+    return getPlayerDisplayName(a).localeCompare(getPlayerDisplayName(b));
+  });
+
   return (
     <div className="space-y-8">
       <div className="flex items-center justify-between">
@@ -78,7 +90,7 @@ export default async function PlayersPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {players.map((player) => (
+                {sortedPlayers.map((player) => (
                   <TableRow key={player.id}>
                     <TableCell className="font-medium">{getPlayerDisplayName(player)}</TableCell>
                     <TableCell className="text-xs text-muted-foreground">{player.firstName} {player.lastName}</TableCell>
