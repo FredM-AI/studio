@@ -5,10 +5,3 @@ runConfig:
   # Increase this value if you'd like to automatically spin up
   # more instances in response to increased traffic.
   maxInstances: 2
-
-# Environment variables for the backend.
-# You can use Secret Manager to manage and store secrets.
-# https://firebase.google.com/docs/app-hosting/configure#secret-manager
-env:
-  - variable: FIREBASE_SERVICE_ACCOUNT
-    secret: FIREBASE_SERVICE_ACCOUNT

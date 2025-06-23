@@ -19,20 +19,12 @@ let db: Firestore;
 let dbInitialized = false; // Flag to check if DB is initialized
 
 // --- Initialize Firebase Admin SDK ---
-// This uses a service account for server-side authentication.
+// This will automatically use Application Default Credentials in a managed environment like
+// Firebase Studio, App Hosting, or Cloud Run. For local development, you may need to
+// run `gcloud auth application-default login` in your terminal.
 try {
-  const serviceAccountString = process.env.FIREBASE_SERVICE_ACCOUNT;
-  if (!serviceAccountString) {
-    throw new Error("The FIREBASE_SERVICE_ACCOUNT environment variable is not set.");
-  }
-
-  // This will throw an error if the service account is not valid JSON
-  const serviceAccount = JSON.parse(serviceAccountString);
-
   if (getApps().length === 0) {
-    app = initializeApp({
-      credential: cert(serviceAccount),
-    });
+    app = initializeApp();
   } else {
     app = getApps()[0];
   }
@@ -41,12 +33,8 @@ try {
   console.log("✅ Firebase Admin SDK initialized successfully.");
 
 } catch (error: any) {
-  console.warn("⚠️ Firebase Admin SDK initialization failed. The app will use local JSON files as a fallback. This is normal for local development without a service account file, but if you are in a deployed environment, this indicates a problem.");
-  if (error.message.includes("JSON.parse")) {
-    console.error("➡️ Critical Error: The FIREBASE_SERVICE_ACCOUNT environment variable is not valid JSON. Please check its value in your hosting provider's settings.");
-  } else {
-    console.error("➡️ To fix this, ensure the FIREBASE_SERVICE_ACCOUNT environment variable is correctly set in your hosting provider (e.g., Vercel, Firebase App Hosting) with the full content of your service account JSON file. The error was:", error.message);
-  }
+  console.warn("⚠️ Firebase Admin SDK initialization failed. The app will use local JSON files as a fallback.");
+  console.error("➡️ This can happen if you are running locally without authenticating. Try running `gcloud auth application-default login` in your terminal. The error was:", error.message);
   // db remains undefined, and dbInitialized remains false
 }
 
