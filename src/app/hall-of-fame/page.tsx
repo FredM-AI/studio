@@ -139,6 +139,13 @@ export default async function HallOfFamePage() {
                         unit="wins"
                     />
                     <StatCard 
+                        icon={<TrendingUp className="h-10 w-10 text-green-500" />}
+                        title="Highest Net Profit"
+                        description="The most profitable player of all time."
+                        stat={stats.highestNet}
+                        formatValue={(v) => `€${v.toLocaleString()}`}
+                    />
+                    <StatCard 
                         icon={<Crosshair className="h-10 w-10 text-orange-500" />}
                         title="Bounty Hunter"
                         description="Player with the highest total value from bounties."
@@ -146,17 +153,17 @@ export default async function HallOfFamePage() {
                         formatValue={(v) => `€${v.toLocaleString()}`}
                     />
                     <StatCard 
-                        icon={<TrendingUp className="h-10 w-10 text-green-500" />}
-                        title="Highest Net Profit"
-                        description="The most profitable player of all time."
-                        stat={stats.highestNet}
-                        formatValue={(v) => `€${v.toLocaleString()}`}
-                    />
-                     <StatCard 
                         icon={<TrendingDown className="h-10 w-10 text-red-500" />}
                         title="The Philanthropist"
                         description="The player with the biggest net loss."
                         stat={stats.lowestNet}
+                        formatValue={(v) => `€${v.toLocaleString()}`}
+                    />
+                    <StatCard 
+                        icon={<Gem className="h-10 w-10 text-purple-500" />}
+                        title="Biggest Single Win"
+                        description="Largest net gain in a single event."
+                        stat={stats.biggestSingleWin}
                         formatValue={(v) => `€${v.toLocaleString()}`}
                     />
                     <StatCard 
@@ -165,13 +172,6 @@ export default async function HallOfFamePage() {
                         description="Most top 3 finishes."
                         stat={stats.mostPodiums}
                         unit="podiums"
-                    />
-                    <StatCard 
-                        icon={<Gem className="h-10 w-10 text-purple-500" />}
-                        title="Biggest Single Win"
-                        description="Largest net gain in a single event."
-                        stat={stats.biggestSingleWin}
-                        formatValue={(v) => `€${v.toLocaleString()}`}
                     />
                     <StatCard 
                         icon={<Repeat className="h-10 w-10 text-red-500" />}
