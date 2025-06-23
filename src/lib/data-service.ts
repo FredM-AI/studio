@@ -4,7 +4,6 @@ import { getFirestore, collection, getDocs, doc, getDoc, setDoc, type Firestore,
 import type { Player, Event, Season, AppSettings } from './definitions';
 
 // Your web app's Firebase configuration
-// It's highly recommended to use environment variables for this
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
   authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
@@ -14,28 +13,66 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
+// --- START: Added for Vercel deployment debugging ---
+// Helper to check if the config is valid and log errors if not.
+const checkFirebaseConfig = () => {
+  const missingEnvVars: string[] = [];
+  if (!firebaseConfig.apiKey) missingEnvVars.push('NEXT_PUBLIC_FIREBASE_API_KEY');
+  if (!firebaseConfig.authDomain) missingEnvVars.push('NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN');
+  if (!firebaseConfig.projectId) missingEnvVars.push('NEXT_PUBLIC_FIREBASE_PROJECT_ID');
+  if (!firebaseConfig.storageBucket) missingEnvVars.push('NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET');
+  if (!firebaseConfig.messagingSenderId) missingEnvVars.push('NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID');
+  if (!firebaseConfig.appId) missingEnvVars.push('NEXT_PUBLIC_FIREBASE_APP_ID');
+
+  if (missingEnvVars.length > 0) {
+    console.error("🔴 CRITICAL ERROR: Firebase configuration is missing required environment variables.");
+    console.error(`The following variables are not set: ${missingEnvVars.join(', ')}`);
+    console.error("Please ensure you have set up these environment variables in your Vercel (or other hosting) project settings.");
+    console.log("Current config being used (some values may be null or undefined):", firebaseConfig);
+    return false;
+  }
+  console.log("✅ Firebase environment variables seem to be correctly set.");
+  return true;
+};
+
+const isConfigValid = checkFirebaseConfig();
+// --- END: Added for Vercel deployment debugging ---
+
 // Initialize Firebase
 let app: FirebaseApp;
-if (!getApps().length) {
-  app = initializeApp(firebaseConfig);
+let db: Firestore;
+
+// Only initialize if the config is valid.
+if (isConfigValid) {
+  if (!getApps().length) {
+    try {
+      app = initializeApp(firebaseConfig);
+      db = getFirestore(app);
+    } catch (e) {
+      console.error("🔴 Firebase initialization failed:", e);
+      // @ts-ignore - db will be undefined, causing downstream functions to fail gracefully (in their try/catch blocks).
+      db = undefined;
+    }
+  } else {
+    app = getApps()[0];
+    db = getFirestore(app);
+  }
 } else {
-  app = getApps()[0];
+   console.error("Firebase initialization skipped due to invalid configuration.");
+   // @ts-ignore - db will be undefined.
+   db = undefined;
 }
 
-const db: Firestore = getFirestore(app);
 
 // Export db for use in server actions
 export { db };
 
-const PLAYERS_COLLECTION = 'players';
-const EVENTS_COLLECTION = 'events';
-const SEASONS_COLLECTION = 'seasons';
-const SETTINGS_COLLECTION = 'settings';
-const GLOBAL_SETTINGS_DOC_ID = 'appGlobalSettings';
-
-
 // Player data functions
 export async function getPlayers(): Promise<Player[]> {
+  if (!db) {
+    console.error("Firestore is not initialized. Cannot fetch players.");
+    return [];
+  }
   try {
     const playersCol = collection(db, PLAYERS_COLLECTION);
     const playerSnapshot = await getDocs(playersCol);
@@ -65,6 +102,10 @@ export async function getPlayers(): Promise<Player[]> {
 
 // Event data functions
 export async function getEvents(): Promise<Event[]> {
+  if (!db) {
+    console.error("Firestore is not initialized. Cannot fetch events.");
+    return [];
+  }
   try {
     const eventsCol = collection(db, EVENTS_COLLECTION);
     const eventSnapshot = await getDocs(eventsCol);
@@ -98,6 +139,10 @@ export async function getEvents(): Promise<Event[]> {
 
 // Season data functions
 export async function getSeasons(): Promise<Season[]> {
+  if (!db) {
+    console.error("Firestore is not initialized. Cannot fetch seasons.");
+    return [];
+  }
   try {
     const seasonsCol = collection(db, SEASONS_COLLECTION);
     const seasonSnapshot = await getDocs(seasonsCol);
@@ -123,6 +168,10 @@ export async function getSeasons(): Promise<Season[]> {
 
 // Settings data functions
 export async function getSettings(): Promise<AppSettings> {
+  if (!db) {
+    console.error("Firestore is not initialized. Cannot fetch settings.");
+    return { theme: 'light', defaultBuyIn: 20, defaultMaxPlayers: 90 };
+  }
   const defaultSettings: AppSettings = { theme: 'light', defaultBuyIn: 20, defaultMaxPlayers: 90 };
   try {
     const settingsDocRef = doc(db, SETTINGS_COLLECTION, GLOBAL_SETTINGS_DOC_ID);
@@ -140,6 +189,10 @@ export async function getSettings(): Promise<AppSettings> {
 }
 
 export async function saveSettings(settings: AppSettings): Promise<void> {
+  if (!db) {
+    console.error("Firestore is not initialized. Cannot save settings.");
+    throw new Error('Could not save settings to Firestore, DB not initialized.');
+  }
   try {
     const settingsDocRef = doc(db, SETTINGS_COLLECTION, GLOBAL_SETTINGS_DOC_ID);
     await setDoc(settingsDocRef, settings);
