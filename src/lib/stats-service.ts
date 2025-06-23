@@ -264,7 +264,7 @@ export async function calculateHallOfFameStats(
   const totalPrizePools = completedEvents.reduce((sum, event) => sum + (event.prizePool.total || 0), 0);
 
   if (nonGuestPlayers.length === 0 || completedEvents.length === 0) {
-    return { mostWins: null, mostPodiums: null, highestNet: null, lowestNet: null, mostGamesPlayed: null, mostSpent: null, biggestSingleWin: null, totalPrizePools };
+    return { mostWins: null, mostPodiums: null, highestNet: null, lowestNet: null, mostGamesPlayed: null, mostSpent: null, biggestSingleWin: null, mostBountiesWon: null, totalPrizePools };
   }
   
   const playerStatsMap = new Map<string, {
@@ -273,11 +273,12 @@ export async function calculateHallOfFameStats(
     gamesPlayed: number;
     totalNet: number;
     totalSpent: number;
-    biggestWin: { event: Event, value: number } | null
+    biggestWin: { event: Event, value: number } | null;
+    totalBountiesWon: number;
   }>();
 
   for (const player of nonGuestPlayers) {
-    playerStatsMap.set(player.id, { wins: 0, podiums: 0, gamesPlayed: 0, totalNet: 0, totalSpent: 0, biggestWin: null });
+    playerStatsMap.set(player.id, { wins: 0, podiums: 0, gamesPlayed: 0, totalNet: 0, totalSpent: 0, biggestWin: null, totalBountiesWon: 0 });
   }
 
   for (const event of completedEvents) {
@@ -300,6 +301,7 @@ export async function calculateHallOfFameStats(
       const totalInvestmentInExtras = (1 + rebuys) * bountyAndMkoCostsPerEntry;
       const totalInvestmentForSpending = investmentInMainPot + totalInvestmentInExtras;
       stats.totalSpent += totalInvestmentForSpending;
+      stats.totalBountiesWon += bountiesWon;
 
       // Calculate net gain FOR RANKING STATS (respects the flag)
       const includeBountiesInNetCalc = event.includeBountiesInNet ?? true;
@@ -333,6 +335,7 @@ export async function calculateHallOfFameStats(
   let mostGamesPlayed: HofPlayerStat | null = null;
   let mostSpent: HofPlayerStat | null = null;
   let biggestSingleWin: HofEventStat | null = null;
+  let mostBountiesWon: HofPlayerStat | null = null;
 
   for (const [playerId, stats] of playerStatsMap.entries()) {
     const player = nonGuestPlayers.find(p => p.id === playerId)!;
@@ -358,6 +361,9 @@ export async function calculateHallOfFameStats(
     if (stats.biggestWin && (!biggestSingleWin || stats.biggestWin.value > biggestSingleWin.value)) {
       biggestSingleWin = { player, event: stats.biggestWin.event, value: stats.biggestWin.value };
     }
+    if (!mostBountiesWon || stats.totalBountiesWon > mostBountiesWon.value) {
+      mostBountiesWon = { player, value: stats.totalBountiesWon };
+    }
   }
 
   return {
@@ -368,6 +374,7 @@ export async function calculateHallOfFameStats(
     mostGamesPlayed: mostGamesPlayed && mostGamesPlayed.value > 0 ? mostGamesPlayed : null,
     mostSpent: mostSpent && mostSpent.value > 0 ? mostSpent : null,
     biggestSingleWin: biggestSingleWin && biggestSingleWin.value > 0 ? biggestSingleWin : null,
+    mostBountiesWon: mostBountiesWon && mostBountiesWon.value > 0 ? mostBountiesWon : null,
     totalPrizePools,
   };
 }

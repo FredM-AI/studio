@@ -5,7 +5,7 @@ import type { HallOfFameStats, HofPlayerStat, HofEventStat, Player } from '@/lib
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import Link from 'next/link';
-import { Crown, TrendingUp, Gem, Shield, Repeat, Award, Trophy, Banknote, TrendingDown } from 'lucide-react';
+import { Crown, TrendingUp, Gem, Shield, Repeat, Award, Trophy, Banknote, TrendingDown, Crosshair } from 'lucide-react';
 import { format } from 'date-fns';
 
 const getInitials = (firstName: string, lastName: string) => {
@@ -137,6 +137,13 @@ export default async function HallOfFamePage() {
                         description="The player with the most 1st place finishes."
                         stat={stats.mostWins}
                         unit="wins"
+                    />
+                    <StatCard 
+                        icon={<Crosshair className="h-10 w-10 text-orange-500" />}
+                        title="Bounty Hunter"
+                        description="The player with the most bounties collected."
+                        stat={stats.mostBountiesWon}
+                        unit="bounties"
                     />
                     <StatCard 
                         icon={<TrendingUp className="h-10 w-10 text-green-500" />}
