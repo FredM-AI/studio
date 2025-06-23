@@ -106,7 +106,7 @@ export default async function EventDetailsPage({ params }: { params: { eventId: 
             <h3 className="font-headline text-xl text-primary flex items-center"><Info className="mr-2 h-5 w-5"/>Details</h3>
             <div className="flex items-center justify-between text-sm">
               <span className="text-muted-foreground flex items-center"><DollarSign className="mr-2 h-4 w-4"/>Buy-in (Main Pool):</span>
-              <span className="font-medium">${event.buyIn}</span>
+              <span className="font-medium">€{event.buyIn}</span>
             </div>
             {event.maxPlayers && (
               <div className="flex items-center justify-between text-sm">
@@ -119,23 +119,23 @@ export default async function EventDetailsPage({ params }: { params: { eventId: 
                 {rebuysActive ? <CheckCircle className="mr-2 h-4 w-4 text-green-500"/> : <XCircle className="mr-2 h-4 w-4 text-red-500"/>}
                 Rebuys (Prize Pool part):
               </span>
-              <span className="font-medium">{rebuysActive ? `Yes (Price: $${event.rebuyPrice})` : 'No'}</span>
+              <span className="font-medium">{rebuysActive ? `Yes (Price: €${event.rebuyPrice})` : 'No'}</span>
             </div>
             {(event.bounties !== undefined && event.bounties > 0) && (
                 <div className="flex items-center justify-between text-sm">
                     <span className="text-muted-foreground flex items-center"><Star className="mr-2 h-4 w-4 text-yellow-500"/>Bounty Value:</span>
-                    <span className="font-medium">${event.bounties}</span>
+                    <span className="font-medium">€{event.bounties}</span>
                 </div>
             )}
             {(event.mysteryKo !== undefined && event.mysteryKo > 0) && (
                 <div className="flex items-center justify-between text-sm">
                     <span className="text-muted-foreground flex items-center"><Gift className="mr-2 h-4 w-4 text-purple-500"/>Mystery KO Value:</span>
-                    <span className="font-medium">${event.mysteryKo}</span>
+                    <span className="font-medium">€{event.mysteryKo}</span>
                 </div>
             )}
             <div className="flex items-center justify-between text-sm">
               <span className="text-muted-foreground flex items-center"><DollarSign className="mr-2 h-4 w-4"/>Total Main Prize Pool:</span>
-              <span className="font-medium">${event.prizePool.total}</span>
+              <span className="font-medium">€{event.prizePool.total}</span>
             </div>
             <div className="flex items-center justify-between text-sm">
               <span className="text-muted-foreground flex items-center"><CalendarDays className="mr-2 h-4 w-4"/>Status:</span>
@@ -188,10 +188,10 @@ export default async function EventDetailsPage({ params }: { params: { eventId: 
                       <th className="p-2 text-left font-semibold">Position</th>
                       <th className="p-2 text-left font-semibold">Player</th>
                       <th className="p-2 text-center font-semibold">Rebuys</th>
-                      <th className="p-2 text-right font-semibold">Prize ($)</th>
-                      <th className="p-2 text-right font-semibold">Bounties ($)</th>
-                      <th className="p-2 text-right font-semibold">MSKO ($)</th>
-                      <th className="p-2 text-right font-semibold">Net ($)</th>
+                      <th className="p-2 text-right font-semibold">Prize (€)</th>
+                      <th className="p-2 text-right font-semibold">Bounties (€)</th>
+                      <th className="p-2 text-right font-semibold">MSKO (€)</th>
+                      <th className="p-2 text-right font-semibold">Net (€)</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -228,11 +228,11 @@ export default async function EventDetailsPage({ params }: { params: { eventId: 
                             </Link>
                           </td>
                           <td className="p-2 text-center">{result.rebuys ?? 0}</td>
-                          <td className="p-2 text-right">${result.prize}</td>
-                          <td className="p-2 text-right">${result.bountiesWon || 0}</td>
-                          <td className="p-2 text-right">${result.mysteryKoWon || 0}</td>
+                          <td className="p-2 text-right">€{result.prize}</td>
+                          <td className="p-2 text-right">€{result.bountiesWon || 0}</td>
+                          <td className="p-2 text-right">€{result.mysteryKoWon || 0}</td>
                           <td className={`p-2 text-right font-medium ${netResult >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                            ${netResult}
+                            €{netResult}
                           </td>
                         </tr>
                       );

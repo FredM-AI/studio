@@ -44,7 +44,7 @@ export default function SeasonLeaderboardTable({ leaderboardData, seasonEvents }
                 </div>
               </TableHead>
             ))}
-            <TableHead className="min-w-[150px] w-[150px] text-right px-4 py-3 sticky right-0 bg-card z-10">Total Net ($)</TableHead> 
+            <TableHead className="min-w-[150px] w-[150px] text-right px-4 py-3 sticky right-0 bg-card z-10">Total Net (€)</TableHead> 
           </TableRow>
         </TableHeader>
         <TableBody>

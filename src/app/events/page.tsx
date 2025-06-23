@@ -45,7 +45,7 @@ const EventTableRow = ({ event, isAuthenticated, allPlayers }: { event: Event, i
     <TableRow>
       <TableCell className="font-medium">{event.name}</TableCell>
       <TableCell>{new Date(event.date).toLocaleDateString()}</TableCell>
-      <TableCell>${event.buyIn}</TableCell>
+      <TableCell>€{event.buyIn}</TableCell>
       <TableCell>{event.participants.length}</TableCell>
       <TableCell>
         {winnerName !== "N/A" ? (

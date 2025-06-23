@@ -176,7 +176,7 @@ export default function SeasonPlayerProgressChart({ playerProgressData, players,
             <YAxis 
               stroke="hsl(var(--muted-foreground))" 
               fontSize={11} 
-              tickFormatter={(value) => `$${value}`}
+              tickFormatter={(value) => `€${value}`}
               tickMargin={5}
               allowDecimals={false}
             />
@@ -193,7 +193,7 @@ export default function SeasonPlayerProgressChart({ playerProgressData, players,
                  return point ? `${format(new Date(label), 'EEE, MMM d, yyyy')} - ${point.eventName}` : format(new Date(label), 'PPP');
               }}
               formatter={(value: number, name: string, props) => {
-                 const formattedValue = `$${value}`;
+                 const formattedValue = `€${value}`;
                  return [formattedValue, name];
               }}
               itemSorter={(item) => -item.value!} 

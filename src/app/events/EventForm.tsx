@@ -410,7 +410,7 @@ export default function EventForm({ event, allPlayers, allSeasons, action, formT
              <h3 className="font-headline text-lg flex items-center"><Settings className="mr-2 h-5 w-5 text-primary" />Event Configuration</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               <div>
-                <Label htmlFor="buyIn">Buy-in (Main Prize Pool) ($)</Label>
+                <Label htmlFor="buyIn">Buy-in (Main Prize Pool) (€)</Label>
                 <Input
                   id="buyIn"
                   name="buyIn"
@@ -427,7 +427,7 @@ export default function EventForm({ event, allPlayers, allSeasons, action, formT
                 {state.errors?.buyIn && <p id="buyIn-error" className="text-sm text-destructive mt-1">{state.errors.buyIn.join(', ')}</p>}
               </div>
               <div>
-                <Label htmlFor="rebuyPrice">Rebuy Price (to Prize Pool) ($)</Label>
+                <Label htmlFor="rebuyPrice">Rebuy Price (to Prize Pool) (€)</Label>
                 <Input
                     id="rebuyPrice"
                     name="rebuyPrice"
@@ -443,7 +443,7 @@ export default function EventForm({ event, allPlayers, allSeasons, action, formT
                 {state.errors?.rebuyPrice && <p id="rebuyPrice-error" className="text-sm text-destructive mt-1">{state.errors.rebuyPrice.join(', ')}</p>}
               </div>
               <div>
-                <Label htmlFor="prizePoolTotal">Total Main Prize Pool ($)</Label>
+                <Label htmlFor="prizePoolTotal">Total Main Prize Pool (€)</Label>
                 <Input
                   id="prizePoolTotal"
                   name="prizePoolTotal"
@@ -461,7 +461,7 @@ export default function EventForm({ event, allPlayers, allSeasons, action, formT
                 {state.errors?.prizePoolTotal && <p id="prizePoolTotal-error" className="text-sm text-destructive mt-1">{state.errors.prizePoolTotal.join(', ')}</p>}
               </div>
               <div>
-                <Label htmlFor="bounties" className="flex items-center"><Star className="mr-1 h-4 w-4 text-yellow-500" />Bounty Value ($)</Label>
+                <Label htmlFor="bounties" className="flex items-center"><Star className="mr-1 h-4 w-4 text-yellow-500" />Bounty Value (€)</Label>
                 <Input
                   id="bounties"
                   name="bounties"
@@ -478,7 +478,7 @@ export default function EventForm({ event, allPlayers, allSeasons, action, formT
                 {state.errors?.bounties && <p id="bounties-error" className="text-sm text-destructive mt-1">{state.errors.bounties.join(', ')}</p>}
               </div>
               <div>
-                <Label htmlFor="mysteryKo" className="flex items-center"><Gift className="mr-1 h-4 w-4 text-purple-500" />Mystery KO Value ($)</Label>
+                <Label htmlFor="mysteryKo" className="flex items-center"><Gift className="mr-1 h-4 w-4 text-purple-500" />Mystery KO Value (€)</Label>
                 <Input
                   id="mysteryKo"
                   name="mysteryKo"
@@ -585,10 +585,10 @@ export default function EventForm({ event, allPlayers, allSeasons, action, formT
                       <TableHead className="w-[8%] text-center">Pos</TableHead>
                       <TableHead className="w-[25%]">Player</TableHead>
                       <TableHead className="w-[12%] text-center">Rebuys</TableHead>
-                      <TableHead className="w-[15%] text-right">Prize ($)</TableHead>
-                      <TableHead className="w-[15%] text-right">Bounty ($)</TableHead>
-                      <TableHead className="w-[15%] text-right">MSKO ($)</TableHead>
-                      <TableHead className="w-[15%] text-right">Net ($)</TableHead>
+                      <TableHead className="w-[15%] text-right">Prize (€)</TableHead>
+                      <TableHead className="w-[15%] text-right">Bounty (€)</TableHead>
+                      <TableHead className="w-[15%] text-right">MSKO (€)</TableHead>
+                      <TableHead className="w-[15%] text-right">Net (€)</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>

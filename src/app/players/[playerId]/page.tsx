@@ -132,11 +132,11 @@ export default async function PlayerDetailPage({ params }: { params: { playerId:
               </li>
               <li className="flex items-center justify-between">
                 <span className="text-muted-foreground">Total Winnings:</span>
-                <span className="font-medium text-green-600 dark:text-green-500">${totalWinningsSafe}</span>
+                <span className="font-medium text-green-600 dark:text-green-500">€{totalWinningsSafe}</span>
               </li>
                <li className="flex items-center justify-between">
                 <span className="text-muted-foreground">Total Buy-Ins & Rebuys:</span>
-                <span className="font-medium text-red-600 dark:text-red-500">${totalBuyInsSafe}</span>
+                <span className="font-medium text-red-600 dark:text-red-500">€{totalBuyInsSafe}</span>
               </li>
               <li className="flex items-center justify-between border-t pt-2 mt-1">
                 <span className="text-muted-foreground font-semibold">Net Profit/Loss:</span>
@@ -144,7 +144,7 @@ export default async function PlayerDetailPage({ params }: { params: { playerId:
                   {netProfitOrLoss > 0 && <TrendingUp className="mr-1 h-4 w-4" />}
                   {netProfitOrLoss < 0 && <TrendingDown className="mr-1 h-4 w-4" />}
                   {netProfitOrLoss === 0 && <Minus className="mr-1 h-4 w-4" />}
-                  ${netProfitOrLoss}
+                  €{netProfitOrLoss}
                 </span>
               </li>
               <li className="flex items-center justify-between mt-2">

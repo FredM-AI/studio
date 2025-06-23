@@ -128,7 +128,7 @@ export default function SeasonDetailsCalendar({ events }: SeasonDetailsCalendarP
                         {event.name}
                     </Link>
                     <p className="text-xs text-muted-foreground">Status: {event.status.charAt(0).toUpperCase() + event.status.slice(1)}</p>
-                    <p className="text-xs text-muted-foreground">Buy-in: ${event.buyIn.toFixed(2)}</p>
+                    <p className="text-xs text-muted-foreground">Buy-in: €{event.buyIn.toFixed(2)}</p>
                   </div>
                 </div>
               ))}

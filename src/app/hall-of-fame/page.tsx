@@ -123,7 +123,7 @@ export default async function HallOfFamePage() {
                 </CardHeader>
                 <CardContent className="text-center">
                      <p className="text-4xl font-headline text-primary">
-                        ${stats.totalPrizePools.toLocaleString()}
+                        €{stats.totalPrizePools.toLocaleString()}
                     </p>
                 </CardContent>
             </Card>
@@ -143,7 +143,7 @@ export default async function HallOfFamePage() {
                         title="Highest Net Profit"
                         description="The most profitable player of all time."
                         stat={stats.highestNet}
-                        formatValue={(v) => `$${v.toLocaleString()}`}
+                        formatValue={(v) => `€${v.toLocaleString()}`}
                     />
                     <StatCard 
                         icon={<Shield className="h-10 w-10 text-blue-500" />}
@@ -157,14 +157,14 @@ export default async function HallOfFamePage() {
                         title="Biggest Single Win"
                         description="Largest net gain in a single event."
                         stat={stats.biggestSingleWin}
-                        formatValue={(v) => `$${v.toLocaleString()}`}
+                        formatValue={(v) => `€${v.toLocaleString()}`}
                     />
                     <StatCard 
                         icon={<Repeat className="h-10 w-10 text-red-500" />}
                         title="The Investor"
                         description="Player who has spent the most on buy-ins & rebuys."
                         stat={stats.mostSpent}
-                        formatValue={(v) => `$${v.toLocaleString()}`}
+                        formatValue={(v) => `€${v.toLocaleString()}`}
                     />
                     <StatCard 
                         icon={<Award className="h-10 w-10 text-indigo-500" />}
