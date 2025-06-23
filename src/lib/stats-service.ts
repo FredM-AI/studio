@@ -264,7 +264,7 @@ export async function calculateHallOfFameStats(
   const totalPrizePools = completedEvents.reduce((sum, event) => sum + (event.prizePool.total || 0), 0);
 
   if (nonGuestPlayers.length === 0 || completedEvents.length === 0) {
-    return { mostWins: null, mostPodiums: null, highestNet: null, mostGamesPlayed: null, mostSpent: null, biggestSingleWin: null, totalPrizePools };
+    return { mostWins: null, mostPodiums: null, highestNet: null, lowestNet: null, mostGamesPlayed: null, mostSpent: null, biggestSingleWin: null, totalPrizePools };
   }
   
   const playerStatsMap = new Map<string, {
@@ -329,6 +329,7 @@ export async function calculateHallOfFameStats(
   let mostWins: HofPlayerStat | null = null;
   let mostPodiums: HofPlayerStat | null = null;
   let highestNet: HofPlayerStat | null = null;
+  let lowestNet: HofPlayerStat | null = null;
   let mostGamesPlayed: HofPlayerStat | null = null;
   let mostSpent: HofPlayerStat | null = null;
   let biggestSingleWin: HofEventStat | null = null;
@@ -345,6 +346,9 @@ export async function calculateHallOfFameStats(
     if (!highestNet || stats.totalNet > highestNet.value) {
       highestNet = { player, value: stats.totalNet };
     }
+    if (!lowestNet || stats.totalNet < lowestNet.value) {
+      lowestNet = { player, value: stats.totalNet };
+    }
     if (!mostGamesPlayed || stats.gamesPlayed > mostGamesPlayed.value) {
       mostGamesPlayed = { player, value: stats.gamesPlayed };
     }
@@ -360,6 +364,7 @@ export async function calculateHallOfFameStats(
     mostWins: mostWins && mostWins.value > 0 ? mostWins : null,
     mostPodiums: mostPodiums && mostPodiums.value > 0 ? mostPodiums : null,
     highestNet: highestNet && highestNet.value > 0 ? highestNet : null,
+    lowestNet: lowestNet && lowestNet.value < 0 ? lowestNet : null,
     mostGamesPlayed: mostGamesPlayed && mostGamesPlayed.value > 0 ? mostGamesPlayed : null,
     mostSpent: mostSpent && mostSpent.value > 0 ? mostSpent : null,
     biggestSingleWin: biggestSingleWin && biggestSingleWin.value > 0 ? biggestSingleWin : null,

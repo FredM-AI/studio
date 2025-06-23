@@ -5,7 +5,7 @@ import type { HallOfFameStats, HofPlayerStat, HofEventStat, Player } from '@/lib
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import Link from 'next/link';
-import { Crown, TrendingUp, Gem, Shield, Repeat, Award, Trophy, Banknote } from 'lucide-react';
+import { Crown, TrendingUp, Gem, Shield, Repeat, Award, Trophy, Banknote, TrendingDown } from 'lucide-react';
 import { format } from 'date-fns';
 
 const getInitials = (firstName: string, lastName: string) => {
@@ -143,6 +143,13 @@ export default async function HallOfFamePage() {
                         title="Highest Net Profit"
                         description="The most profitable player of all time."
                         stat={stats.highestNet}
+                        formatValue={(v) => `€${v.toLocaleString()}`}
+                    />
+                     <StatCard 
+                        icon={<TrendingDown className="h-10 w-10 text-red-500" />}
+                        title="Le Philanthrope"
+                        description="Le joueur avec la plus grosse perte nette."
+                        stat={stats.lowestNet}
                         formatValue={(v) => `€${v.toLocaleString()}`}
                     />
                     <StatCard 
