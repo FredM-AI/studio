@@ -1,5 +1,5 @@
 
-import { initializeApp, getApps, type App } from 'firebase-admin/app';
+import { initializeApp, getApps, credential } from 'firebase-admin/app';
 import { getFirestore, type Firestore } from 'firebase-admin/firestore';
 import type { Player, Event, Season, AppSettings } from './definitions';
 
@@ -13,31 +13,46 @@ const GLOBAL_SETTINGS_DOC_ID = 'global';
 let db: Firestore;
 
 // --- Initialize Firebase Admin SDK ---
-// This block will run once when the server starts.
+// This new logic requires the service account JSON to be set as an environment variable.
+const serviceAccountJson = process.env.FIREBASE_SERVICE_ACCOUNT;
+
+if (!serviceAccountJson) {
+  const errorMessage = "🔥 CRITICAL: FIREBASE_SERVICE_ACCOUNT environment variable is not set.";
+  console.error(errorMessage);
+  console.error("This is required for server-side communication with Firestore.");
+  console.error("To fix this:");
+  console.error("1. In Firebase Console, go to Project settings > Service accounts.");
+  console.error("2. Generate a new private key to download the JSON file.");
+  console.error("3. Set the *entire content* of the JSON file as the FIREBASE_SERVICE_ACCOUNT environment variable in your hosting provider (e.g., Vercel UI, or Google Secret Manager for App Hosting).");
+  
+  // Throw an error to prevent the server from starting improperly.
+  // This makes the configuration error impossible to ignore.
+  throw new Error("Server configuration error: FIREBASE_SERVICE_ACCOUNT is not set.");
+}
+
+
 try {
+  // We only initialize the app if it hasn't been initialized yet.
   if (getApps().length === 0) {
-    // This uses Application Default Credentials, which is the standard for managed environments
-    // like Firebase Studio, App Hosting, or Cloud Run.
-    // For local development, ensure `gcloud auth application-default login` has been run.
-    initializeApp();
+    const serviceAccount = JSON.parse(serviceAccountJson);
+    initializeApp({
+      credential: credential.cert(serviceAccount)
+    });
   }
   db = getFirestore();
-  console.log("✅ Firebase Admin SDK initialized successfully.");
+  console.log("✅ Firebase Admin SDK initialized successfully via Service Account.");
 } catch (error: any) {
-  // If initialization fails, log a critical error and stop the process.
-  // This is better than a silent failure or hanging.
-  console.error("🔥 CRITICAL: Firebase Admin SDK initialization failed. This is a fatal error.");
-  console.error("🔥 Ensure your environment is authenticated correctly (e.g., via `gcloud auth`). Error details:", error.message);
-  // Re-throwing the error ensures the server process will crash instead of hang, providing a clear failure signal.
+  console.error("🔥 CRITICAL: Firebase Admin SDK initialization failed. The FIREBASE_SERVICE_ACCOUNT might be malformed or have incorrect permissions.");
+  console.error("🔥 Error details:", error.message);
   throw new Error(`Firebase initialization failed: ${error.message}`);
 }
+
 
 // Export the initialized db instance for use in server actions and data-fetching functions.
 export { db };
 
 
 // --- Data Fetching Functions ---
-// These functions now assume `db` is successfully initialized. If not, the server would have already crashed.
 
 // Player data functions
 export async function getPlayers(): Promise<Player[]> {

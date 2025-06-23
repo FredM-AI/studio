@@ -1,3 +1,4 @@
+
 # Settings to manage and configure a Firebase App Hosting backend.
 # https://firebase.google.com/docs/app-hosting/configure
 
@@ -5,3 +6,8 @@ runConfig:
   # Increase this value if you'd like to automatically spin up
   # more instances in response to increased traffic.
   maxInstances: 2
+  # Make the service account secret available to the app.
+  # Create a secret in Google Secret Manager named "FIREBASE_SERVICE_ACCOUNT"
+  # and paste the entire content of your service account JSON key as the value.
+  secrets:
+    - FIREBASE_SERVICE_ACCOUNT
