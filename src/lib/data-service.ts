@@ -3,6 +3,10 @@ import { initializeApp, getApps, cert, type App } from 'firebase-admin/app';
 import { getFirestore, collection, getDocs, doc, getDoc, setDoc, type Firestore } from 'firebase-admin/firestore';
 import type { Player, Event, Season, AppSettings } from './definitions';
 
+// For JSON fallback
+import fs from 'fs/promises';
+import path from 'path';
+
 // Constants for collection names
 const PLAYERS_COLLECTION = 'players';
 const EVENTS_COLLECTION = 'events';
@@ -12,17 +16,17 @@ const GLOBAL_SETTINGS_DOC_ID = 'global';
 
 let app: App;
 let db: Firestore;
+let dbInitialized = false; // Flag to check if DB is initialized
 
 // --- Initialize Firebase Admin SDK ---
 // This uses a service account for server-side authentication.
-// It's more secure and appropriate for backend operations than API keys.
-
 try {
   const serviceAccountString = process.env.FIREBASE_SERVICE_ACCOUNT;
   if (!serviceAccountString) {
-    throw new Error("The FIREBASE_SERVICE_ACCOUNT environment variable is not set. This is required for server-side authentication with Firestore. On Vercel or Firebase App Hosting, this must be set in the project settings, not in a file.");
+    throw new Error("The FIREBASE_SERVICE_ACCOUNT environment variable is not set.");
   }
 
+  // This will throw an error if the service account is not valid JSON
   const serviceAccount = JSON.parse(serviceAccountString);
 
   if (getApps().length === 0) {
@@ -33,35 +37,61 @@ try {
     app = getApps()[0];
   }
   db = getFirestore(app);
+  dbInitialized = true;
+  console.log("✅ Firebase Admin SDK initialized successfully.");
 
 } catch (error: any) {
-  console.error("🔴 CRITICAL: Firebase Admin SDK initialization failed.");
+  console.warn("⚠️ Firebase Admin SDK initialization failed. The app will use local JSON files as a fallback. This is normal for local development without a service account file, but if you are in a deployed environment, this indicates a problem.");
   if (error.message.includes("JSON.parse")) {
-    console.error("➡️ The FIREBASE_SERVICE_ACCOUNT environment variable does not seem to be valid JSON.");
+    console.error("➡️ Critical Error: The FIREBASE_SERVICE_ACCOUNT environment variable is not valid JSON. Please check its value in your hosting provider's settings.");
   } else {
-    console.error("➡️", error.message);
+    console.error("➡️ To fix this, ensure the FIREBASE_SERVICE_ACCOUNT environment variable is correctly set in your hosting provider (e.g., Vercel, Firebase App Hosting) with the full content of your service account JSON file. The error was:", error.message);
   }
-  // db remains undefined, subsequent calls will throw an error.
+  // db remains undefined, and dbInitialized remains false
 }
 
 
-// Export db for use in server actions
+// Export db for use in server actions, but it might be undefined
 export { db };
 
-function checkDb() {
-    if (!db) {
-        // This is the user-facing error. It will be shown on the Next.js error page.
-        throw new Error("Database connection failed. The 'FIREBASE_SERVICE_ACCOUNT' environment variable is likely missing or misconfigured. Please check your hosting provider's settings and review the server logs for detailed initialization errors.");
+// Helper function to read local JSON data for arrays
+async function readJsonArrayFallback<T>(fileName: string): Promise<T[]> {
+    console.log(`↪️ Using local fallback for ${fileName}`);
+    const filePath = path.join(process.cwd(), 'src', 'data', fileName);
+    try {
+        const fileContent = await fs.readFile(filePath, 'utf-8');
+        return JSON.parse(fileContent);
+    } catch (e: any) {
+        console.error(`❌ Failed to read or parse fallback file ${fileName}:`, e.message);
+        return [];
     }
 }
 
+// Helper function to read local JSON data for a single object
+async function readJsonObjectFallback<T>(fileName: string, defaults: T): Promise<T> {
+    console.log(`↪️ Using local fallback for ${fileName}`);
+    const filePath = path.join(process.cwd(), 'src', 'data', fileName);
+    try {
+        const fileContent = await fs.readFile(filePath, 'utf-8');
+        return JSON.parse(fileContent);
+    } catch (e: any) {
+        console.error(`❌ Failed to read or parse fallback file ${fileName}:`, e.message);
+        return defaults;
+    }
+}
 
 // Player data functions
 export async function getPlayers(): Promise<Player[]> {
-  checkDb();
+  if (!dbInitialized) {
+    return readJsonArrayFallback<Player>('players.json');
+  }
   try {
     const playersCol = collection(db, PLAYERS_COLLECTION);
     const playerSnapshot = await getDocs(playersCol);
+    if (playerSnapshot.empty) {
+        console.log("Firestore 'players' collection is empty. Falling back to local data.");
+        return readJsonArrayFallback<Player>('players.json');
+    }
     const playerList = playerSnapshot.docs.map(doc => {
       const data = doc.data();
       return {
@@ -81,17 +111,24 @@ export async function getPlayers(): Promise<Player[]> {
     });
     return playerList;
   } catch (error) {
-    console.error("Error fetching players:", error);
-    throw new Error("Failed to fetch players from Firestore.");
+    console.error("Error fetching players from Firestore:", error);
+    console.log("↪️ Falling back to local players.json due to Firestore fetch error.");
+    return readJsonArrayFallback<Player>('players.json');
   }
 }
 
 // Event data functions
 export async function getEvents(): Promise<Event[]> {
-  checkDb();
+  if (!dbInitialized) {
+    return readJsonArrayFallback<Event>('events.json');
+  }
   try {
     const eventsCol = collection(db, EVENTS_COLLECTION);
     const eventSnapshot = await getDocs(eventsCol);
+     if (eventSnapshot.empty) {
+        console.log("Firestore 'events' collection is empty. Falling back to local data.");
+        return readJsonArrayFallback<Event>('events.json');
+    }
     const eventList = eventSnapshot.docs.map(doc => {
       const data = doc.data();
       return {
@@ -115,17 +152,24 @@ export async function getEvents(): Promise<Event[]> {
     });
     return eventList;
   } catch (error) {
-    console.error("Error fetching events:", error);
-    throw new Error("Failed to fetch events from Firestore.");
+    console.error("Error fetching events from Firestore:", error);
+    console.log("↪️ Falling back to local events.json due to Firestore fetch error.");
+    return readJsonArrayFallback<Event>('events.json');
   }
 }
 
 // Season data functions
 export async function getSeasons(): Promise<Season[]> {
-  checkDb();
+  if (!dbInitialized) {
+    return readJsonArrayFallback<Season>('seasons.json');
+  }
   try {
     const seasonsCol = collection(db, SEASONS_COLLECTION);
     const seasonSnapshot = await getDocs(seasonsCol);
+     if (seasonSnapshot.empty) {
+        console.log("Firestore 'seasons' collection is empty. Falling back to local data.");
+        return readJsonArrayFallback<Season>('seasons.json');
+    }
     const seasonList = seasonSnapshot.docs.map(doc => {
       const data = doc.data();
       return {
@@ -141,33 +185,40 @@ export async function getSeasons(): Promise<Season[]> {
     });
     return seasonList;
   } catch (error) {
-    console.error("Error fetching seasons:", error);
-    throw new Error("Failed to fetch seasons from Firestore.");
+    console.error("Error fetching seasons from Firestore:", error);
+    console.log("↪️ Falling back to local seasons.json due to Firestore fetch error.");
+    return readJsonArrayFallback<Season>('seasons.json');
   }
 }
 
 // Settings data functions
 export async function getSettings(): Promise<AppSettings> {
   const defaultSettings: AppSettings = { theme: 'light', defaultBuyIn: 20, defaultMaxPlayers: 90 };
-  checkDb();
+  if (!dbInitialized) {
+      return readJsonObjectFallback<AppSettings>('settings.json', defaultSettings);
+  }
   try {
     const settingsDocRef = doc(db, SETTINGS_COLLECTION, GLOBAL_SETTINGS_DOC_ID);
     const settingsSnap = await getDoc(settingsDocRef);
     if (settingsSnap.exists()) {
       return settingsSnap.data() as AppSettings;
     } else {
+      console.log("No global settings found in Firestore. Using and saving defaults.");
       await setDoc(settingsDocRef, defaultSettings);
       return defaultSettings;
     }
   } catch (error) {
-    console.error("Error fetching settings:", error);
-    // It's safer to return defaults for settings than to crash the app
-    return defaultSettings;
+    console.error("Error fetching settings from Firestore:", error);
+    console.log("↪️ Falling back to local settings.json due to Firestore fetch error.");
+    return readJsonObjectFallback<AppSettings>('settings.json', defaultSettings);
   }
 }
 
 export async function saveSettings(settings: AppSettings): Promise<void> {
-  checkDb();
+  if (!dbInitialized) {
+      console.warn("⚠️ Firestore not initialized. Settings cannot be saved.");
+      return;
+  }
   try {
     const settingsDocRef = doc(db, SETTINGS_COLLECTION, GLOBAL_SETTINGS_DOC_ID);
     await setDoc(settingsDocRef, settings);
