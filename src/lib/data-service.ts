@@ -1,13 +1,13 @@
 
 'use server';
 
-import * as admin from 'firebase-admin/app';
+import admin from 'firebase-admin';
 import { getFirestore, type Firestore } from 'firebase-admin/firestore';
 import type { Player, Event, Season, AppSettings } from './definitions';
 
 // Constants for collection names
 const PLAYERS_COLLECTION = 'players';
-const EVENTS_COLLECTION = 'events';
+const EVENTS_COLlection = 'events';
 const SEASONS_COLLECTION = 'seasons';
 const SETTINGS_COLLECTION = 'settings';
 const GLOBAL_SETTINGS_DOC_ID = 'global';
@@ -24,7 +24,8 @@ if (!serviceAccountEnv) {
   console.error("This is required for server-side communication with Firestore.");
   console.error("To fix this:");
   console.error("1. Get your service account JSON file from the Firebase Console.");
-  console.error("2. Set the entire content of that JSON file as the FIREBASE_SERVICE_ACCOUNT environment variable in your hosting provider.");
+  console.error("2. Encode its content to Base64 (e.g., using an online tool).");
+  console.error("3. Set the resulting Base64 string as the FIREBASE_SERVICE_ACCOUNT environment variable in your hosting provider.");
   
   // Throw an error to prevent the server from starting improperly.
   throw new Error("Server configuration error: FIREBASE_SERVICE_ACCOUNT is not set.");
@@ -33,7 +34,7 @@ if (!serviceAccountEnv) {
 
 try {
   // We only initialize the app if it hasn't been initialized yet.
-  if (admin.getApps().length === 0) {
+  if (admin.apps.length === 0) {
     let serviceAccount;
     try {
       // First, try to parse it as a raw JSON string.
@@ -41,9 +42,15 @@ try {
     } catch (e) {
       // If that fails, assume it's a Base64 encoded string and decode it.
       console.log("Could not parse FIREBASE_SERVICE_ACCOUNT as raw JSON, attempting to decode from Base64.");
-      const decodedString = Buffer.from(serviceAccountEnv, 'base64').toString('utf-8');
-      serviceAccount = JSON.parse(decodedString);
-      console.log("Successfully decoded and parsed service account from Base64.");
+      try {
+        const decodedString = Buffer.from(serviceAccountEnv, 'base64').toString('utf-8');
+        serviceAccount = JSON.parse(decodedString);
+        console.log("Successfully decoded and parsed service account from Base64.");
+      } catch (decodeError: any) {
+         console.error("🔥 CRITICAL: Failed to decode or parse the Base64-encoded FIREBASE_SERVICE_ACCOUNT.");
+         console.error("🔥 Decode Error details:", decodeError.message);
+         throw new Error(`Firebase initialization failed: ${decodeError.message}`);
+      }
     }
     
     admin.initializeApp({
@@ -95,7 +102,7 @@ export async function getPlayers(): Promise<Player[]> {
 
 // Event data functions
 export async function getEvents(): Promise<Event[]> {
-  const eventsCol = db.collection(EVENTS_COLLECTION);
+  const eventsCol = db.collection(EVENTS_COLlection);
   const eventSnapshot = await eventsCol.get();
   if (eventSnapshot.empty) {
       console.log("Firestore 'events' collection is empty.");
