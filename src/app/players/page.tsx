@@ -73,7 +73,6 @@ export default async function PlayersPage() {
                   <TableHead>Name</TableHead>
                   <TableHead>Full Name (for ref)</TableHead>
                   <TableHead>Email</TableHead>
-                  <TableHead>Games Played</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
@@ -84,7 +83,6 @@ export default async function PlayersPage() {
                     <TableCell className="font-medium">{getPlayerDisplayName(player)}</TableCell>
                     <TableCell className="text-xs text-muted-foreground">{player.firstName} {player.lastName}</TableCell>
                     <TableCell>{player.email}</TableCell>
-                    <TableCell>{player.stats.gamesPlayed}</TableCell>
                     <TableCell>
                        <div className="flex items-center gap-2">
                         <span className={`px-2 py-1 text-xs rounded-full ${
