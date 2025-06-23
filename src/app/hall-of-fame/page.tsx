@@ -147,8 +147,8 @@ export default async function HallOfFamePage() {
                     />
                      <StatCard 
                         icon={<TrendingDown className="h-10 w-10 text-red-500" />}
-                        title="Le Philanthrope"
-                        description="Le joueur avec la plus grosse perte nette."
+                        title="The Philanthropist"
+                        description="The player with the biggest net loss."
                         stat={stats.lowestNet}
                         formatValue={(v) => `€${v.toLocaleString()}`}
                     />
