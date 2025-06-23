@@ -5,7 +5,7 @@ import type { LeaderboardEntry } from '@/lib/stats-service';
 import type { Event as EventType } from '@/lib/definitions';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import Link from 'next/link';
-import { Crown, TrendingUp, TrendingDown, Minus, ShieldCheck, ShieldX, BarChart2, CalendarDays } from 'lucide-react';
+import { Crown, TrendingUp, TrendingDown, Minus, ShieldCheck, BarChart2, CalendarDays } from 'lucide-react';
 import { format } from 'date-fns';
 import { Badge } from "@/components/ui/badge";
 
@@ -61,7 +61,6 @@ export default function SeasonLeaderboardTable({ leaderboardData, seasonEvents }
                   {rank === 1 && <Crown className="inline-block h-5 w-5 text-yellow-400 mr-1" />}
                   {rank === 2 && <ShieldCheck className="inline-block h-5 w-5 text-gray-400 mr-1" />}
                   {rank === 3 && <BarChart2 className="inline-block h-5 w-5 text-orange-400 mr-1" />}
-                  {rank > 3 && entry.totalFinalResult <= 0 && <ShieldX className="inline-block h-5 w-5 text-destructive mr-1 opacity-50"/>}
                   {rank}
                 </TableCell>
                 <TableCell className="px-4 py-2.5 sticky left-[60px] bg-card z-10">
