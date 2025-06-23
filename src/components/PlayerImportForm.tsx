@@ -2,7 +2,7 @@
 'use client';
 
 import * as React from 'react';
-import { useFormState } from 'react-dom';
+import { useActionState, useTransition } from 'react';
 import { importPlayersFromJson, type PlayerImportFormState } from '@/app/players/actions';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,10 +12,10 @@ import { UploadCloud, AlertCircle, CheckCircle } from 'lucide-react';
 
 export default function PlayerImportForm() {
   const initialState: PlayerImportFormState = { message: null, errors: {}, successCount: 0, skippedCount: 0 };
-  const [state, dispatch] = useFormState(importPlayersFromJson, initialState);
+  const [state, dispatch] = useActionState(importPlayersFromJson, initialState);
   const [fileContent, setFileContent] = React.useState<string | null>(null);
   const [fileName, setFileName] = React.useState<string>('');
-  const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const [isPending, startTransition] = useTransition();
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -27,10 +27,8 @@ export default function PlayerImportForm() {
         setFileContent(text);
       };
       reader.onerror = () => {
-        // Reset state and show an error for file reading
         setFileContent(null);
         setFileName('');
-        // This error won't go through `useActionState`, so handle it directly or set a local error state
         console.error("Error reading file."); 
       };
       reader.readAsText(file);
@@ -40,22 +38,16 @@ export default function PlayerImportForm() {
     }
   };
 
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!fileContent) {
-      // Handle case where no file is selected or content is null
-      // Potentially set a local error message here
       return;
     }
-    setIsSubmitting(true);
     const formData = new FormData();
     formData.append('jsonContent', fileContent);
-    await dispatch(formData); // `dispatch` is already async-aware from `useActionState`
-    setIsSubmitting(false);
-    // Optionally reset file input after submission attempt
-    // setFileContent(null);
-    // setFileName('');
-    // if (event.target instanceof HTMLFormElement) event.target.reset();
+    startTransition(() => {
+      dispatch(formData);
+    });
   };
 
   return (
@@ -106,8 +98,8 @@ export default function PlayerImportForm() {
           )}
         </CardContent>
         <CardFooter>
-          <Button type="submit" disabled={!fileContent || isSubmitting} className="w-full">
-            {isSubmitting ? 'Importing...' : 'Import Players'}
+          <Button type="submit" disabled={!fileContent || isPending} className="w-full">
+            {isPending ? 'Importing...' : 'Import Players'}
           </Button>
         </CardFooter>
       </form>
