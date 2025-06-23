@@ -3,12 +3,6 @@ import { initializeApp, getApps, type FirebaseApp } from 'firebase/app';
 import { getFirestore, collection, getDocs, doc, getDoc, setDoc, type Firestore } from 'firebase/firestore';
 import type { Player, Event, Season, AppSettings } from './definitions';
 
-// Import local JSON data as a fallback
-import playersData from '@/data/players.json';
-import eventsData from '@/data/events.json';
-import seasonsData from '@/data/seasons.json';
-import settingsData from '@/data/settings.json';
-
 // Constants for collection names
 const PLAYERS_COLLECTION = 'players';
 const EVENTS_COLLECTION = 'events';
@@ -83,9 +77,8 @@ export { db };
 // Player data functions
 export async function getPlayers(): Promise<Player[]> {
   if (!db) {
-    console.warn("⚠️ Firestore not initialized. Falling back to local JSON data for players. Please check your Firebase environment variables on your hosting provider.");
-    // @ts-ignore
-    return playersData as Player[];
+    console.error("⚠️ Firestore not initialized. Players cannot be fetched. Please check your Firebase environment variables on your hosting provider.");
+    return [];
   }
   try {
     const playersCol = collection(db, PLAYERS_COLLECTION);
@@ -117,9 +110,8 @@ export async function getPlayers(): Promise<Player[]> {
 // Event data functions
 export async function getEvents(): Promise<Event[]> {
   if (!db) {
-    console.warn("⚠️ Firestore not initialized. Falling back to local JSON data for events. Please check your Firebase environment variables on your hosting provider.");
-    // @ts-ignore
-    return eventsData as Event[];
+    console.error("⚠️ Firestore not initialized. Events cannot be fetched. Please check your Firebase environment variables on your hosting provider.");
+    return [];
   }
   try {
     const eventsCol = collection(db, EVENTS_COLLECTION);
@@ -155,9 +147,8 @@ export async function getEvents(): Promise<Event[]> {
 // Season data functions
 export async function getSeasons(): Promise<Season[]> {
   if (!db) {
-    console.warn("⚠️ Firestore not initialized. Falling back to local JSON data for seasons. Please check your Firebase environment variables on your hosting provider.");
-    // @ts-ignore
-    return seasonsData as Season[];
+     console.error("⚠️ Firestore not initialized. Seasons cannot be fetched. Please check your Firebase environment variables on your hosting provider.");
+    return [];
   }
   try {
     const seasonsCol = collection(db, SEASONS_COLLECTION);
@@ -186,8 +177,8 @@ export async function getSeasons(): Promise<Season[]> {
 export async function getSettings(): Promise<AppSettings> {
   const defaultSettings: AppSettings = { theme: 'light', defaultBuyIn: 20, defaultMaxPlayers: 90 };
   if (!db) {
-    console.warn("⚠️ Firestore not initialized. Falling back to local JSON data for settings. Please check your Firebase environment variables on your hosting provider.");
-    return settingsData as AppSettings;
+    console.error("⚠️ Firestore not initialized. Settings cannot be fetched. Returning defaults. Please check your Firebase environment variables on your hosting provider.");
+    return defaultSettings;
   }
   try {
     const settingsDocRef = doc(db, SETTINGS_COLLECTION, GLOBAL_SETTINGS_DOC_ID);
