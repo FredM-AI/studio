@@ -5,7 +5,7 @@ import type { NextRequest } from 'next/server';
 const AUTH_COOKIE_NAME = 'app_session_active';
 const LOGIN_PATH = '/login';
 // Paths that guests can view. Actions (create/edit/delete) will be restricted at UI level.
-const PUBLIC_VIEW_PATHS_PREFIXES = ['/dashboard', '/assistant', '/events', '/players', '/seasons']; 
+const PUBLIC_VIEW_PATHS_PREFIXES = ['/dashboard', '/assistant', '/events', '/players', '/seasons', '/hall-of-fame']; 
 
 export function middleware(request: NextRequest) {
   const isAuthenticated = request.cookies.get(AUTH_COOKIE_NAME)?.value === 'true';
