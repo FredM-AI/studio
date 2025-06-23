@@ -5,7 +5,7 @@ import type { HallOfFameStats, HofPlayerStat, HofEventStat, Player } from '@/lib
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import Link from 'next/link';
-import { Crown, TrendingUp, Gem, Shield, Repeat, Award, Trophy, Banknote, TrendingDown, Crosshair } from 'lucide-react';
+import { Crown, TrendingUp, Gem, Shield, Repeat, Award, Trophy, Banknote, TrendingDown, Crosshair, Anchor } from 'lucide-react';
 import { format } from 'date-fns';
 
 const getInitials = (firstName: string, lastName: string) => {
@@ -153,6 +153,13 @@ export default async function HallOfFamePage() {
                         formatValue={(v) => `€${v.toLocaleString()}`}
                     />
                     <StatCard 
+                        icon={<Shield className="h-10 w-10 text-blue-500" />}
+                        title="Most Podiums"
+                        description="Most top 3 finishes."
+                        stat={stats.mostPodiums}
+                        unit="podiums"
+                    />
+                    <StatCard 
                         icon={<TrendingDown className="h-10 w-10 text-red-500" />}
                         title="The Philanthropist"
                         description="The player with the biggest net loss."
@@ -167,13 +174,6 @@ export default async function HallOfFamePage() {
                         formatValue={(v) => `€${v.toLocaleString()}`}
                     />
                     <StatCard 
-                        icon={<Shield className="h-10 w-10 text-blue-500" />}
-                        title="Most Podiums"
-                        description="Most top 3 finishes."
-                        stat={stats.mostPodiums}
-                        unit="podiums"
-                    />
-                    <StatCard 
                         icon={<Repeat className="h-10 w-10 text-red-500" />}
                         title="The Investor"
                         description="Player who has spent the most on buy-ins & rebuys."
@@ -186,6 +186,13 @@ export default async function HallOfFamePage() {
                         description="The player with the most games played."
                         stat={stats.mostGamesPlayed}
                         unit="games"
+                    />
+                     <StatCard 
+                        icon={<Anchor className="h-10 w-10 text-gray-500" />}
+                        title="Mr. Consistent"
+                        description="Best average position (min. 3 games)."
+                        stat={stats.mostConsistent}
+                        formatValue={(v) => v.toFixed(2)}
                     />
                 </div>
             </div>

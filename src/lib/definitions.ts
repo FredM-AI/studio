@@ -183,5 +183,6 @@ export interface HallOfFameStats {
   mostSpent: HofPlayerStat | null;
   biggestSingleWin: HofEventStat | null;
   mostBountiesWon: HofPlayerStat | null;
+  mostConsistent: HofPlayerStat | null;
   totalPrizePools: number;
 }

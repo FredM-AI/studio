@@ -264,7 +264,7 @@ export async function calculateHallOfFameStats(
   const totalPrizePools = completedEvents.reduce((sum, event) => sum + (event.prizePool.total || 0), 0);
 
   if (nonGuestPlayers.length === 0 || completedEvents.length === 0) {
-    return { mostWins: null, mostPodiums: null, highestNet: null, lowestNet: null, mostGamesPlayed: null, mostSpent: null, biggestSingleWin: null, mostBountiesWon: null, totalPrizePools };
+    return { mostWins: null, mostPodiums: null, highestNet: null, lowestNet: null, mostGamesPlayed: null, mostSpent: null, biggestSingleWin: null, mostBountiesWon: null, mostConsistent: null, totalPrizePools };
   }
   
   const playerStatsMap = new Map<string, {
@@ -275,10 +275,11 @@ export async function calculateHallOfFameStats(
     totalSpent: number;
     biggestWin: { event: Event, value: number } | null;
     totalBountiesWon: number;
+    positions: number[];
   }>();
 
   for (const player of nonGuestPlayers) {
-    playerStatsMap.set(player.id, { wins: 0, podiums: 0, gamesPlayed: 0, totalNet: 0, totalSpent: 0, biggestWin: null, totalBountiesWon: 0 });
+    playerStatsMap.set(player.id, { wins: 0, podiums: 0, gamesPlayed: 0, totalNet: 0, totalSpent: 0, biggestWin: null, totalBountiesWon: 0, positions: [] });
   }
 
   for (const event of completedEvents) {
@@ -320,6 +321,7 @@ export async function calculateHallOfFameStats(
       stats.totalNet += netGain;
       
       if(result) {
+          stats.positions.push(result.position);
           if (result.position === 1) stats.wins += 1;
           if (result.position <= 3) stats.podiums += 1;
       }
@@ -336,6 +338,7 @@ export async function calculateHallOfFameStats(
   let mostSpent: HofPlayerStat | null = null;
   let biggestSingleWin: HofEventStat | null = null;
   let mostBountiesWon: HofPlayerStat | null = null;
+  let mostConsistent: HofPlayerStat | null = null;
 
   for (const [playerId, stats] of playerStatsMap.entries()) {
     const player = nonGuestPlayers.find(p => p.id === playerId)!;
@@ -364,6 +367,13 @@ export async function calculateHallOfFameStats(
     if (!mostBountiesWon || stats.totalBountiesWon > mostBountiesWon.value) {
       mostBountiesWon = { player, value: stats.totalBountiesWon };
     }
+    const MIN_GAMES_FOR_CONSISTENCY = 3;
+    if (stats.positions.length > 0 && stats.gamesPlayed >= MIN_GAMES_FOR_CONSISTENCY) {
+      const averagePosition = stats.positions.reduce((a, b) => a + b, 0) / stats.positions.length;
+      if (!mostConsistent || averagePosition < mostConsistent.value) {
+        mostConsistent = { player, value: averagePosition };
+      }
+    }
   }
 
   return {
@@ -375,6 +385,7 @@ export async function calculateHallOfFameStats(
     mostSpent: mostSpent && mostSpent.value > 0 ? mostSpent : null,
     biggestSingleWin: biggestSingleWin && biggestSingleWin.value > 0 ? biggestSingleWin : null,
     mostBountiesWon: mostBountiesWon && mostBountiesWon.value > 0 ? mostBountiesWon : null,
+    mostConsistent: mostConsistent,
     totalPrizePools,
   };
 }
