@@ -1,6 +1,6 @@
 
-import { initializeApp, getApps, type FirebaseApp } from 'firebase/app';
-import { getFirestore, collection, getDocs, doc, getDoc, setDoc, type Firestore } from 'firebase/firestore';
+import { initializeApp, getApps, cert, type App } from 'firebase-admin/app';
+import { getFirestore, collection, getDocs, doc, getDoc, setDoc, type Firestore } from 'firebase-admin/firestore';
 import type { Player, Event, Season, AppSettings } from './definitions';
 
 // Constants for collection names
@@ -10,64 +10,41 @@ const SEASONS_COLLECTION = 'seasons';
 const SETTINGS_COLLECTION = 'settings';
 const GLOBAL_SETTINGS_DOC_ID = 'global';
 
-// Your web app's Firebase configuration
-const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
-};
-
-// --- START: Added for Vercel deployment debugging ---
-// Helper to check if the config is valid and log errors if not.
-const checkFirebaseConfig = () => {
-  const missingEnvVars: string[] = [];
-  if (!firebaseConfig.apiKey) missingEnvVars.push('NEXT_PUBLIC_FIREBASE_API_KEY');
-  if (!firebaseConfig.authDomain) missingEnvVars.push('NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN');
-  if (!firebaseConfig.projectId) missingEnvVars.push('NEXT_PUBLIC_FIREBASE_PROJECT_ID');
-  if (!firebaseConfig.storageBucket) missingEnvVars.push('NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET');
-  if (!firebaseConfig.messagingSenderId) missingEnvVars.push('NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID');
-  if (!firebaseConfig.appId) missingEnvVars.push('NEXT_PUBLIC_FIREBASE_APP_ID');
-
-  if (missingEnvVars.length > 0) {
-    console.error("🔴 CRITICAL: Firebase config is missing variables.");
-    console.error(`Missing: ${missingEnvVars.join(', ')}`);
-    console.error("➡️ ACTION: Go to your Vercel project settings > Environment Variables and add the missing NEXT_PUBLIC_FIREBASE_* variables. Committing a .env file to GitHub will not work for production deployments.");
-    console.log("Current config (values may be empty):", firebaseConfig);
-    return false;
-  }
-  console.log("✅ Firebase environment variables seem to be correctly set.");
-  return true;
-};
-
-const isConfigValid = checkFirebaseConfig();
-// --- END: Added for Vercel deployment debugging ---
-
-// Initialize Firebase
-let app: FirebaseApp;
+let app: App;
 let db: Firestore;
 
-// Only initialize if the config is valid.
-if (isConfigValid) {
-  if (!getApps().length) {
-    try {
-      app = initializeApp(firebaseConfig);
-      db = getFirestore(app);
-    } catch (e) {
-      console.error("🔴 Firebase initialization failed:", e);
-      // @ts-ignore - db will be undefined, causing downstream functions to fail gracefully (in their try/catch blocks).
-      db = undefined;
-    }
+// --- Initialize Firebase Admin SDK ---
+// This uses a service account for server-side authentication.
+// It's more secure and appropriate for backend operations than API keys.
+
+try {
+  const serviceAccountString = process.env.FIREBASE_SERVICE_ACCOUNT;
+  if (!serviceAccountString) {
+    throw new Error("The FIREBASE_SERVICE_ACCOUNT environment variable is not set. This is required for server-side authentication with Firestore. Go to your hosting provider (e.g., Vercel, App Hosting) and set this variable with the JSON content of your service account key.");
+  }
+
+  const serviceAccount = JSON.parse(serviceAccountString);
+
+  if (getApps().length === 0) {
+    app = initializeApp({
+      credential: cert(serviceAccount),
+    });
+    console.log("✅ Firebase Admin SDK initialized successfully.");
   } else {
     app = getApps()[0];
-    db = getFirestore(app);
   }
-} else {
-   console.error("Firebase initialization skipped due to invalid configuration.");
-   // @ts-ignore - db will be undefined.
-   db = undefined;
+  db = getFirestore(app);
+
+} catch (error: any) {
+  console.error("🔴 CRITICAL: Firebase Admin SDK initialization failed.");
+  if (error.message.includes("JSON.parse")) {
+    console.error("➡️ The FIREBASE_SERVICE_ACCOUNT environment variable does not seem to be valid JSON.");
+  } else {
+    console.error("➡️", error.message);
+  }
+  // If initialization fails, db will be undefined, and subsequent calls will fail.
+  // @ts-ignore
+  db = undefined;
 }
 
 
@@ -77,7 +54,7 @@ export { db };
 // Player data functions
 export async function getPlayers(): Promise<Player[]> {
   if (!db) {
-    console.error("⚠️ Firestore not initialized. Players cannot be fetched. Please check your Firebase environment variables on your hosting provider.");
+    console.error("⚠️ Firestore not initialized. Players cannot be fetched. Check server logs for initialization errors.");
     return [];
   }
   try {
@@ -110,7 +87,7 @@ export async function getPlayers(): Promise<Player[]> {
 // Event data functions
 export async function getEvents(): Promise<Event[]> {
   if (!db) {
-    console.error("⚠️ Firestore not initialized. Events cannot be fetched. Please check your Firebase environment variables on your hosting provider.");
+    console.error("⚠️ Firestore not initialized. Events cannot be fetched. Check server logs for initialization errors.");
     return [];
   }
   try {
@@ -147,7 +124,7 @@ export async function getEvents(): Promise<Event[]> {
 // Season data functions
 export async function getSeasons(): Promise<Season[]> {
   if (!db) {
-     console.error("⚠️ Firestore not initialized. Seasons cannot be fetched. Please check your Firebase environment variables on your hosting provider.");
+     console.error("⚠️ Firestore not initialized. Seasons cannot be fetched. Check server logs for initialization errors.");
     return [];
   }
   try {
@@ -177,7 +154,7 @@ export async function getSeasons(): Promise<Season[]> {
 export async function getSettings(): Promise<AppSettings> {
   const defaultSettings: AppSettings = { theme: 'light', defaultBuyIn: 20, defaultMaxPlayers: 90 };
   if (!db) {
-    console.error("⚠️ Firestore not initialized. Settings cannot be fetched. Returning defaults. Please check your Firebase environment variables on your hosting provider.");
+    console.error("⚠️ Firestore not initialized. Settings cannot be fetched. Returning defaults. Check server logs for initialization errors.");
     return defaultSettings;
   }
   try {
@@ -197,7 +174,7 @@ export async function getSettings(): Promise<AppSettings> {
 
 export async function saveSettings(settings: AppSettings): Promise<void> {
   if (!db) {
-    console.warn("⚠️ Firestore not initialized. Settings cannot be saved. Please check your Vercel environment variables.");
+    console.warn("⚠️ Firestore not initialized. Settings cannot be saved. Check server logs for initialization errors.");
     return;
   }
   try {
