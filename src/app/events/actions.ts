@@ -3,7 +3,7 @@
 
 import { z } from 'zod';
 import { db } from '@/lib/data-service';
-import { doc, setDoc, getDoc, deleteDoc } from 'firebase/firestore';
+import { doc, setDoc, getDoc, deleteDoc } from 'firebase-admin/firestore';
 import type { Event, EventStatus } from '@/lib/definitions';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';

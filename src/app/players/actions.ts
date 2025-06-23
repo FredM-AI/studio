@@ -3,7 +3,7 @@
 
 import { z } from 'zod';
 import { db } from '@/lib/data-service';
-import { collection, doc, setDoc, deleteDoc, getDocs, query, where, getDoc, writeBatch } from 'firebase/firestore';
+import { collection, doc, setDoc, deleteDoc, getDocs, query, where, getDoc, writeBatch } from 'firebase-admin/firestore';
 import type { Player, PlayerFormState, PlayerStats } from '@/lib/definitions';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';

@@ -3,7 +3,7 @@
 
 import { z } from 'zod';
 import { db } from '@/lib/data-service'; // Import db
-import { collection, doc, setDoc, getDoc, getDocs, writeBatch, query, where } from 'firebase/firestore';
+import { collection, doc, setDoc, getDoc, getDocs, writeBatch, query, where } from 'firebase-admin/firestore';
 import type { SeasonFormState } from '@/lib/definitions'; // Removed Event, Season (as SeasonDocumentData is used internally)
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
