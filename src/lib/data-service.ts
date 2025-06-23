@@ -1,5 +1,7 @@
 
-import { initializeApp, getApps, credential } from 'firebase-admin/app';
+'use server';
+
+import * as admin from 'firebase-admin/app';
 import { getFirestore, type Firestore } from 'firebase-admin/firestore';
 import type { Player, Event, Season, AppSettings } from './definitions';
 
@@ -31,7 +33,7 @@ if (!serviceAccountEnv) {
 
 try {
   // We only initialize the app if it hasn't been initialized yet.
-  if (getApps().length === 0) {
+  if (admin.getApps().length === 0) {
     let serviceAccount;
     try {
       // First, try to parse it as a raw JSON string.
@@ -44,8 +46,8 @@ try {
       console.log("Successfully decoded and parsed service account from Base64.");
     }
     
-    initializeApp({
-      credential: credential.cert(serviceAccount)
+    admin.initializeApp({
+      credential: admin.credential.cert(serviceAccount)
     });
   }
   db = getFirestore();
