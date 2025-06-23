@@ -3,7 +3,7 @@
 
 import type { Event, Player, EventStatus, ServerEventFormState, Season } from '@/lib/definitions'; 
 import * as React from 'react';
-import { useActionState } from 'react';
+import { useFormState } from 'react-dom';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
@@ -70,7 +70,7 @@ const sortPlayersWithGuestsLast = (a: Player, b: Player): number => {
 
 export default function EventForm({ event, allPlayers, allSeasons, action, formTitle, formDescription, submitButtonText, defaultSeasonId }: EventFormProps) {
   const initialState: ServerEventFormState = { message: null, errors: {} };
-  const [state, dispatch] = useActionState(action, initialState);
+  const [state, dispatch] = useFormState(action, initialState);
 
   const [selectedDate, setSelectedDate] = React.useState<Date | undefined>(undefined);
   const [currentStatus, setCurrentStatus] = React.useState<EventStatus>(event?.status || 'draft');
@@ -713,5 +713,7 @@ export default function EventForm({ event, allPlayers, allSeasons, action, formT
     </Card>
   );
 }
+
+    
 
     

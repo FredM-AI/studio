@@ -3,7 +3,7 @@
 
 import type { Season, SeasonFormState, Event } from '@/lib/definitions';
 import * as React from 'react';
-import { useActionState } from 'react';
+import { useFormState } from 'react-dom';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
@@ -25,7 +25,7 @@ interface SeasonFormProps {
 
 export default function SeasonForm({ season, allEvents, action, formTitle, formDescription, submitButtonText }: SeasonFormProps) {
   const initialState: SeasonFormState = { message: null, errors: {} };
-  const [state, dispatch] = useActionState(action, initialState);
+  const [state, dispatch] = useFormState(action, initialState);
 
   const [startDate, setStartDate] = React.useState<Date | undefined>(undefined);
   const [endDate, setEndDate] = React.useState<Date | undefined>(undefined);
@@ -206,3 +206,5 @@ export default function SeasonForm({ season, allEvents, action, formTitle, formD
     </Card>
   );
 }
+
+    

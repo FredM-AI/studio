@@ -2,7 +2,7 @@
 'use client';
 
 import type { Player, PlayerFormState } from '@/lib/definitions';
-import { useActionState } from 'react';
+import { useFormState } from 'react-dom';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
@@ -20,7 +20,7 @@ interface PlayerFormProps {
 
 export default function PlayerForm({ player, action, formTitle, formDescription, submitButtonText }: PlayerFormProps) {
   const initialState: PlayerFormState = { message: null, errors: {} };
-  const [state, dispatch] = useActionState(action, initialState);
+  const [state, dispatch] = useFormState(action, initialState);
 
   return (
     <Card className="max-w-2xl mx-auto">
@@ -163,3 +163,5 @@ export default function PlayerForm({ player, action, formTitle, formDescription,
     </Card>
   );
 }
+
+    
