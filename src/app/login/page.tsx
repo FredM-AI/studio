@@ -2,7 +2,7 @@
 'use client';
 
 import * as React from 'react';
-import { useActionState } from 'react';
+import { useFormState } from 'react-dom';
 import { loginUser } from './actions';
 import type { LoginFormState } from '@/lib/definitions';
 import { Button } from '@/components/ui/button';
@@ -16,7 +16,7 @@ import { Separator } from '@/components/ui/separator';
 
 export default function LoginPage() {
   const initialState: LoginFormState = { message: null, errors: {} };
-  const [state, dispatch] = useActionState(loginUser, initialState);
+  const [state, dispatch] = useFormState(loginUser, initialState);
 
   return (
     <div className="flex min-h-[calc(100vh-8rem)] items-center justify-center bg-gradient-to-br from-muted/30 to-background p-4">

@@ -14,9 +14,9 @@ let db: Firestore;
 
 // --- Initialize Firebase Admin SDK ---
 // This logic requires the service account JSON to be set as an environment variable.
-const serviceAccountJson = process.env.FIREBASE_SERVICE_ACCOUNT;
+const serviceAccountEnv = process.env.FIREBASE_SERVICE_ACCOUNT;
 
-if (!serviceAccountJson) {
+if (!serviceAccountEnv) {
   const errorMessage = "🔥 CRITICAL: FIREBASE_SERVICE_ACCOUNT environment variable is not set.";
   console.error(errorMessage);
   console.error("This is required for server-side communication with Firestore.");
@@ -32,7 +32,18 @@ if (!serviceAccountJson) {
 try {
   // We only initialize the app if it hasn't been initialized yet.
   if (getApps().length === 0) {
-    const serviceAccount = JSON.parse(serviceAccountJson);
+    let serviceAccount;
+    try {
+      // First, try to parse it as a raw JSON string.
+      serviceAccount = JSON.parse(serviceAccountEnv);
+    } catch (e) {
+      // If that fails, assume it's a Base64 encoded string and decode it.
+      console.log("Could not parse FIREBASE_SERVICE_ACCOUNT as raw JSON, attempting to decode from Base64.");
+      const decodedString = Buffer.from(serviceAccountEnv, 'base64').toString('utf-8');
+      serviceAccount = JSON.parse(decodedString);
+      console.log("Successfully decoded and parsed service account from Base64.");
+    }
+    
     initializeApp({
       credential: credential.cert(serviceAccount)
     });
@@ -40,7 +51,7 @@ try {
   db = getFirestore();
   console.log("✅ Firebase Admin SDK initialized successfully via Service Account.");
 } catch (error: any) {
-  console.error("🔥 CRITICAL: Firebase Admin SDK initialization failed. The FIREBASE_SERVICE_ACCOUNT might be a malformed JSON string.");
+  console.error("🔥 CRITICAL: Firebase Admin SDK initialization failed. The FIREBASE_SERVICE_ACCOUNT might be a malformed or invalid.");
   console.error("🔥 Error details:", error.message);
   throw new Error(`Firebase initialization failed: ${error.message}`);
 }

@@ -2,7 +2,7 @@
 'use client';
 
 import * as React from 'react';
-import { useActionState } from 'react';
+import { useFormState } from 'react-dom';
 import { importPlayersFromJson, type PlayerImportFormState } from '@/app/players/actions';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,7 +12,7 @@ import { UploadCloud, AlertCircle, CheckCircle } from 'lucide-react';
 
 export default function PlayerImportForm() {
   const initialState: PlayerImportFormState = { message: null, errors: {}, successCount: 0, skippedCount: 0 };
-  const [state, dispatch] = useActionState(importPlayersFromJson, initialState);
+  const [state, dispatch] = useFormState(importPlayersFromJson, initialState);
   const [fileContent, setFileContent] = React.useState<string | null>(null);
   const [fileName, setFileName] = React.useState<string>('');
   const [isSubmitting, setIsSubmitting] = React.useState(false);
