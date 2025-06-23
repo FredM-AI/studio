@@ -41,7 +41,7 @@ const EventFormSchema = z.object({
   rebuyPrice: z.coerce.number().int().nonnegative({ message: 'Rebuy price must be a non-negative integer.' }).optional(),
   bounties: z.coerce.number().int().nonnegative({ message: 'Bounties must be a non-negative integer.' }).optional(),
   mysteryKo: z.coerce.number().int().nonnegative({ message: 'Mystery KO must be a non-negative integer.' }).optional(),
-  includeBountiesInNet: z.preprocess((val) => val === 'on' || val === true, z.boolean()).default(true),
+  includeBountiesInNet: z.preprocess((val) => val === 'on' || val === true, z.boolean()),
   maxPlayers: z.coerce.number().int().positive({ message: 'Max players must be a positive integer.' }).optional(),
   prizePoolTotal: z.coerce.number().int().nonnegative({ message: 'Prize pool total must be a non-negative integer.' }),
   seasonId: z.string().optional(), // Optional season ID
