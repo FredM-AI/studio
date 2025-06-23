@@ -78,6 +78,7 @@ export async function getEvents(): Promise<Event[]> {
         rebuyPrice: data.rebuyPrice,
         bounties: data.bounties,
         mysteryKo: data.mysteryKo,
+        includeBountiesInNet: data.includeBountiesInNet,
         maxPlayers: data.maxPlayers,
         status: data.status,
         seasonId: data.seasonId,
