@@ -1,9 +1,8 @@
 
 'use server';
 
-import admin from 'firebase-admin';
-import { getFirestore, type Firestore } from 'firebase-admin/firestore';
 import type { Player, Event, Season, AppSettings } from './definitions';
+import { db } from './firebase';
 
 // Constants for collection names
 const PLAYERS_COLLECTION = 'players';
@@ -11,64 +10,6 @@ const EVENTS_COLlection = 'events';
 const SEASONS_COLLECTION = 'seasons';
 const SETTINGS_COLLECTION = 'settings';
 const GLOBAL_SETTINGS_DOC_ID = 'global';
-
-let db: Firestore;
-
-// --- Initialize Firebase Admin SDK ---
-// This logic requires the service account JSON to be set as an environment variable.
-const serviceAccountEnv = process.env.FIREBASE_SERVICE_ACCOUNT;
-
-if (!serviceAccountEnv) {
-  const errorMessage = "🔥 CRITICAL: FIREBASE_SERVICE_ACCOUNT environment variable is not set.";
-  console.error(errorMessage);
-  console.error("This is required for server-side communication with Firestore.");
-  console.error("To fix this:");
-  console.error("1. Get your service account JSON file from the Firebase Console.");
-  console.error("2. Encode its content to Base64 (e.g., using an online tool).");
-  console.error("3. Set the resulting Base64 string as the FIREBASE_SERVICE_ACCOUNT environment variable in your hosting provider.");
-  
-  // Throw an error to prevent the server from starting improperly.
-  throw new Error("Server configuration error: FIREBASE_SERVICE_ACCOUNT is not set.");
-}
-
-
-try {
-  // We only initialize the app if it hasn't been initialized yet.
-  if (admin.apps.length === 0) {
-    let serviceAccount;
-    try {
-      // First, try to parse it as a raw JSON string.
-      serviceAccount = JSON.parse(serviceAccountEnv);
-    } catch (e) {
-      // If that fails, assume it's a Base64 encoded string and decode it.
-      console.log("Could not parse FIREBASE_SERVICE_ACCOUNT as raw JSON, attempting to decode from Base64.");
-      try {
-        const decodedString = Buffer.from(serviceAccountEnv, 'base64').toString('utf-8');
-        serviceAccount = JSON.parse(decodedString);
-        console.log("Successfully decoded and parsed service account from Base64.");
-      } catch (decodeError: any) {
-         console.error("🔥 CRITICAL: Failed to decode or parse the Base64-encoded FIREBASE_SERVICE_ACCOUNT.");
-         console.error("🔥 Decode Error details:", decodeError.message);
-         throw new Error(`Firebase initialization failed: ${decodeError.message}`);
-      }
-    }
-    
-    admin.initializeApp({
-      credential: admin.credential.cert(serviceAccount)
-    });
-  }
-  db = getFirestore();
-  console.log("✅ Firebase Admin SDK initialized successfully via Service Account.");
-} catch (error: any) {
-  console.error("🔥 CRITICAL: Firebase Admin SDK initialization failed. The FIREBASE_SERVICE_ACCOUNT might be a malformed or invalid.");
-  console.error("🔥 Error details:", error.message);
-  throw new Error(`Firebase initialization failed: ${error.message}`);
-}
-
-
-// Export the initialized db instance for use in server actions and data-fetching functions.
-export { db };
-
 
 // --- Data Fetching Functions ---
 
