@@ -3,7 +3,6 @@
 
 import { z } from 'zod';
 import { db } from '@/lib/data-service';
-import { collection, doc, setDoc, deleteDoc, getDocs, query, where, getDoc, writeBatch } from 'firebase-admin/firestore';
 import type { Player, PlayerFormState, PlayerStats } from '@/lib/definitions';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
@@ -46,9 +45,9 @@ export async function createPlayer(prevState: PlayerFormState, formData: FormDat
   const data = validatedFields.data;
 
   try {
-    const playersRef = collection(db, PLAYERS_COLLECTION);
-    const q = query(playersRef, where("email", "==", data.email));
-    const querySnapshot = await getDocs(q);
+    const playersRef = db.collection(PLAYERS_COLLECTION);
+    const q = playersRef.where("email", "==", data.email);
+    const querySnapshot = await q.get();
     if (!querySnapshot.empty) {
       return {
         errors: { email: ['Email already exists.'] },
@@ -88,7 +87,7 @@ export async function createPlayer(prevState: PlayerFormState, formData: FormDat
       newPlayerData.avatar = data.avatar.trim();
     }
 
-    await setDoc(doc(db, PLAYERS_COLLECTION, playerId), newPlayerData);
+    await db.collection(PLAYERS_COLLECTION).doc(playerId).set(newPlayerData);
 
   } catch (error: any) {
     console.error("Firestore Error creating player:", error);
@@ -124,9 +123,9 @@ export async function updatePlayer(prevState: PlayerFormState, formData: FormDat
   }
 
   try {
-    const playersRef = collection(db, PLAYERS_COLLECTION);
-    const q = query(playersRef, where("email", "==", data.email));
-    const querySnapshot = await getDocs(q);
+    const playersRef = db.collection(PLAYERS_COLLECTION);
+    const q = playersRef.where("email", "==", data.email);
+    const querySnapshot = await q.get();
     if (!querySnapshot.empty) {
       let duplicateFound = false;
       querySnapshot.forEach((docSnap) => {
@@ -142,10 +141,10 @@ export async function updatePlayer(prevState: PlayerFormState, formData: FormDat
       }
     }
   
-    const playerRef = doc(db, PLAYERS_COLLECTION, playerId);
-    const playerSnap = await getDoc(playerRef);
+    const playerRef = db.collection(PLAYERS_COLLECTION).doc(playerId);
+    const playerSnap = await playerRef.get();
 
-    if (!playerSnap.exists()) {
+    if (!playerSnap.exists) {
       return { message: 'Player not found in database.' };
     }
     const existingPlayer = playerSnap.data() as Player;
@@ -163,7 +162,7 @@ export async function updatePlayer(prevState: PlayerFormState, formData: FormDat
       updatedAt: new Date().toISOString(),
     };
 
-    await setDoc(playerRef, cleanUndefinedProperties(playerToSave)); 
+    await playerRef.set(cleanUndefinedProperties(playerToSave)); 
 
   } catch (error: any) {
     console.error("Firestore Error updating player:", error);
@@ -188,8 +187,8 @@ export async function deletePlayer(playerId: string): Promise<{ message?: string
     return { message: 'Player ID is required for deletion.', success: false };
   }
   try {
-    const playerRef = doc(db, PLAYERS_COLLECTION, playerId);
-    await deleteDoc(playerRef);
+    const playerRef = db.collection(PLAYERS_COLLECTION).doc(playerId);
+    await playerRef.delete();
 
     revalidatePath('/players');
     return { message: 'Player deleted successfully.', success: true };
@@ -308,22 +307,22 @@ export async function importPlayersFromJson(prevState: PlayerImportFormState, fo
   const playersToImport = validatedFields.data.jsonContent;
   let successCount = 0;
   let skippedCount = 0;
-  const batch = writeBatch(db);
-  const playersRef = collection(db, PLAYERS_COLLECTION);
+  const batch = db.batch();
+  const playersRef = db.collection(PLAYERS_COLLECTION);
 
   try {
     for (const playerJson of playersToImport) {
       // 1. Check if player ID already exists
-      const playerDocRefById = doc(db, PLAYERS_COLLECTION, playerJson.id);
-      const playerSnapById = await getDoc(playerDocRefById);
-      if (playerSnapById.exists()) {
+      const playerDocRefById = db.collection(PLAYERS_COLLECTION).doc(playerJson.id);
+      const playerSnapById = await playerDocRefById.get();
+      if (playerSnapById.exists) {
         skippedCount++;
         continue; // Skip if ID exists
       }
 
       // 2. Check if email already exists
-      const qEmail = query(playersRef, where("email", "==", playerJson.email));
-      const emailQuerySnapshot = await getDocs(qEmail);
+      const qEmail = playersRef.where("email", "==", playerJson.email);
+      const emailQuerySnapshot = await qEmail.get();
       if (!emailQuerySnapshot.empty) {
         skippedCount++;
         continue; // Skip if email exists

@@ -1,6 +1,6 @@
 
-import { initializeApp, getApps, cert, type App } from 'firebase-admin/app';
-import { getFirestore, collection, getDocs, doc, getDoc, setDoc, type Firestore } from 'firebase-admin/firestore';
+import { initializeApp, getApps, type App } from 'firebase-admin/app';
+import { getFirestore, type Firestore } from 'firebase-admin/firestore';
 import type { Player, Event, Season, AppSettings } from './definitions';
 
 // For JSON fallback
@@ -14,7 +14,6 @@ const SEASONS_COLLECTION = 'seasons';
 const SETTINGS_COLLECTION = 'settings';
 const GLOBAL_SETTINGS_DOC_ID = 'global';
 
-let app: App;
 let db: Firestore;
 let dbInitialized = false; // Flag to check if DB is initialized
 
@@ -24,10 +23,9 @@ let dbInitialized = false; // Flag to check if DB is initialized
 // run `gcloud auth application-default login` in your terminal.
 try {
   if (getApps().length === 0) {
-    app = initializeApp();
-  } else {
-    app = getApps()[0];
+    initializeApp();
   }
+  const app: App = getApps()[0];
   db = getFirestore(app);
   dbInitialized = true;
   console.log("✅ Firebase Admin SDK initialized successfully.");
@@ -74,8 +72,8 @@ export async function getPlayers(): Promise<Player[]> {
     return readJsonArrayFallback<Player>('players.json');
   }
   try {
-    const playersCol = collection(db, PLAYERS_COLLECTION);
-    const playerSnapshot = await getDocs(playersCol);
+    const playersCol = db.collection(PLAYERS_COLLECTION);
+    const playerSnapshot = await playersCol.get();
     if (playerSnapshot.empty) {
         console.log("Firestore 'players' collection is empty. Falling back to local data.");
         return readJsonArrayFallback<Player>('players.json');
@@ -111,8 +109,8 @@ export async function getEvents(): Promise<Event[]> {
     return readJsonArrayFallback<Event>('events.json');
   }
   try {
-    const eventsCol = collection(db, EVENTS_COLLECTION);
-    const eventSnapshot = await getDocs(eventsCol);
+    const eventsCol = db.collection(EVENTS_COLLECTION);
+    const eventSnapshot = await eventsCol.get();
      if (eventSnapshot.empty) {
         console.log("Firestore 'events' collection is empty. Falling back to local data.");
         return readJsonArrayFallback<Event>('events.json');
@@ -152,8 +150,8 @@ export async function getSeasons(): Promise<Season[]> {
     return readJsonArrayFallback<Season>('seasons.json');
   }
   try {
-    const seasonsCol = collection(db, SEASONS_COLLECTION);
-    const seasonSnapshot = await getDocs(seasonsCol);
+    const seasonsCol = db.collection(SEASONS_COLLECTION);
+    const seasonSnapshot = await seasonsCol.get();
      if (seasonSnapshot.empty) {
         console.log("Firestore 'seasons' collection is empty. Falling back to local data.");
         return readJsonArrayFallback<Season>('seasons.json');
@@ -186,13 +184,13 @@ export async function getSettings(): Promise<AppSettings> {
       return readJsonObjectFallback<AppSettings>('settings.json', defaultSettings);
   }
   try {
-    const settingsDocRef = doc(db, SETTINGS_COLLECTION, GLOBAL_SETTINGS_DOC_ID);
-    const settingsSnap = await getDoc(settingsDocRef);
-    if (settingsSnap.exists()) {
+    const settingsDocRef = db.collection(SETTINGS_COLLECTION).doc(GLOBAL_SETTINGS_DOC_ID);
+    const settingsSnap = await settingsDocRef.get();
+    if (settingsSnap.exists) {
       return settingsSnap.data() as AppSettings;
     } else {
       console.log("No global settings found in Firestore. Using and saving defaults.");
-      await setDoc(settingsDocRef, defaultSettings);
+      await settingsDocRef.set(defaultSettings);
       return defaultSettings;
     }
   } catch (error) {
@@ -208,8 +206,8 @@ export async function saveSettings(settings: AppSettings): Promise<void> {
       return;
   }
   try {
-    const settingsDocRef = doc(db, SETTINGS_COLLECTION, GLOBAL_SETTINGS_DOC_ID);
-    await setDoc(settingsDocRef, settings);
+    const settingsDocRef = db.collection(SETTINGS_COLLECTION).doc(GLOBAL_SETTINGS_DOC_ID);
+    await settingsDocRef.set(settings);
   } catch (error) {
     console.error("Error saving settings:", error);
     throw new Error('Could not save settings to Firestore');

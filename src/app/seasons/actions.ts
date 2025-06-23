@@ -3,8 +3,7 @@
 
 import { z } from 'zod';
 import { db } from '@/lib/data-service'; // Import db
-import { collection, doc, setDoc, getDoc, getDocs, writeBatch, query, where } from 'firebase-admin/firestore';
-import type { SeasonFormState } from '@/lib/definitions'; // Removed Event, Season (as SeasonDocumentData is used internally)
+import type { SeasonFormState } from '@/lib/definitions';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 
@@ -76,15 +75,15 @@ export async function createSeason(prevState: SeasonFormState, formData: FormDat
   }
 
   try {
-    const seasonRef = doc(db, SEASONS_COLLECTION, seasonId);
-    await setDoc(seasonRef, seasonDocData);
+    const seasonRef = db.collection(SEASONS_COLLECTION).doc(seasonId);
+    await seasonRef.set(seasonDocData);
 
     // For a new season, eventIdsToAssociate is usually empty from the form
     const eventIdsToAssociate = data.eventIdsToAssociate || [];
     if (eventIdsToAssociate.length > 0) {
-      const batch = writeBatch(db);
+      const batch = db.batch();
       eventIdsToAssociate.forEach(eventId => {
-        const eventRef = doc(db, EVENTS_COLLECTION, eventId);
+        const eventRef = db.collection(EVENTS_COLLECTION).doc(eventId);
         batch.update(eventRef, { seasonId: seasonId });
       });
       await batch.commit();
@@ -121,10 +120,10 @@ export async function updateSeason(prevState: SeasonFormState, formData: FormDat
   }
 
   try {
-    const seasonRef = doc(db, SEASONS_COLLECTION, seasonIdToUpdate);
-    const seasonSnap = await getDoc(seasonRef);
+    const seasonRef = db.collection(SEASONS_COLLECTION).doc(seasonIdToUpdate);
+    const seasonSnap = await seasonRef.get();
 
-    if (!seasonSnap.exists()) {
+    if (!seasonSnap.exists) {
       return { message: 'Season not found in database.' };
     }
     const existingSeason = seasonSnap.data() as SeasonDocumentData;
@@ -140,16 +139,16 @@ export async function updateSeason(prevState: SeasonFormState, formData: FormDat
     if (data.endDate && data.endDate.trim() !== '') {
         updatedSeasonDocData.endDate = new Date(data.endDate).toISOString();
     } else {
-        delete updatedSeasonDocData.endDate; // Remove if it's now empty
+        delete (updatedSeasonDocData as Partial<SeasonDocumentData>).endDate; // Remove if it's now empty
     }
     
-    const batch = writeBatch(db);
+    const batch = db.batch();
     batch.set(seasonRef, updatedSeasonDocData); 
 
     const eventIdsToAssociateInForm = new Set(data.eventIdsToAssociate || []);
     
-    const qAssociatedEvents = query(collection(db, EVENTS_COLLECTION), where("seasonId", "==", seasonIdToUpdate));
-    const associatedEventsSnapshot = await getDocs(qAssociatedEvents);
+    const qAssociatedEvents = db.collection(EVENTS_COLLECTION).where("seasonId", "==", seasonIdToUpdate);
+    const associatedEventsSnapshot = await qAssociatedEvents.get();
     const currentAssociatedEventIdsDB = new Set(associatedEventsSnapshot.docs.map(d => d.id));
 
     // Dissociate events: events currently linked in DB but not in form's list
@@ -162,7 +161,7 @@ export async function updateSeason(prevState: SeasonFormState, formData: FormDat
     // Associate new events: events in form's list but not currently linked in DB
     for (const eventId of eventIdsToAssociateInForm) {
         if (!currentAssociatedEventIdsDB.has(eventId)) {
-            const eventRef = doc(db, EVENTS_COLLECTION, eventId);
+            const eventRef = db.collection(EVENTS_COLLECTION).doc(eventId);
             batch.update(eventRef, { seasonId: seasonIdToUpdate });
         }
     }
@@ -183,4 +182,3 @@ export async function updateSeason(prevState: SeasonFormState, formData: FormDat
 
 // Note: A deleteSeason action would also need to handle dissociating events.
 // For now, focusing on create/update.
-

@@ -3,13 +3,12 @@
 
 import { z } from 'zod';
 import { db } from '@/lib/data-service';
-import { doc, setDoc, getDoc, deleteDoc } from 'firebase-admin/firestore';
 import type { Event, EventStatus } from '@/lib/definitions';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import type { EventFormState } from '@/lib/definitions';
 
-const EVENTS_COLLECTION = 'events'; // Define the constant here
+const EVENTS_COLLECTION = 'events';
 
 // Helper function to remove undefined properties from an object
 function cleanUndefinedProperties(obj: any): any {
@@ -171,8 +170,8 @@ export async function createEvent(prevState: EventFormState, formData: FormData)
 
 
   try {
-    const eventRef = doc(db, EVENTS_COLLECTION, eventId);
-    await setDoc(eventRef, finalEventPayload);
+    const eventRef = db.collection(EVENTS_COLLECTION).doc(eventId);
+    await eventRef.set(finalEventPayload);
   } catch (error: any) {
     console.error("Firestore Error creating event:", error);
     let errorMessage = 'Database Error: Failed to create event.';
@@ -213,10 +212,10 @@ export async function updateEvent(prevState: EventFormState, formData: FormData)
 
 
   try {
-    const eventRef = doc(db, EVENTS_COLLECTION, eventId);
-    const eventSnap = await getDoc(eventRef);
+    const eventRef = db.collection(EVENTS_COLLECTION).doc(eventId);
+    const eventSnap = await eventRef.get();
 
-    if (!eventSnap.exists()) {
+    if (!eventSnap.exists) {
       return { message: 'Event not found in database.' };
     }
     const existingEvent = eventSnap.data() as Event;
@@ -254,7 +253,7 @@ export async function updateEvent(prevState: EventFormState, formData: FormData)
     } as Event;
 
 
-    await setDoc(eventRef, finalEventPayload);
+    await eventRef.set(finalEventPayload);
 
   } catch (error: any)
 {
@@ -282,8 +281,8 @@ export async function deleteEvent(eventId: string): Promise<{ success: boolean; 
     return { success: false, message: 'Event ID is required for deletion.' };
   }
   try {
-    const eventRef = doc(db, EVENTS_COLLECTION, eventId);
-    await deleteDoc(eventRef);
+    const eventRef = db.collection(EVENTS_COLLECTION).doc(eventId);
+    await eventRef.delete();
 
     revalidatePath('/events');
     revalidatePath('/dashboard');
