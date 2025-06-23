@@ -19,8 +19,11 @@ const Header = ({ isAuthenticated }: { isAuthenticated: boolean }) => {
     { href: '/events', label: 'Events', icon: CalendarDays },
     { href: '/players', label: 'Players', icon: Users },
     { href: '/seasons', label: 'Seasons', icon: BarChart3 },
-    { href: '/assistant', label: 'Assistant', icon: MessageSquare },
   ];
+
+  if (isAuthenticated) {
+    navItems.push({ href: '/assistant', label: 'Assistant', icon: MessageSquare });
+  }
 
   const showNav = pathname !== '/login';
 
