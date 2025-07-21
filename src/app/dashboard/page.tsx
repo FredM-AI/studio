@@ -5,14 +5,34 @@ import { calculateSeasonStats, type SeasonStats } from '@/lib/stats-service';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import Link from 'next/link';
-import { BarChart3, CalendarDays, TrendingUp, Edit, PlusCircle, Info, LogIn } from 'lucide-react';
+import { BarChart3, CalendarDays, TrendingUp, Edit, PlusCircle, Info, LogIn, Trophy, Award } from 'lucide-react';
 import SeasonDetailsCalendar from '@/app/seasons/[seasonId]/SeasonDetailsCalendar';
 import SeasonLeaderboardTable from '@/app/seasons/[seasonId]/SeasonLeaderboardTable';
 import SeasonPlayerProgressChart from '@/app/seasons/[seasonId]/SeasonPlayerProgressChart';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cookies } from 'next/headers';
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const AUTH_COOKIE_NAME = 'app_session_active';
+
+const getPlayerDisplayName = (player: Player | undefined): string => {
+  if (!player) return "Unknown Player";
+  if (player.nickname && player.nickname.trim() !== '') {
+    return player.nickname;
+  }
+  if (player.firstName) {
+    return `${player.firstName}${player.lastName ? ' ' + player.lastName.charAt(0) + '.' : ''}`;
+  }
+  if (player.lastName) {
+    return player.lastName;
+  }
+  return "Unnamed";
+};
+
+const getInitials = (firstName?: string, lastName?: string) => {
+    return `${firstName?.[0] || ''}${lastName?.[0] || ''}`.toUpperCase();
+};
+
 
 async function getCurrentSeasonData(): Promise<{ currentSeason?: Season; allEvents: EventType[]; allPlayers: Player[]; seasonStats?: SeasonStats, seasonEvents: EventType[] }> {
   const allSeasons = await getSeasons();
@@ -42,7 +62,7 @@ export default async function DashboardPage() {
 
   const { currentSeason, allPlayers, seasonStats, seasonEvents } = await getCurrentSeasonData();
 
-  if (!currentSeason) { // Modification: seulement vérifier currentSeason ici, seasonStats peut être undefined.
+  if (!currentSeason) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[calc(100vh-10rem)]">
         <Card className="max-w-lg text-center">
@@ -61,7 +81,6 @@ export default async function DashboardPage() {
                 </Link>
               </Button>
             ) : (
-               // No login button here, header handles it for guests
                null
             )}
           </CardContent>
@@ -70,11 +89,58 @@ export default async function DashboardPage() {
     );
   }
   
-  // completedSeasonEvents sera passé à SeasonLeaderboardTable et SeasonPlayerProgressChart
   const completedSeasonEvents = seasonStats?.completedSeasonEvents || [];
+  const lastCompletedEvent = completedSeasonEvents.length > 0 ? completedSeasonEvents[completedSeasonEvents.length - 1] : undefined;
+  
+  const lastEventPodium = lastCompletedEvent ? lastCompletedEvent.results
+    .filter(r => r.position <= 3)
+    .sort((a, b) => a.position - b.position)
+    .map(result => {
+        const player = allPlayers.find(p => p.id === result.playerId);
+        return {
+            ...result,
+            player,
+        }
+    }) : [];
 
   return (
     <div className="space-y-8">
+      
+      {lastCompletedEvent && (
+        <Card className="shadow-md hover:shadow-lg transition-shadow">
+          <CardHeader>
+            <CardTitle className="font-headline text-2xl flex items-center gap-3">
+              <Trophy className="h-7 w-7 text-yellow-500" />
+              <span>Last Event Summary: {lastCompletedEvent.name}</span>
+            </CardTitle>
+            <CardDescription>
+              Results from the event on {new Date(lastCompletedEvent.date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })} with {lastCompletedEvent.participants.length} players.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {lastEventPodium.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {lastEventPodium.map((result) => (
+                  <div key={result.playerId} className="flex items-center gap-4 p-3 rounded-lg bg-muted/50">
+                    <Award className={`h-8 w-8 ${result.position === 1 ? 'text-yellow-500' : result.position === 2 ? 'text-gray-400' : 'text-orange-400'}`} />
+                    <Avatar className="h-12 w-12 border">
+                       <AvatarImage src={result.player?.avatar} alt={getPlayerDisplayName(result.player)} />
+                       <AvatarFallback>{getInitials(result.player?.firstName, result.player?.lastName)}</AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <p className="font-semibold">{result.position}. {getPlayerDisplayName(result.player)}</p>
+                      <p className="text-sm text-green-600">Prize: €{result.prize}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-muted-foreground text-center py-4">Podium results are not available for the last event.</p>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 className="font-headline text-3xl font-bold">Current Season: {currentSeason.name}</h1>
@@ -125,7 +191,7 @@ export default async function DashboardPage() {
               <CardDescription>Overview of all events scheduled for this season (includes draft, active, completed).</CardDescription>
             </CardHeader>
             <CardContent>
-                <SeasonDetailsCalendar events={seasonEvents} /> {/* Utilise tous les événements de la saison pour le calendrier */}
+                <SeasonDetailsCalendar events={seasonEvents} />
             </CardContent>
           </Card>
         </TabsContent>
