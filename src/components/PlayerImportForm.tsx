@@ -2,21 +2,20 @@
 'use client';
 
 import * as React from 'react';
-import { useFormState } from 'react-dom';
+import { useActionState } from 'react';
 import { importPlayersFromJson, type PlayerImportFormState } from '@/app/players/actions';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { UploadCloud, AlertCircle, CheckCircle } from 'lucide-react';
+import { UploadCloud, AlertCircle, CheckCircle, Loader2 } from 'lucide-react';
 
 export default function PlayerImportForm() {
   const initialState: PlayerImportFormState = { message: null, errors: {}, successCount: 0, skippedCount: 0 };
-  const [state, dispatch] = useFormState(importPlayersFromJson, initialState);
+  const [state, formAction, isPending] = useActionState(importPlayersFromJson, initialState);
   const [fileContent, setFileContent] = React.useState<string | null>(null);
   const [fileName, setFileName] = React.useState<string>('');
-  const [isPending, startTransition] = React.useTransition();
-
+  
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
@@ -43,11 +42,9 @@ export default function PlayerImportForm() {
     if (!fileContent) {
       return;
     }
-    const formData = new FormData();
-    formData.append('jsonContent', fileContent);
-    startTransition(() => {
-      dispatch(formData);
-    });
+    const formData = new FormData(event.currentTarget);
+    formData.set('jsonContent', fileContent); // Ensure latest file content is in form data
+    formAction(formData);
   };
 
   return (
@@ -99,6 +96,7 @@ export default function PlayerImportForm() {
         </CardContent>
         <CardFooter>
           <Button type="submit" disabled={!fileContent || isPending} className="w-full">
+            {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
             {isPending ? 'Importing...' : 'Import Players'}
           </Button>
         </CardFooter>
@@ -106,5 +104,3 @@ export default function PlayerImportForm() {
     </Card>
   );
 }
-
-    
