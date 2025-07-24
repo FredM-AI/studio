@@ -6,7 +6,7 @@ import type { Event, Player, BlindLevel, BlindStructureTemplate } from "@/lib/de
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { ArrowLeft, Clock, Settings, List, Banknote, Chip } from "lucide-react";
+import { ArrowLeft, Clock, Settings, List, Banknote, Cpu } from "lucide-react";
 import PokerTimerModal from '@/components/PokerTimerModal';
 import BlindStructureManager from '@/components/BlindStructureManager';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -381,7 +381,7 @@ export default function LiveTournamentClient({ event: initialEvent, players: all
                     <Card>
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2">
-                                <Chip className="h-6 w-6 text-primary"/>
+                                <Cpu className="h-6 w-6 text-primary"/>
                                 Live Chip Counts
                             </CardTitle>
                             <CardDescription>Real-time chip statistics.</CardDescription>
