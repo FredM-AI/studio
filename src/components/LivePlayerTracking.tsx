@@ -56,12 +56,13 @@ export default function LivePlayerTracking({
     const activeParticipants = participants.filter(p => p.eliminatedPosition === null);
     const eliminatedParticipants = participants
         .filter(p => p.eliminatedPosition !== null)
-        .sort((a, b) => (b.eliminatedPosition || 0) - (a.eliminatedPosition || 0));
+        .sort((a, b) => (a.eliminatedPosition || 0) - (b.eliminatedPosition || 0));
 
     const lastEliminatedId = React.useMemo(() => {
         if (eliminatedParticipants.length === 0) return null;
+        // Find the player with the lowest elimination number, as that's the most recent bust-out.
         const lastEliminated = eliminatedParticipants.reduce((last, current) => 
-            (current.eliminatedPosition || 0) < (last.eliminatedPosition || 0) ? current : last
+            (current.eliminatedPosition || Infinity) < (last.eliminatedPosition || Infinity) ? current : last
         );
         return lastEliminated.id;
     }, [eliminatedParticipants]);
