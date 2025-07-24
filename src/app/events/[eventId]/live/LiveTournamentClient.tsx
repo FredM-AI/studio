@@ -51,17 +51,41 @@ export default function LiveTournamentClient({ event: initialEvent, players: all
   const [isTimerModalOpen, setIsTimerModalOpen] = React.useState(false);
   const [isStructureManagerOpen, setIsStructureManagerOpen] = React.useState(false);
   const [blindStructures, setBlindStructures] = React.useState<BlindStructureTemplate[]>(initialBlindStructures);
+  
+  const storageKey = `live-event-state-${initialEvent.id}`;
 
-  // State for participants, lifted up from LivePlayerTracking
-  const [participants, setParticipants] = React.useState<ParticipantState[]>([]);
+  const getInitialState = <T,>(key: string, initialValue: T): T => {
+    if (typeof window === 'undefined') {
+      return initialValue;
+    }
+    try {
+      const item = window.localStorage.getItem(storageKey);
+      if (item) {
+        const parsedItem = JSON.parse(item);
+        return parsedItem[key] !== undefined ? parsedItem[key] : initialValue;
+      }
+    } catch (error) {
+      console.warn(`Error reading localStorage key “${key}”:`, error);
+    }
+    return initialValue;
+  };
+
+  const [participants, setParticipants] = React.useState<ParticipantState[]>(() => 
+    getInitialState('participants', [])
+  );
+  
   const [availablePlayers, setAvailablePlayers] = React.useState<Player[]>([]);
 
-  // State for blind structures
   const [activeStructureId, setActiveStructureId] = React.useState<string>(() => {
+    const savedId = getInitialState('activeStructureId', null);
+    if (savedId) return savedId;
     return event.blindStructureId || (initialBlindStructures.length > 0 ? initialBlindStructures[0].id : 'custom');
   });
   
   const [activeStructure, setActiveStructure] = React.useState<BlindLevel[]>(() => {
+    const savedStructure = getInitialState('activeStructure', null);
+    if(savedStructure) return savedStructure;
+    
     if (event.blindStructure && event.blindStructure.length > 0) {
       return event.blindStructure;
     }
@@ -72,10 +96,34 @@ export default function LiveTournamentClient({ event: initialEvent, players: all
     return defaultBlindStructure;
   });
 
-  // Effect to initialize participants and available players
+  // Save state to localStorage whenever it changes
   React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const stateToSave = {
+          participants,
+          activeStructureId,
+          activeStructure,
+        };
+        window.localStorage.setItem(storageKey, JSON.stringify(stateToSave));
+      } catch (error) {
+        console.error('Error saving state to localStorage:', error);
+      }
+    }
+  }, [participants, activeStructureId, activeStructure, storageKey]);
+
+
+  React.useEffect(() => {
+    if (participants.length > 0) {
+      // If we have participants from localStorage, use them
+      const participantIds = new Set(participants.map(p => p.id));
+      const initialAvailablePlayers = allPlayers
+          .filter(p => !participantIds.has(p.id))
+          .sort(sortPlayersWithGuestsLast);
+      setAvailablePlayers(initialAvailablePlayers);
+    } else {
+      // Otherwise, initialize from event data
       const participantIds = new Set(event.participants);
-      
       const initialParticipants = event.participants.map(playerId => {
           const player = allPlayers.find(p => p.id === playerId);
           const result = event.results.find(r => r.playerId === playerId);
@@ -93,6 +141,7 @@ export default function LiveTournamentClient({ event: initialEvent, players: all
 
       setParticipants(initialParticipants);
       setAvailablePlayers(initialAvailablePlayers);
+    }
   }, [event, allPlayers]);
 
 
@@ -111,7 +160,6 @@ export default function LiveTournamentClient({ event: initialEvent, players: all
     }
   }
 
-  // Participant management functions
   const handleRebuyChange = (playerId: string, delta: number) => {
       setParticipants(prevParticipants => 
           prevParticipants.map(p => 
@@ -139,7 +187,6 @@ export default function LiveTournamentClient({ event: initialEvent, players: all
       setParticipants(prev => prev.filter(p => p.id !== participantId));
   };
 
-  // Centralized Prize Pool Calculation
   const { totalPrizePool, payoutStructure } = React.useMemo(() => {
     const numParticipants = participants.length;
     const totalRebuys = participants.reduce((sum, p) => sum + p.rebuys, 0);

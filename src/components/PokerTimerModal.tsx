@@ -40,14 +40,56 @@ export default function PokerTimerModal({
 }: PokerTimerModalProps) {
   const nodeRef = useRef(null);
   const [isStructureManagerOpen, setIsStructureManagerOpen] = useState(false);
-  const [currentLevelIndex, setCurrentLevelIndex] = useState(0);
-  const [timeLeft, setTimeLeft] = useState(activeStructure[0]?.duration * 60 || 0);
-  const [totalTime, setTotalTime] = useState(0);
-  const [isPaused, setIsPaused] = useState(true);
+  const storageKey = `poker-timer-state-${event.id}`;
 
-  // Sync with external structure changes
+  const getInitialTimerState = <T,>(key: string, defaultValue: T): T => {
+    if (typeof window === 'undefined') return defaultValue;
+    try {
+      const item = window.localStorage.getItem(storageKey);
+      if (item) {
+        const parsed = JSON.parse(item);
+        return parsed[key] !== undefined ? parsed[key] : defaultValue;
+      }
+    } catch (e) {
+      console.warn(`Error reading timer state for key ${key} from localStorage`, e);
+    }
+    return defaultValue;
+  };
+  
+  const [currentLevelIndex, setCurrentLevelIndex] = useState(() => getInitialTimerState('currentLevelIndex', 0));
+  const [timeLeft, setTimeLeft] = useState(() => getInitialTimerState('timeLeft', activeStructure[0]?.duration * 60 || 0));
+  const [totalTime, setTotalTime] = useState(() => getInitialTimerState('totalTime', 0));
+  const [isPaused, setIsPaused] = useState(() => getInitialTimerState('isPaused', true));
+  
+  // Effect to save timer state to localStorage
   useEffect(() => {
-    resetTimerWithNewStructure(activeStructure);
+    if (typeof window !== 'undefined') {
+      try {
+        const timerState = { currentLevelIndex, timeLeft, totalTime, isPaused };
+        window.localStorage.setItem(storageKey, JSON.stringify(timerState));
+      } catch (e) {
+        console.error("Failed to save timer state to localStorage", e);
+      }
+    }
+  }, [currentLevelIndex, timeLeft, totalTime, isPaused, storageKey]);
+
+
+  // Sync with external structure changes from parent
+  useEffect(() => {
+    const savedLevelIndex = getInitialTimerState('currentLevelIndex', 0);
+    const newStructureDuration = activeStructure[savedLevelIndex]?.duration * 60;
+    
+    // Only reset timer if the structure fundamentally changes, otherwise respect saved state
+    // A simple check is to see if the duration for the current level is different.
+    if (activeStructure[currentLevelIndex]?.duration * 60 !== timeLeft && !getInitialTimerState('timeLeft', undefined)) {
+       resetTimerWithNewStructure(activeStructure);
+    } else {
+       // Ensure currentLevelIndex is not out of bounds for the new structure
+       if(currentLevelIndex >= activeStructure.length) {
+          setCurrentLevelIndex(0);
+          setTimeLeft(activeStructure[0]?.duration * 60);
+       }
+    }
   }, [activeStructure]);
 
   useEffect(() => {
@@ -68,6 +110,7 @@ export default function PokerTimerModal({
       setCurrentLevelIndex(0);
       setTimeLeft(newStructure.length > 0 ? newStructure[0].duration * 60 : 0);
       setIsPaused(true);
+      setTotalTime(0);
   }
 
   const goToNextLevel = () => {
