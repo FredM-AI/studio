@@ -3,6 +3,7 @@
 
 import * as React from 'react';
 import type { ParticipantState } from './LivePlayerTracking';
+import { Crown } from 'lucide-react';
 
 interface LivePrizePoolProps {
     participants: ParticipantState[];
@@ -17,24 +18,21 @@ export default function LivePrizePool({ participants, buyIn, rebuyPrice }: LiveP
 
         const calculatedPrizePool = (numParticipants * (buyIn || 0)) + (totalRebuys * (rebuyPrice || 0));
         
-        const structure = [];
+        const structure: { position: number, prize: number }[] = [];
 
         if (numParticipants > 0 && calculatedPrizePool > 0) {
             if (numParticipants < 14) {
-                // Logic for less than 14 players
                 if (numParticipants >= 3) {
                     structure.push({ position: 1, prize: Math.round(calculatedPrizePool * 0.50) });
                     structure.push({ position: 2, prize: Math.round(calculatedPrizePool * 0.30) });
                     structure.push({ position: 3, prize: Math.round(calculatedPrizePool * 0.20) });
                 } else if (numParticipants === 2) {
-                    // Custom logic for 2 players if needed, e.g., 65/35
                     structure.push({ position: 1, prize: Math.round(calculatedPrizePool * 0.65) });
                     structure.push({ position: 2, prize: Math.round(calculatedPrizePool * 0.35) });
-                } else { // 1 player
+                } else {
                     structure.push({ position: 1, prize: calculatedPrizePool });
                 }
             } else {
-                // Logic for 14 or more players
                 const fourthPrize = buyIn || 0;
                 if (calculatedPrizePool > fourthPrize) {
                     const remainingPool = calculatedPrizePool - fourthPrize;
@@ -43,7 +41,6 @@ export default function LivePrizePool({ participants, buyIn, rebuyPrice }: LiveP
                     structure.push({ position: 3, prize: Math.round(remainingPool * 0.20) });
                     structure.push({ position: 4, prize: fourthPrize });
                 } else {
-                    // Not enough for 4th place prize, revert to 3-place structure
                     structure.push({ position: 1, prize: Math.round(calculatedPrizePool * 0.50) });
                     structure.push({ position: 2, prize: Math.round(calculatedPrizePool * 0.30) });
                     structure.push({ position: 3, prize: Math.round(calculatedPrizePool * 0.20) });
@@ -53,6 +50,18 @@ export default function LivePrizePool({ participants, buyIn, rebuyPrice }: LiveP
         
         return { totalPrizePool: calculatedPrizePool, payoutStructure: structure.sort((a,b) => a.position - b.position) };
     }, [participants, buyIn, rebuyPrice]);
+
+    const findPlacingPlayerName = (position: number) => {
+        // Special case for winner (has not been eliminated)
+        if (position === 1) {
+             const activePlayers = participants.filter(p => p.eliminatedPosition === null);
+             if (activePlayers.length === 1 && participants.filter(p => p.eliminatedPosition !== null).length === participants.length -1) {
+                 return activePlayers[0].name;
+             }
+        }
+        const player = participants.find(p => p.eliminatedPosition === position);
+        return player?.name;
+    };
 
     return (
         <div className="space-y-4">
@@ -66,12 +75,19 @@ export default function LivePrizePool({ participants, buyIn, rebuyPrice }: LiveP
                 <h4 className="font-medium text-center mb-2">Estimated Payouts</h4>
                  {payoutStructure.length > 0 ? (
                     <ul className="space-y-2">
-                        {payoutStructure.map(({ position, prize }) => (
-                            <li key={position} className="flex justify-between items-center text-md bg-card p-2 rounded-md shadow-sm">
-                                <span className="font-semibold text-muted-foreground">{position}.</span>
-                                <span className="font-bold">€{prize.toLocaleString()}</span>
-                            </li>
-                        ))}
+                        {payoutStructure.map(({ position, prize }) => {
+                            const playerName = findPlacingPlayerName(position);
+                            return (
+                                <li key={position} className="flex justify-between items-center text-md bg-card p-2 rounded-md shadow-sm">
+                                    <span className="font-semibold text-muted-foreground flex items-center">
+                                      {position === 1 && <Crown className="h-4 w-4 mr-1.5 text-yellow-400" />}
+                                      {position}.
+                                    </span>
+                                    <span className="text-sm font-medium truncate text-right flex-1 mx-2">{playerName || '...'}</span>
+                                    <span className="font-bold">€{prize.toLocaleString()}</span>
+                                </li>
+                            );
+                        })}
                     </ul>
                 ) : (
                     <p className="text-muted-foreground text-center py-4 text-sm">

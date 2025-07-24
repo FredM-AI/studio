@@ -1,11 +1,12 @@
+
 'use client';
 
 import * as React from 'react';
-import type { Event, Player, BlindLevel, BlindStructureTemplate } from "@/lib/definitions";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import type { Event, Player, BlindLevel, BlindStructureTemplate, EventResult } from "@/lib/definitions";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { ArrowLeft, Clock, Settings, List, Banknote, Cpu } from "lucide-react";
+import { ArrowLeft, Clock, Settings, List, Banknote, Cpu, Save, Loader2 } from "lucide-react";
 import PokerTimerModal from '@/components/PokerTimerModal';
 import BlindStructureManager from '@/components/BlindStructureManager';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -15,6 +16,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/components/ui/label';
 import LivePlayerTracking, { type ParticipantState } from '@/components/LivePlayerTracking';
 import LivePrizePool from '@/components/LivePrizePool';
+import { saveLiveResults } from '@/app/events/actions';
+import { useToast } from '@/hooks/use-toast';
+import { useRouter } from 'next/navigation';
+
 
 interface LiveTournamentClientProps {
     event: Event;
@@ -49,7 +54,10 @@ export default function LiveTournamentClient({ event: initialEvent, players: all
   const [isTimerModalOpen, setIsTimerModalOpen] = React.useState(false);
   const [isStructureManagerOpen, setIsStructureManagerOpen] = React.useState(false);
   const [blindStructures, setBlindStructures] = React.useState<BlindStructureTemplate[]>(initialBlindStructures);
-  
+  const [isSaving, setIsSaving] = React.useState(false);
+  const { toast } = useToast();
+  const router = useRouter();
+
   const storageKey = `live-event-state-${initialEvent.id}`;
 
   const getInitialState = <T,>(key: string, initialValue: T): T => {
@@ -258,6 +266,40 @@ export default function LiveTournamentClient({ event: initialEvent, players: all
   const totalChips = (participants.length + totalRebuys) * (event.startingStack || 0);
   const activeParticipantsCount = participants.filter(p => p.eliminatedPosition === null).length;
   const avgStack = activeParticipantsCount > 0 ? Math.floor(totalChips / activeParticipantsCount) : 0;
+  
+  const isTournamentFinished = activeParticipantsCount <= 1 && participants.length > 0;
+
+  const handleSaveResults = async () => {
+      if (!isTournamentFinished) return;
+      setIsSaving(true);
+      
+      const winner = participants.find(p => p.eliminatedPosition === null);
+      
+      const finalResults: EventResult[] = participants.map(p => {
+          const prizeInfo = payoutStructure.find(ps => ps.position === p.eliminatedPosition);
+          return {
+              playerId: p.id,
+              position: p.id === winner?.id ? 1 : (p.eliminatedPosition as number),
+              prize: p.id === winner?.id ? (payoutStructure.find(ps => ps.position === 1)?.prize || 0) : (prizeInfo?.prize || 0),
+              rebuys: p.rebuys,
+          };
+      }).sort((a,b) => a.position - b.position);
+
+      const result = await saveLiveResults(initialEvent.id, finalResults, totalPrizePool);
+      
+      setIsSaving(false);
+      
+      if(result.success) {
+          toast({ title: 'Success', description: 'Event results have been saved successfully.'});
+          if (typeof window !== 'undefined') {
+            window.localStorage.removeItem(storageKey);
+          }
+          router.push(`/events/${initialEvent.id}`);
+      } else {
+          toast({ title: 'Error', description: result.message || 'Failed to save event results.', variant: 'destructive'});
+      }
+  };
+
 
   return (
     <div className="container mx-auto p-4 space-y-6">
@@ -280,8 +322,8 @@ export default function LiveTournamentClient({ event: initialEvent, players: all
                 onApplyStructure={handleApplyStructure}
             />
         )}
-        <div className="flex justify-between items-center">
-            <div>
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div className="flex-grow">
                 <Button variant="outline" size="sm" asChild>
                     <Link href={`/events/${event.id}`}>
                         <ArrowLeft className="mr-2 h-4 w-4" /> Back
@@ -289,9 +331,17 @@ export default function LiveTournamentClient({ event: initialEvent, players: all
                 </Button>
                 <h1 className="font-headline text-3xl font-bold mt-1">{event.name} - Live</h1>
             </div>
-             <Button onClick={() => setIsTimerModalOpen(true)} size="lg">
-                <Clock className="mr-2 h-5 w-5" /> Open Poker Timer
-            </Button>
+             <div className="flex gap-2">
+                {isTournamentFinished && (
+                    <Button onClick={handleSaveResults} disabled={isSaving} size="lg" className="bg-green-600 hover:bg-green-700">
+                        {isSaving ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Save className="mr-2 h-5 w-5" />}
+                        {isSaving ? 'Saving...' : 'Save Results'}
+                    </Button>
+                )}
+                 <Button onClick={() => setIsTimerModalOpen(true)} size="lg">
+                    <Clock className="mr-2 h-5 w-5" /> Open Timer
+                </Button>
+            </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
@@ -356,9 +406,9 @@ export default function LiveTournamentClient({ event: initialEvent, players: all
                 </CardHeader>
                 <CardContent className="pt-2">
                     <LivePrizePool 
-                    participants={participants}
-                    buyIn={event.buyIn || 0}
-                    rebuyPrice={event.rebuyPrice}
+                        participants={participants}
+                        buyIn={event.buyIn || 0}
+                        rebuyPrice={event.rebuyPrice}
                     />
                 </CardContent>
             </Card>

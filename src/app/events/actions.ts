@@ -3,7 +3,7 @@
 
 import { z } from 'zod';
 import { db } from '@/lib/firebase';
-import type { Event, EventStatus, BlindStructureTemplate } from '@/lib/definitions';
+import type { Event, EventStatus, BlindStructureTemplate, EventResult } from '@/lib/definitions';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import type { EventFormState } from '@/lib/definitions';
@@ -121,7 +121,7 @@ const EventFormSchema = z.object({
 export async function createEvent(prevState: EventFormState, formData: FormData): Promise<EventFormState> {
   const rawFormData = Object.fromEntries(formData.entries());
   const participantIdsValue = rawFormData.participantIds;
-  rawFormData.participantIds = typeof participantIdsValue === 'string' && participantIdsValue ? participantIdsValue.split(',').filter(id => id.trim() !== '') : (Array.isArray(participantIdsValue) ? participantIdsValue : []);
+  rawFormData.participantIds = typeof participantIdsValue === 'string' && participantIdsValue ? participantIdsValue.split(',').filter(id => id.trim() !== '') : (Array.isArray(val) ? val : []);
 
   const validatedFields = EventFormSchema.safeParse(rawFormData);
 
@@ -204,7 +204,7 @@ export async function createEvent(prevState: EventFormState, formData: FormData)
 export async function updateEvent(prevState: EventFormState, formData: FormData): Promise<EventFormState> {
   const rawFormData = Object.fromEntries(formData.entries());
   const participantIdsValue = rawFormData.participantIds;
-  rawFormData.participantIds = typeof participantIdsValue === 'string' && participantIdsValue ? participantIdsValue.split(',').filter(id => id.trim() !== '') : (Array.isArray(participantIdsValue) ? participantIdsValue : []);
+  rawFormData.participantIds = typeof participantIdsValue === 'string' && participantIdsValue ? participantIdsValue.split(',').filter(id => id.trim() !== '') : (Array.isArray(val) ? val : []);
 
   const validatedFields = EventFormSchema.safeParse(rawFormData);
 
@@ -317,5 +317,52 @@ export async function deleteEvent(eventId: string): Promise<{ success: boolean; 
   } catch (error) {
     console.error('Delete Event Error:', error);
     return { success: false, message: 'Database Error: Failed to delete event.' };
+  }
+}
+
+export async function saveLiveResults(
+  eventId: string, 
+  finalResults: EventResult[], 
+  finalPrizePool: number
+): Promise<{ success: boolean; message?: string }> {
+  if (!eventId || !finalResults) {
+    return { success: false, message: 'Event ID and final results are required.' };
+  }
+
+  try {
+    const eventRef = db.collection(EVENTS_COLLECTION).doc(eventId);
+    const eventSnap = await eventRef.get();
+
+    if (!eventSnap.exists) {
+        return { success: false, message: 'Event not found.' };
+    }
+
+    const eventData = eventSnap.data() as Event;
+    
+    // Update the event with final data
+    const updatedData: Partial<Event> = {
+      status: 'completed',
+      results: finalResults,
+      prizePool: {
+        ...eventData.prizePool,
+        total: finalPrizePool,
+      },
+      updatedAt: new Date().toISOString(),
+    };
+
+    await eventRef.update(updatedData);
+
+    // Revalidate paths to reflect changes
+    revalidatePath('/events');
+    revalidatePath(`/events/${eventId}`);
+    revalidatePath(`/events/${eventId}/live`);
+    revalidatePath('/dashboard');
+    revalidatePath('/seasons');
+
+    return { success: true };
+
+  } catch (error) {
+    console.error("Firestore Error saving live results:", error);
+    return { success: false, message: 'Database Error: Failed to save final results.' };
   }
 }
