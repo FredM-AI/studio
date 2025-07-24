@@ -74,9 +74,23 @@ export default function LiveTournamentClient({ event: initialEvent, players: all
     return { ...initialEvent, startingStack: savedStartingStack };
   });
 
-  const [participants, setParticipants] = React.useState<ParticipantState[]>(() => 
-    getInitialState('participants', [])
-  );
+  const [participants, setParticipants] = React.useState<ParticipantState[]>(() => {
+    const savedParticipants = getInitialState<ParticipantState[] | null>('participants', null);
+    if (savedParticipants) {
+        return savedParticipants;
+    }
+    // If nothing in localStorage, initialize from event data
+    return initialEvent.participants.map(playerId => {
+        const player = allPlayers.find(p => p.id === playerId);
+        const result = initialEvent.results.find(r => r.playerId === playerId);
+        return {
+            id: playerId,
+            name: getPlayerDisplayName(player),
+            isGuest: player?.isGuest || false,
+            rebuys: result?.rebuys || 0,
+        };
+    }).sort((a,b) => a.name.localeCompare(b.name));
+  });
   
   const [availablePlayers, setAvailablePlayers] = React.useState<Player[]>([]);
 
@@ -119,35 +133,14 @@ export default function LiveTournamentClient({ event: initialEvent, players: all
 
 
   React.useEffect(() => {
-    if (participants.length > 0) {
-      // If we have participants from localStorage, use them
-      const participantIds = new Set(participants.map(p => p.id));
-      const initialAvailablePlayers = allPlayers
-          .filter(p => !participantIds.has(p.id))
-          .sort(sortPlayersWithGuestsLast);
-      setAvailablePlayers(initialAvailablePlayers);
-    } else {
-      // Otherwise, initialize from event data
-      const participantIds = new Set(event.participants);
-      const initialParticipants = event.participants.map(playerId => {
-          const player = allPlayers.find(p => p.id === playerId);
-          const result = event.results.find(r => r.playerId === playerId);
-          return {
-              id: playerId,
-              name: getPlayerDisplayName(player),
-              isGuest: player?.isGuest || false,
-              rebuys: result?.rebuys || 0,
-          };
-      }).sort((a,b) => a.name.localeCompare(b.name));
-
-      const initialAvailablePlayers = allPlayers
-          .filter(p => !participantIds.has(p.id))
-          .sort(sortPlayersWithGuestsLast);
-
-      setParticipants(initialParticipants);
-      setAvailablePlayers(initialAvailablePlayers);
-    }
-  }, [initialEvent, allPlayers]); // Changed dependency from 'event' to 'initialEvent'
+    // This effect now simply syncs the available players list based on the current participants.
+    // The initialization of participants is handled in the useState initializer.
+    const participantIds = new Set(participants.map(p => p.id));
+    const currentAvailablePlayers = allPlayers
+        .filter(p => !participantIds.has(p.id))
+        .sort(sortPlayersWithGuestsLast);
+    setAvailablePlayers(currentAvailablePlayers);
+  }, [participants, allPlayers]);
 
 
   const handleApplyStructure = (newLevels: BlindLevel[], newStructureId: string) => {
