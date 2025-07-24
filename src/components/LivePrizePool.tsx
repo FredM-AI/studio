@@ -17,34 +17,40 @@ export default function LivePrizePool({ participants, buyIn, rebuyPrice }: LiveP
 
         const calculatedPrizePool = (numParticipants * (buyIn || 0)) + (totalRebuys * (rebuyPrice || 0));
         
-        // Simple payout structure logic (can be customized)
         const structure = [];
-        if (numParticipants >= 1 && calculatedPrizePool > 0) {
-            if (numParticipants >= 4 && calculatedPrizePool >= (buyIn || 0) * 4) { // Payout for 4th if at least 4 players and enough pool
-                const remainingPool = calculatedPrizePool - (buyIn || 0);
-                structure.push({ position: 1, prize: Math.round(remainingPool * 0.5) });
-                structure.push({ position: 2, prize: Math.round(remainingPool * 0.3) });
-                structure.push({ position: 3, prize: Math.round(remainingPool * 0.2) });
-                structure.push({ position: 4, prize: (buyIn || 0) });
-            } else if (numParticipants === 3) {
-                 structure.push({ position: 1, prize: Math.round(calculatedPrizePool * 0.6) });
-                 structure.push({ position: 2, prize: Math.round(calculatedPrizePool * 0.4) });
-            } else if (numParticipants >= 2) {
-                 structure.push({ position: 1, prize: Math.round(calculatedPrizePool * 0.65) });
-                 structure.push({ position: 2, prize: Math.round(calculatedPrizePool * 0.35) });
-            } else { // 1 player
-                structure.push({ position: 1, prize: calculatedPrizePool });
+
+        if (numParticipants > 0 && calculatedPrizePool > 0) {
+            if (numParticipants < 14) {
+                // Logic for less than 14 players
+                if (numParticipants >= 3) {
+                    structure.push({ position: 1, prize: Math.round(calculatedPrizePool * 0.50) });
+                    structure.push({ position: 2, prize: Math.round(calculatedPrizePool * 0.30) });
+                    structure.push({ position: 3, prize: Math.round(calculatedPrizePool * 0.20) });
+                } else if (numParticipants === 2) {
+                    // Custom logic for 2 players if needed, e.g., 65/35
+                    structure.push({ position: 1, prize: Math.round(calculatedPrizePool * 0.65) });
+                    structure.push({ position: 2, prize: Math.round(calculatedPrizePool * 0.35) });
+                } else { // 1 player
+                    structure.push({ position: 1, prize: calculatedPrizePool });
+                }
+            } else {
+                // Logic for 14 or more players
+                const fourthPrize = buyIn || 0;
+                if (calculatedPrizePool > fourthPrize) {
+                    const remainingPool = calculatedPrizePool - fourthPrize;
+                    structure.push({ position: 1, prize: Math.round(remainingPool * 0.50) });
+                    structure.push({ position: 2, prize: Math.round(remainingPool * 0.30) });
+                    structure.push({ position: 3, prize: Math.round(remainingPool * 0.20) });
+                    structure.push({ position: 4, prize: fourthPrize });
+                } else {
+                    // Not enough for 4th place prize, revert to 3-place structure
+                    structure.push({ position: 1, prize: Math.round(calculatedPrizePool * 0.50) });
+                    structure.push({ position: 2, prize: Math.round(calculatedPrizePool * 0.30) });
+                    structure.push({ position: 3, prize: Math.round(calculatedPrizePool * 0.20) });
+                }
             }
         }
         
-        // Fallback for simple 3-way split
-        if (structure.length === 0 && numParticipants >= 3) {
-            structure.push({ position: 1, prize: Math.round(calculatedPrizePool * 0.5) });
-            structure.push({ position: 2, prize: Math.round(calculatedPrizePool * 0.3) });
-            structure.push({ position: 3, prize: Math.round(calculatedPrizePool * 0.2) });
-        }
-
-
         return { totalPrizePool: calculatedPrizePool, payoutStructure: structure };
     }, [participants, buyIn, rebuyPrice]);
 
@@ -60,7 +66,7 @@ export default function LivePrizePool({ participants, buyIn, rebuyPrice }: LiveP
                 <h4 className="font-medium text-center mb-2">Estimated Payouts</h4>
                  {payoutStructure.length > 0 ? (
                     <ul className="space-y-2">
-                        {payoutStructure.map(({ position, prize }) => (
+                        {payoutStructure.sort((a,b) => a.position - b.position).map(({ position, prize }) => (
                             <li key={position} className="flex justify-between items-center text-lg bg-card p-3 rounded-md shadow-sm">
                                 <span className="font-semibold text-muted-foreground">{position}.</span>
                                 <span className="font-bold">€{prize.toLocaleString()}</span>
@@ -76,4 +82,3 @@ export default function LivePrizePool({ participants, buyIn, rebuyPrice }: LiveP
         </div>
     );
 }
-
