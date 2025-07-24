@@ -21,7 +21,13 @@ const nextConfig = {
         hostname: 'i.ibb.co',
         port: '',
         pathname: '/**',
-      }
+      },
+      {
+        protocol: 'https',
+        hostname: 'www.warlegend.net',
+        port: '',
+        pathname: '/**',
+      },
     ],
   },
 };

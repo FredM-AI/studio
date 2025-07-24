@@ -26,10 +26,6 @@ export default function PlayerForm({ player, action, formTitle, formDescription,
   
   const [avatarUrl, setAvatarUrl] = React.useState(player?.avatar || '');
 
-  React.useEffect(() => {
-    setAvatarUrl(player?.avatar || '');
-  }, [player?.avatar]);
-
   const getInitials = () => {
       // Attempt to get names from the form if possible, otherwise from player prop
       const firstName = (document.getElementById('firstName') as HTMLInputElement)?.value || player?.firstName || '';
