@@ -83,11 +83,6 @@ export default function BlindStructureManager({ isOpen, onClose, structures, act
     setCurrentLevels(currentLevels.filter((_, i) => i !== index));
   };
 
-  const handleApply = () => {
-    onApplyStructure(currentLevels);
-    onClose();
-  };
-
   const handleSaveStructure = async () => {
     // This would call a server action to save the structure
     console.log("Saving structure:", { id: isEditing ? selectedStructureId : crypto.randomUUID(), name: structureName, levels: currentLevels });
@@ -104,6 +99,10 @@ export default function BlindStructureManager({ isOpen, onClose, structures, act
         setAvailableStructures([...availableStructures, newStructure]);
         setSelectedStructureId(newStructure.id);
     }
+    
+    // Apply the newly saved structure to the timer
+    onApplyStructure(newStructure.levels);
+    
     alert('Structure saved (locally for now)!');
   };
 
@@ -113,36 +112,40 @@ export default function BlindStructureManager({ isOpen, onClose, structures, act
         <DialogHeader>
           <DialogTitle>Blind Structure Manager</DialogTitle>
           <DialogDescription>
-            Create, view, and modify blind structures. Apply a structure to the current tournament timer.
+            Create, view, and modify blind structures. Saved structures can be applied to any event.
           </DialogDescription>
         </DialogHeader>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 flex-grow min-h-0">
-            {/* Column 1: Structure Selection */}
-            <div className="md:col-span-1 flex flex-col gap-4">
-                <Label>Load Structure</Label>
-                <Select value={selectedStructureId} onValueChange={setSelectedStructureId}>
-                    <SelectTrigger>
-                        <SelectValue placeholder="Select a structure..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                        {availableStructures.map(s => (
-                            <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
-                 <Button variant="outline" onClick={() => setSelectedStructureId(crypto.randomUUID())}>
-                    <PlusCircle className="mr-2 h-4 w-4" /> Create New
-                </Button>
-            </div>
-            {/* Column 2: Structure Editor */}
-            <div className="md:col-span-2 flex flex-col gap-4 min-h-0">
-                <div className="flex gap-4 items-end">
-                    <div className="flex-grow">
-                        <Label htmlFor="structureName">Structure Name</Label>
-                        <Input id="structureName" value={structureName} onChange={(e) => setStructureName(e.target.value)} />
-                    </div>
-                    <Button onClick={handleSaveStructure}><Save className="mr-2 h-4 w-4"/> Save</Button>
+        
+        <div className="flex flex-col gap-4 flex-grow min-h-0">
+            {/* Top Controls */}
+            <div className="flex flex-col sm:flex-row gap-4">
+                <div className="flex-grow">
+                    <Label>Load or Edit Structure</Label>
+                    <Select value={selectedStructureId} onValueChange={setSelectedStructureId}>
+                        <SelectTrigger>
+                            <SelectValue placeholder="Select a structure..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {availableStructures.map(s => (
+                                <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
                 </div>
+                <div className="flex-grow">
+                    <Label>Structure Name</Label>
+                    <Input id="structureName" value={structureName} onChange={(e) => setStructureName(e.target.value)} />
+                </div>
+                 <div className="self-end">
+                    <Button variant="outline" onClick={() => setSelectedStructureId(crypto.randomUUID())}>
+                        <PlusCircle className="mr-2 h-4 w-4" /> Create New
+                    </Button>
+                </div>
+            </div>
+
+            {/* Structure Editor */}
+            <div className="flex flex-col gap-4 flex-grow min-h-0">
+                <Label>Levels</Label>
                 <ScrollArea className="border rounded-md flex-grow">
                     <Table>
                     <TableHeader className="sticky top-0 bg-muted">
@@ -191,8 +194,8 @@ export default function BlindStructureManager({ isOpen, onClose, structures, act
             </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>Cancel</Button>
-          <Button onClick={handleApply}>Apply to Timer</Button>
+          <Button variant="outline" onClick={onClose}>Close</Button>
+          <Button onClick={handleSaveStructure}><Save className="mr-2 h-4 w-4"/> Save Structure</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
