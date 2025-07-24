@@ -7,7 +7,6 @@
     "nickname": "Prof",
     "email": "olivier.garcia@example.com",
     "phone": "",
-    "avatar": "",
     "isGuest": false,
     "isActive": true,
     "stats": {
@@ -29,7 +28,6 @@
     "nickname": "La Mèche",
     "email": "regis.mahe@example.com",
     "phone": "",
-    "avatar": "",
     "isGuest": false,
     "isActive": true,
     "stats": {
@@ -51,7 +49,6 @@
     "nickname": "The Revenant",
     "email": "damien.heckman@example.com",
     "phone": "",
-    "avatar": "",
     "isGuest": false,
     "isActive": true,
     "stats": {
@@ -73,7 +70,6 @@
     "nickname": "Le Marocain",
     "email": "hubert.faucher@example.com",
     "phone": "",
-    "avatar": "",
     "isGuest": false,
     "isActive": true,
     "stats": {
@@ -95,7 +91,6 @@
     "nickname": "DJ Raid",
     "email": "tanguy.feugier@example.com",
     "phone": "",
-    "avatar": "",
     "isGuest": false,
     "isActive": true,
     "stats": {
@@ -117,7 +112,6 @@
     "nickname": "Oeil de lynx",
     "email": "frederic.chuimert@example.com",
     "phone": "",
-    "avatar": "",
     "isGuest": false,
     "isActive": true,
     "stats": {
@@ -139,7 +133,6 @@
     "nickname": "Tony Mitchelli",
     "email": "eric.vernhes@example.com",
     "phone": "",
-    "avatar": "",
     "isGuest": false,
     "isActive": true,
     "stats": {
@@ -161,7 +154,6 @@
     "nickname": "Némo",
     "email": "jerome.ernzen@example.com",
     "phone": "",
-    "avatar": "",
     "isGuest": false,
     "isActive": true,
     "stats": {
@@ -183,7 +175,6 @@
     "nickname": "Le Polak",
     "email": "greg.szulc@example.com",
     "phone": "",
-    "avatar": "",
     "isGuest": false,
     "isActive": true,
     "stats": {
@@ -205,7 +196,6 @@
     "nickname": "La Friteuse",
     "email": "sebastien.royon@example.com",
     "phone": "",
-    "avatar": "",
     "isGuest": false,
     "isActive": true,
     "stats": {
@@ -227,7 +217,6 @@
     "nickname": "Passe-Muraille",
     "email": "olivier.boynard@example.com",
     "phone": "",
-    "avatar": "",
     "isGuest": false,
     "isActive": true,
     "stats": {
@@ -249,7 +238,6 @@
     "nickname": "Isaac",
     "email": "simon.moisson@example.com",
     "phone": "",
-    "avatar": "",
     "isGuest": false,
     "isActive": true,
     "stats": {
@@ -271,7 +259,6 @@
     "nickname": "MalAAbar",
     "email": "yann.blaize@example.com",
     "phone": "",
-    "avatar": "",
     "isGuest": false,
     "isActive": true,
     "stats": {
@@ -293,7 +280,6 @@
     "nickname": "La Fouine",
     "email": "francois.degryse@example.com",
     "phone": "",
-    "avatar": "",
     "isGuest": false,
     "isActive": true,
     "stats": {
@@ -315,7 +301,6 @@
     "nickname": "Le Sniper",
     "email": "philippe.coudray@example.com",
     "phone": "",
-    "avatar": "",
     "isGuest": false,
     "isActive": true,
     "stats": {
@@ -337,7 +322,6 @@
     "nickname": "La Serrure",
     "email": "nicolas.merceron@example.com",
     "phone": "",
-    "avatar": "",
     "isGuest": false,
     "isActive": true,
     "stats": {
@@ -359,7 +343,6 @@
     "nickname": "Guest - Rom",
     "email": "romarin.billong@example.com",
     "phone": "",
-    "avatar": "",
     "isGuest": true,
     "isActive": true,
     "stats": {
@@ -381,7 +364,6 @@
     "nickname": "Diesel",
     "email": "jeanchristophe.keib@example.com",
     "phone": "",
-    "avatar": "",
     "isGuest": false,
     "isActive": true,
     "stats": {
@@ -403,7 +385,6 @@
     "nickname": "Guest de la mêche",
     "email": "mika.bouillu@example.com",
     "phone": "",
-    "avatar": "",
     "isGuest": true,
     "isActive": true,
     "stats": {
