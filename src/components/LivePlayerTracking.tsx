@@ -56,7 +56,7 @@ export default function LivePlayerTracking({
     const activeParticipants = participants.filter(p => p.eliminatedPosition === null);
     const eliminatedParticipants = participants
         .filter(p => p.eliminatedPosition !== null)
-        .sort((a, b) => (a.eliminatedPosition || 0) - (b.eliminatedPosition || 0));
+        .sort((a, b) => (b.eliminatedPosition || 0) - (a.eliminatedPosition || 0));
 
     if (allPlayers.length === 0) {
         return <p className="text-muted-foreground text-center py-12">No players found in the system.</p>
