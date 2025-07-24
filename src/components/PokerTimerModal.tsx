@@ -8,7 +8,6 @@ import Draggable from 'react-draggable';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { X, Play, Pause, FastForward, Rewind, Settings, Maximize } from 'lucide-react';
-import BlindStructureManager from './BlindStructureManager';
 import { Slider } from '@/components/ui/slider';
 
 interface PokerTimerModalProps {
@@ -16,9 +15,7 @@ interface PokerTimerModalProps {
   participants: ParticipantState[];
   totalPrizePool: number;
   payoutStructure: { position: number, prize: number }[];
-  blindStructures: BlindStructureTemplate[];
   activeStructure: BlindLevel[];
-  setActiveStructure: (structure: BlindLevel[], structureId: string) => void;
   onClose: () => void;
 }
 
@@ -34,13 +31,10 @@ export default function PokerTimerModal({
     participants, 
     totalPrizePool,
     payoutStructure,
-    blindStructures, 
     activeStructure, 
-    setActiveStructure, 
     onClose 
 }: PokerTimerModalProps) {
   const nodeRef = useRef(null);
-  const [isStructureManagerOpen, setIsStructureManagerOpen] = useState(false);
   const timerStorageKey = `poker-timer-state-${event.id}`;
   
   const getInitialTimerState = <T,>(key: string, defaultValue: T): T => {
@@ -91,13 +85,6 @@ export default function PokerTimerModal({
     }
     return () => clearInterval(timerInterval);
   }, [isPaused, timeLeft]);
-
-  const resetTimerWithNewStructure = (newStructure: BlindLevel[]) => {
-      const newIndex = 0;
-      setCurrentLevelIndex(newIndex);
-      setTimeLeft(newStructure.length > 0 ? newStructure[newIndex].duration * 60 : 0);
-      setIsPaused(true);
-  }
 
   const goToNextLevel = () => {
     if (activeStructure.length === 0) return;
@@ -151,18 +138,6 @@ export default function PokerTimerModal({
 
   return (
     <>
-    {isStructureManagerOpen && (
-        <BlindStructureManager 
-            isOpen={isStructureManagerOpen}
-            onClose={() => setIsStructureManagerOpen(false)}
-            structures={blindStructures}
-            activeStructure={activeStructure}
-            onApplyStructure={(newStructure, newStructureId) => {
-                setActiveStructure(newStructure, newStructureId);
-                resetTimerWithNewStructure(newStructure);
-            }}
-        />
-    )}
     <Draggable nodeRef={nodeRef} handle=".drag-handle">
       <div
         ref={nodeRef}
@@ -281,5 +256,3 @@ export default function PokerTimerModal({
     </>
   );
 }
-
-    
