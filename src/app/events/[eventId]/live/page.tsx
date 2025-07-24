@@ -1,21 +1,60 @@
 
+'use client';
+
+import * as React from 'react';
 import { getEvents, getPlayers } from "@/lib/data-service";
 import type { Event, Player } from "@/lib/definitions";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { ArrowLeft, AlertTriangle } from "lucide-react";
+import { ArrowLeft, AlertTriangle, PlayCircle, Clock } from "lucide-react";
+import PokerTimerModal from '@/components/PokerTimerModal';
 
 async function getEventDetails(id: string): Promise<{ event?: Event, players: Player[] }> {
-  const event = (await getEvents()).find(e => e.id === id);
-  const players = await getPlayers();
-  return { event, players };
+  // This function would ideally fetch data, but we'll use mock data for now
+  // on the client-side, or it should be moved to a server component parent.
+  return { event: undefined, players: [] };
 }
 
-export default async function LiveTournamentPage({ params }: { params: { eventId: string } }) {
-  const { event, players } = await getEventDetails(params.eventId);
 
-  if (!event || event.status !== 'active') {
+export default function LiveTournamentPage({ params }: { params: { eventId: string } }) {
+  const [event, setEvent] = React.useState<Event | undefined>(undefined);
+  const [players, setPlayers] = React.useState<Player[]>([]);
+  const [loading, setLoading] = React.useState(true);
+  const [isTimerModalOpen, setIsTimerModalOpen] = React.useState(false);
+
+  React.useEffect(() => {
+    // Since we cannot use async functions for data fetching directly in a 'use client' component's
+    // main body for the initial render, we fetch data inside useEffect.
+    const fetchEventData = async () => {
+        try {
+            const eventData = (await getEvents()).find(e => e.id === params.eventId);
+            if (eventData && eventData.status === 'active') {
+                setEvent(eventData);
+                const allPlayers = await getPlayers();
+                setPlayers(allPlayers);
+            } else {
+                setEvent(undefined);
+            }
+        } catch (error) {
+            console.error("Failed to fetch event data:", error);
+            setEvent(undefined);
+        } finally {
+            setLoading(false);
+        }
+    };
+    fetchEventData();
+  }, [params.eventId]);
+
+  if (loading) {
+    return (
+        <div className="flex items-center justify-center min-h-[calc(100vh-10rem)]">
+            <p>Loading event data...</p>
+        </div>
+    );
+  }
+
+  if (!event) {
     return (
       <div className="space-y-6 text-center">
          <Button variant="outline" asChild className="mb-6 mr-auto">
@@ -45,6 +84,7 @@ export default async function LiveTournamentPage({ params }: { params: { eventId
 
   return (
     <div className="container mx-auto p-4 space-y-8">
+        {isTimerModalOpen && <PokerTimerModal event={event} onClose={() => setIsTimerModalOpen(false)} />}
         <div className="flex justify-between items-center">
             <div>
                 <Button variant="outline" asChild>
@@ -55,19 +95,14 @@ export default async function LiveTournamentPage({ params }: { params: { eventId
                 <h1 className="font-headline text-4xl font-bold mt-2">{event.name} - Live</h1>
                 <p className="text-muted-foreground">Managing the tournament in real-time.</p>
             </div>
+             <Button onClick={() => setIsTimerModalOpen(true)} size="lg">
+                <Clock className="mr-2 h-5 w-5" /> Open Poker Timer
+            </Button>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Left Column: Timer and Blinds */}
             <div className="lg:col-span-1 space-y-6">
-                 <Card>
-                    <CardHeader>
-                        <CardTitle>Poker Timer</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <p className="text-muted-foreground text-center py-12">Poker Timer component will be here.</p>
-                    </CardContent>
-                </Card>
                  <Card>
                     <CardHeader>
                         <CardTitle>Blind Structure</CardTitle>
