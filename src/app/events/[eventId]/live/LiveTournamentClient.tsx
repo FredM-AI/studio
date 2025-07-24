@@ -14,6 +14,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
+import LivePlayerTracking from '@/components/LivePlayerTracking';
 
 interface LiveTournamentClientProps {
     event: Event;
@@ -26,18 +27,17 @@ const defaultBlindStructure: BlindLevel[] = [
     { level: 2, smallBlind: 20, bigBlind: 40, duration: 20, isBreak: false },
 ];
 
-export default function LiveTournamentClient({ event, players, initialBlindStructures }: LiveTournamentClientProps) {
+export default function LiveTournamentClient({ event: initialEvent, players, initialBlindStructures }: LiveTournamentClientProps) {
+  const [event, setEvent] = React.useState<Event>(initialEvent);
   const [isTimerModalOpen, setIsTimerModalOpen] = React.useState(false);
   const [isStructureManagerOpen, setIsStructureManagerOpen] = React.useState(false);
   const [blindStructures, setBlindStructures] = React.useState<BlindStructureTemplate[]>(initialBlindStructures);
 
   const [activeStructureId, setActiveStructureId] = React.useState<string>(() => {
-    // If the event has a specific structure ID, use it. Otherwise, default to the first available one, or 'custom'.
     return event.blindStructureId || (initialBlindStructures.length > 0 ? initialBlindStructures[0].id : 'custom');
   });
   
   const [activeStructure, setActiveStructure] = React.useState<BlindLevel[]>(() => {
-    // Priority: 1. Event's embedded structure, 2. Look up by ID, 3. Default
     if (event.blindStructure && event.blindStructure.length > 0) {
       return event.blindStructure;
     }
@@ -51,7 +51,6 @@ export default function LiveTournamentClient({ event, players, initialBlindStruc
   const handleApplyStructure = (newLevels: BlindLevel[], newStructureId: string) => {
       setActiveStructure(newLevels);
       setActiveStructureId(newStructureId);
-      // Here you could also trigger a server action to persist this change to the event document
       console.log(`Applied new structure "${newStructureId}" to live event state.`);
   };
 
@@ -74,7 +73,6 @@ export default function LiveTournamentClient({ event, players, initialBlindStruc
                 activeStructure={activeStructure} 
                 setActiveStructure={(newStructure) => {
                     setActiveStructure(newStructure);
-                    // When structure is changed from timer, we might not have an ID. Mark as custom.
                     setActiveStructureId('custom');
                 }}
             />
@@ -127,7 +125,6 @@ export default function LiveTournamentClient({ event, players, initialBlindStruc
                                         {blindStructures.map(s => (
                                             <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
                                         ))}
-                                        {/* You can add a 'Custom' option if the current structure doesn't match any saved one */}
                                         {!blindStructures.some(bs => bs.id === activeStructureId) && activeStructureId === 'custom' && (
                                             <SelectItem value="custom" disabled>Custom</SelectItem>
                                         )}
@@ -168,7 +165,7 @@ export default function LiveTournamentClient({ event, players, initialBlindStruc
                         <CardDescription>Manage buy-ins, rebuys, and add-ons.</CardDescription>
                     </CardHeader>
                     <CardContent>
-                       <p className="text-muted-foreground text-center py-12">Player payment tracking table will be here.</p>
+                        <LivePlayerTracking event={event} allPlayers={players} />
                     </CardContent>
                 </Card>
                  <Card>
