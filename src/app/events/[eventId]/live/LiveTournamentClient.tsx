@@ -47,7 +47,6 @@ const sortPlayersWithGuestsLast = (a: Player, b: Player): number => {
 
 
 export default function LiveTournamentClient({ event: initialEvent, players: allPlayers, initialBlindStructures }: LiveTournamentClientProps) {
-  const [event, setEvent] = React.useState<Event>(initialEvent);
   const [isTimerModalOpen, setIsTimerModalOpen] = React.useState(false);
   const [isStructureManagerOpen, setIsStructureManagerOpen] = React.useState(false);
   const [blindStructures, setBlindStructures] = React.useState<BlindStructureTemplate[]>(initialBlindStructures);
@@ -69,6 +68,11 @@ export default function LiveTournamentClient({ event: initialEvent, players: all
     }
     return initialValue;
   };
+  
+  const [event, setEvent] = React.useState<Event>(() => {
+    const savedStartingStack = getInitialState('startingStack', initialEvent.startingStack);
+    return { ...initialEvent, startingStack: savedStartingStack };
+  });
 
   const [participants, setParticipants] = React.useState<ParticipantState[]>(() => 
     getInitialState('participants', [])
@@ -104,13 +108,14 @@ export default function LiveTournamentClient({ event: initialEvent, players: all
           participants,
           activeStructureId,
           activeStructure,
+          startingStack: event.startingStack,
         };
         window.localStorage.setItem(storageKey, JSON.stringify(stateToSave));
       } catch (error) {
         console.error('Error saving state to localStorage:', error);
       }
     }
-  }, [participants, activeStructureId, activeStructure, storageKey]);
+  }, [participants, activeStructureId, activeStructure, event.startingStack, storageKey]);
 
 
   React.useEffect(() => {
@@ -142,7 +147,7 @@ export default function LiveTournamentClient({ event: initialEvent, players: all
       setParticipants(initialParticipants);
       setAvailablePlayers(initialAvailablePlayers);
     }
-  }, [event, allPlayers]);
+  }, [initialEvent, allPlayers]); // Changed dependency from 'event' to 'initialEvent'
 
 
   const handleApplyStructure = (newLevels: BlindLevel[], newStructureId: string) => {
