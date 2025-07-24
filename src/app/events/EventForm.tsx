@@ -1,9 +1,9 @@
 
 'use client';
 
-import type { Event, Player, EventStatus, ServerEventFormState, Season } from '@/lib/definitions'; 
+import type { Event, Player, EventStatus, ServerEventFormState, Season, BlindStructureTemplate } from '@/lib/definitions'; 
 import * as React from 'react';
-import { useActionState } from 'react';
+import { useFormState } from 'react-dom';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
@@ -13,7 +13,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Switch } from '@/components/ui/switch';
-import { Trophy, PlusCircle, MinusCircle, Users, DollarSign, CalendarDays, Settings, Info, Repeat, Star, Gift, BarChart3, HelpCircle } from 'lucide-react'; 
+import { Trophy, PlusCircle, MinusCircle, Users, DollarSign, CalendarDays, Settings, Info, Repeat, Star, Gift, BarChart3, HelpCircle, Clock } from 'lucide-react'; 
 import Link from 'next/link';
 import { eventStatuses } from '@/lib/definitions';
 
@@ -21,11 +21,12 @@ interface EventFormProps {
   event?: Event;
   allPlayers: Player[];
   allSeasons: Season[]; 
+  blindStructures: BlindStructureTemplate[];
   action: (prevState: ServerEventFormState, formData: FormData) => Promise<ServerEventFormState>;
   formTitle: string;
   formDescription: string;
   submitButtonText: string;
-  defaultSeasonId?: string; // New prop for default season selection
+  defaultSeasonId?: string;
 }
 
 type PositionalResultEntry = {
@@ -68,15 +69,19 @@ const sortPlayersWithGuestsLast = (a: Player, b: Player): number => {
 };
 
 
-export default function EventForm({ event, allPlayers, allSeasons, action, formTitle, formDescription, submitButtonText, defaultSeasonId }: EventFormProps) {
+export default function EventForm({ event, allPlayers, allSeasons, blindStructures, action, formTitle, formDescription, submitButtonText, defaultSeasonId }: EventFormProps) {
   const initialState: ServerEventFormState = { message: null, errors: {} };
-  const [state, dispatch] = useActionState(action, initialState);
+  const [state, dispatch] = useFormState(action, initialState);
 
   const [selectedDate, setSelectedDate] = React.useState<Date | undefined>(undefined);
   const [currentStatus, setCurrentStatus] = React.useState<EventStatus>(event?.status || 'draft');
   
   const [selectedSeasonId, setSelectedSeasonId] = React.useState<string>(
      event?.seasonId || defaultSeasonId || NO_SEASON_SELECTED_VALUE
+  );
+  
+  const [selectedBlindStructureId, setSelectedBlindStructureId] = React.useState<string>(
+      event?.blindStructureId || (blindStructures.length > 0 ? blindStructures[0].id : 'NONE')
   );
 
   const [includeBounties, setIncludeBounties] = React.useState<boolean>(true);
@@ -119,15 +124,16 @@ export default function EventForm({ event, allPlayers, allSeasons, action, formT
     
     if (event?.id) { // Editing an existing event
       setSelectedSeasonId(event.seasonId || NO_SEASON_SELECTED_VALUE);
-      setIncludeBounties(event.includeBountiesInNet ?? true); // Set from event, default to true for old events
+      setIncludeBounties(event.includeBountiesInNet ?? true); 
+      setSelectedBlindStructureId(event.blindStructureId || (blindStructures.length > 0 ? blindStructures[0].id : 'NONE'));
     } else if (defaultSeasonId) { // Creating a new event with a default season
       setSelectedSeasonId(defaultSeasonId);
-      setIncludeBounties(true); // Default ON
+      setIncludeBounties(true); 
     } else { // Creating a new event without a default
       setSelectedSeasonId(NO_SEASON_SELECTED_VALUE);
-      setIncludeBounties(true); // Default ON
+      setIncludeBounties(true); 
     }
-  }, [event, defaultSeasonId]);
+  }, [event, defaultSeasonId, blindStructures]);
 
   React.useEffect(() => {
     const initialParticipantIds = new Set(event?.participants || []);
@@ -352,7 +358,7 @@ export default function EventForm({ event, allPlayers, allSeasons, action, formT
           {event?.id && <input type="hidden" name="id" defaultValue={event.id} />}
           <input type="hidden" name="resultsJson" value={resultsJson} />
           <input type="hidden" name="seasonId" value={selectedSeasonId === NO_SEASON_SELECTED_VALUE ? "" : selectedSeasonId} />
-
+          <input type="hidden" name="blindStructureId" value={selectedBlindStructureId === 'NONE' ? "" : selectedBlindStructureId} />
 
           <div className="space-y-4 p-4 border rounded-lg shadow-sm">
             <h3 className="font-headline text-lg flex items-center"><Info className="mr-2 h-5 w-5 text-primary" />Event Details</h3>
@@ -494,20 +500,40 @@ export default function EventForm({ event, allPlayers, allSeasons, action, formT
                 />
                 {state.errors?.mysteryKo && <p id="mysteryKo-error" className="text-sm text-destructive mt-1">{state.errors.mysteryKo.join(', ')}</p>}
               </div>
-              <div className="md:col-span-1 lg:col-span-3">
-                 <Label htmlFor="includeBountiesInNet" className="flex items-center space-x-2 pt-2">
-                    <Switch
-                        id="includeBountiesInNet"
-                        name="includeBountiesInNet"
-                        checked={includeBounties}
-                        onCheckedChange={setIncludeBounties}
-                    />
-                    <span>Include Bounties &amp; MSKO in Net Calculation</span>
-                    {state.errors?.includeBountiesInNet && <p className="text-sm text-destructive">{state.errors.includeBountiesInNet.join(', ')}</p>}
-                </Label>
-                <p className="text-xs text-muted-foreground mt-1 ml-12">If disabled, bounty/MSKO costs are not subtracted from player net results for this event.</p>
+              <div className="flex items-center space-x-2 pt-2">
+                  <Switch
+                      id="includeBountiesInNet"
+                      name="includeBountiesInNet"
+                      checked={includeBounties}
+                      onCheckedChange={setIncludeBounties}
+                  />
+                  <div>
+                    <Label htmlFor="includeBountiesInNet">Bounties in Net Calc</Label>
+                    <p className="text-xs text-muted-foreground">If off, bounty/MSKO costs are not subtracted from player net results.</p>
+                  </div>
               </div>
             </div>
+             <div className="pt-2"> 
+                <Label htmlFor="blindStructureId-select" className="flex items-center"><Clock className="mr-2 h-4 w-4 text-primary"/>Blind Structure</Label>
+                <Select 
+                    value={selectedBlindStructureId} 
+                    onValueChange={setSelectedBlindStructureId}
+                    name="blindStructureId"
+                >
+                  <SelectTrigger id="blindStructureId-select" aria-describedby="blindStructure-error" className="h-9">
+                    <SelectValue placeholder="-- Select a Structure --" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="NONE">-- No Structure --</SelectItem>
+                    {blindStructures.sort((a,b) => a.name.localeCompare(b.name)).map(structure => (
+                      <SelectItem key={structure.id} value={structure.id}>
+                        {structure.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {state.errors?.blindStructureId && <p id="blindStructure-error" className="text-sm text-destructive mt-1">{state.errors.blindStructureId.join(', ')}</p>}
+              </div>
           </div>
 
           <div className="space-y-4 p-4 border rounded-lg shadow-sm">

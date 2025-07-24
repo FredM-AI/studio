@@ -2,24 +2,26 @@
 'use client';
 
 import * as React from 'react';
-import type { Event, Player } from "@/lib/definitions";
+import type { Event, Player, BlindStructureTemplate } from "@/lib/definitions";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { ArrowLeft, Clock } from "lucide-react";
 import PokerTimerModal from '@/components/PokerTimerModal';
+import { getBlindStructures } from '@/lib/data-service';
 
 interface LiveTournamentClientProps {
     event: Event;
     players: Player[];
+    blindStructures: BlindStructureTemplate[];
 }
 
-export default function LiveTournamentClient({ event, players }: LiveTournamentClientProps) {
+export default function LiveTournamentClient({ event, players, blindStructures }: LiveTournamentClientProps) {
   const [isTimerModalOpen, setIsTimerModalOpen] = React.useState(false);
 
   return (
     <div className="container mx-auto p-4 space-y-8">
-        {isTimerModalOpen && <PokerTimerModal event={event} onClose={() => setIsTimerModalOpen(false)} />}
+        {isTimerModalOpen && <PokerTimerModal event={event} blindStructures={blindStructures} onClose={() => setIsTimerModalOpen(false)} />}
         <div className="flex justify-between items-center">
             <div>
                 <Button variant="outline" asChild>

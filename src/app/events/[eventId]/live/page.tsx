@@ -1,22 +1,23 @@
 
 import * as React from 'react';
-import { getEvents, getPlayers } from "@/lib/data-service";
-import type { Event, Player } from "@/lib/definitions";
+import { getEvents, getPlayers, getBlindStructures } from "@/lib/data-service";
+import type { Event, Player, BlindStructureTemplate } from "@/lib/definitions";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { ArrowLeft, AlertTriangle } from "lucide-react";
 import LiveTournamentClient from './LiveTournamentClient'; // Import the new client component
 
-async function getEventDetails(id: string): Promise<{ event?: Event, players: Player[] }> {
+async function getEventDetails(id: string): Promise<{ event?: Event, players: Player[], blindStructures: BlindStructureTemplate[] }> {
     const events = await getEvents();
     const event = events.find(e => e.id === id);
     const players = await getPlayers();
-    return { event, players };
+    const blindStructures = await getBlindStructures();
+    return { event, players, blindStructures };
 }
 
 export default async function LiveTournamentPage({ params }: { params: { eventId: string } }) {
-  const { event, players } = await getEventDetails(params.eventId);
+  const { event, players, blindStructures } = await getEventDetails(params.eventId);
 
   if (!event || event.status !== 'active') {
     return (
@@ -47,5 +48,5 @@ export default async function LiveTournamentPage({ params }: { params: { eventId
   }
 
   // Pass the server-fetched data to the client component
-  return <LiveTournamentClient event={event} players={players} />;
+  return <LiveTournamentClient event={event} players={players} blindStructures={blindStructures} />;
 }

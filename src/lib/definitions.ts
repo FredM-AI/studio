@@ -1,4 +1,5 @@
 
+
 export type PlayerStats = {
   gamesPlayed: number;
   wins: number;
@@ -52,6 +53,12 @@ export type BlindLevel = {
   isBreak: boolean;
 };
 
+export type BlindStructureTemplate = {
+  id: string;
+  name: string;
+  levels: BlindLevel[];
+}
+
 export type Event = {
   id: string; // UUID
   name: string;
@@ -69,6 +76,7 @@ export type Event = {
     distributionType: "automatic" | "custom";
     distribution: PrizeDistribution[]; // Only if custom
   };
+  blindStructureId?: string;
   blindStructure?: BlindLevel[];
   participants: string[]; // Array of Player IDs
   results: EventResult[]; // Only if completed
@@ -116,6 +124,7 @@ export type EventFormState = {
     participantIds?: string[];
     status?: string[];
     seasonId?: string[]; // Added seasonId for form errors
+    blindStructureId?: string[];
     results?: string[];
     resultsJson?: string[];
     _form?: string[];
@@ -134,7 +143,7 @@ export type EventResultInput = {
   mysteryKoWon: string;
 };
 
-// Type for EventForm to use in useActionState
+// Type for EventForm to use in useFormState
 export type ServerEventFormState = EventFormState;
 
 

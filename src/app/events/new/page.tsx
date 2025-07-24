@@ -1,8 +1,8 @@
 
 import EventForm from '@/app/events/EventForm';
 import { createEvent } from '@/app/events/actions';
-import { getPlayers, getSeasons } from '@/lib/data-service'; 
-import type { Player, Season } from '@/lib/definitions'; 
+import { getPlayers, getSeasons, getBlindStructures } from '@/lib/data-service'; 
+import type { Player, Season, BlindStructureTemplate } from '@/lib/definitions'; 
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
@@ -16,6 +16,7 @@ interface NewEventPageProps {
 export default async function NewEventPage({ searchParams }: NewEventPageProps) {
   const allPlayers: Player[] = await getPlayers();
   const allSeasons: Season[] = await getSeasons(); 
+  const blindStructures: BlindStructureTemplate[] = await getBlindStructures();
   const defaultSeasonId = searchParams?.seasonId;
 
   return (
@@ -27,12 +28,13 @@ export default async function NewEventPage({ searchParams }: NewEventPageProps) 
       </Button>
       <EventForm
         allPlayers={allPlayers}
-        allSeasons={allSeasons} 
+        allSeasons={allSeasons}
+        blindStructures={blindStructures}
         action={createEvent}
         formTitle="Create New Event"
         formDescription="Fill in the details to schedule a new poker event."
         submitButtonText="Create Event"
-        defaultSeasonId={defaultSeasonId} // Pass the default season ID
+        defaultSeasonId={defaultSeasonId}
       />
     </div>
   );

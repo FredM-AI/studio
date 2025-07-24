@@ -3,10 +3,11 @@
 
 import { z } from 'zod';
 import { db } from '@/lib/firebase';
-import type { Event, EventStatus } from '@/lib/definitions';
+import type { Event, EventStatus, BlindStructureTemplate } from '@/lib/definitions';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import type { EventFormState } from '@/lib/definitions';
+import { getBlindStructures } from '@/lib/data-service';
 
 const EVENTS_COLLECTION = 'events';
 
@@ -30,7 +31,7 @@ const EventResultInputSchema = z.object({
   mysteryKoWon: z.coerce.number().int().nonnegative({ message: "Mystery KO won must be non-negative." }).optional().default(0),
 });
 
-const NO_SEASON_ID_VALUE = "NONE"; // Value for "No Season" option
+const NO_SEASON_ID_VALUE = "NONE";
 
 const EventFormSchema = z.object({
   id: z.string().optional(),
@@ -43,7 +44,8 @@ const EventFormSchema = z.object({
   includeBountiesInNet: z.preprocess((val) => val === 'on' || val === true, z.boolean()),
   maxPlayers: z.coerce.number().int().positive({ message: 'Max players must be a positive integer.' }).optional(),
   prizePoolTotal: z.coerce.number().int().nonnegative({ message: 'Prize pool total must be a non-negative integer.' }),
-  seasonId: z.string().optional(), // Optional season ID
+  seasonId: z.string().optional(),
+  blindStructureId: z.string().optional(),
   participantIds: z.preprocess(
     (val) => (typeof val === 'string' && val ? val.split(',').filter(id => id.trim() !== '') : Array.isArray(val) ? val : []),
     z.array(z.string()).optional().default([])
@@ -133,6 +135,14 @@ export async function createEvent(prevState: EventFormState, formData: FormData)
   const eventId = crypto.randomUUID();
   const seasonIdValue = data.seasonId && data.seasonId !== NO_SEASON_ID_VALUE ? data.seasonId : undefined;
 
+  let blindStructure;
+  if (data.blindStructureId && data.blindStructureId !== 'NONE') {
+      const allBlindStructures = await getBlindStructures();
+      const selectedStructure = allBlindStructures.find(bs => bs.id === data.blindStructureId);
+      if (selectedStructure) {
+          blindStructure = selectedStructure.levels;
+      }
+  }
 
   const eventDataForFirestore: Omit<Event, 'createdAt' | 'updatedAt'> & { createdAt?: string, updatedAt?: string, seasonId?: string | null } = {
     id: eventId,
@@ -146,6 +156,8 @@ export async function createEvent(prevState: EventFormState, formData: FormData)
     maxPlayers: data.maxPlayers,
     status: data.status as EventStatus,
     seasonId: seasonIdValue,
+    blindStructureId: data.blindStructureId,
+    blindStructure: blindStructure,
     prizePool: {
       total: data.prizePoolTotal,
       distributionType: 'automatic',
@@ -209,6 +221,15 @@ export async function updateEvent(prevState: EventFormState, formData: FormData)
   }
 
   const seasonIdValue = data.seasonId && data.seasonId !== NO_SEASON_ID_VALUE ? data.seasonId : undefined;
+  
+  let blindStructure;
+  if (data.blindStructureId && data.blindStructureId !== 'NONE') {
+      const allBlindStructures = await getBlindStructures();
+      const selectedStructure = allBlindStructures.find(bs => bs.id === data.blindStructureId);
+      if (selectedStructure) {
+          blindStructure = selectedStructure.levels;
+      }
+  }
 
 
   try {
@@ -231,6 +252,8 @@ export async function updateEvent(prevState: EventFormState, formData: FormData)
       maxPlayers: data.maxPlayers,
       status: data.status as EventStatus,
       seasonId: seasonIdValue,
+      blindStructureId: data.blindStructureId,
+      blindStructure: blindStructure,
       prizePool: {
         ...existingEvent.prizePool,
         total: data.prizePoolTotal,

@@ -1,7 +1,7 @@
 
 'use server';
 
-import type { Player, Event, Season, AppSettings } from './definitions';
+import type { Player, Event, Season, AppSettings, BlindStructureTemplate } from './definitions';
 import { db } from './firebase';
 
 // Constants for collection names
@@ -9,6 +9,7 @@ const PLAYERS_COLLECTION = 'players';
 const EVENTS_COLlection = 'events';
 const SEASONS_COLLECTION = 'seasons';
 const SETTINGS_COLLECTION = 'settings';
+const BLIND_STRUCTURES_COLLECTION = 'blindStructures';
 const GLOBAL_SETTINGS_DOC_ID = 'global';
 
 // --- Data Fetching Functions ---
@@ -64,6 +65,8 @@ export async function getEvents(): Promise<Event[]> {
       status: data.status,
       seasonId: data.seasonId,
       prizePool: data.prizePool || { total: 0, distributionType: 'automatic', distribution: [] },
+      blindStructureId: data.blindStructureId,
+      blindStructure: data.blindStructure,
       participants: data.participants || [],
       results: data.results || [],
       createdAt: data.createdAt,
@@ -115,4 +118,28 @@ export async function getSettings(): Promise<AppSettings> {
 export async function saveSettings(settings: AppSettings): Promise<void> {
   const settingsDocRef = db.collection(SETTINGS_COLLECTION).doc(GLOBAL_SETTINGS_DOC_ID);
   await settingsDocRef.set(settings);
+}
+
+// Blind Structures
+export async function getBlindStructures(): Promise<BlindStructureTemplate[]> {
+    const blindCol = db.collection(BLIND_STRUCTURES_COLLECTION);
+    const blindSnapshot = await blindCol.get();
+    if (blindSnapshot.empty) {
+        console.log("Firestore 'blindStructures' collection is empty.");
+        return [];
+    }
+    const blindList = blindSnapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+            id: doc.id,
+            name: data.name,
+            levels: data.levels || [],
+        } as BlindStructureTemplate;
+    });
+    return blindList;
+}
+
+export async function saveBlindStructure(structure: BlindStructureTemplate): Promise<void> {
+    const blindDocRef = db.collection(BLIND_STRUCTURES_COLLECTION).doc(structure.id);
+    await blindDocRef.set(structure);
 }

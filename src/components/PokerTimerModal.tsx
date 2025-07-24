@@ -2,14 +2,16 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import type { Event, BlindLevel } from '@/lib/definitions';
+import type { Event, BlindLevel, BlindStructureTemplate } from '@/lib/definitions';
 import Draggable from 'react-draggable';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { X, Play, Pause, FastForward, Rewind, Settings, Volume2, Maximize } from 'lucide-react';
+import BlindStructureManager from './BlindStructureManager';
 
 interface PokerTimerModalProps {
   event: Event;
+  blindStructures: BlindStructureTemplate[];
   onClose: () => void;
 }
 
@@ -26,13 +28,15 @@ const defaultBlindStructure: BlindLevel[] = [
 ];
 
 const formatTime = (seconds: number) => {
+  if (seconds < 0) seconds = 0;
   const mins = Math.floor(seconds / 60);
   const secs = seconds % 60;
   return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
 };
 
-export default function PokerTimerModal({ event, onClose }: PokerTimerModalProps) {
+export default function PokerTimerModal({ event, blindStructures, onClose }: PokerTimerModalProps) {
   const nodeRef = useRef(null);
+  const [isStructureManagerOpen, setIsStructureManagerOpen] = useState(false);
   const [structure, setStructure] = useState<BlindLevel[]>(event.blindStructure || defaultBlindStructure);
   const [currentLevelIndex, setCurrentLevelIndex] = useState(0);
   const [timeLeft, setTimeLeft] = useState(structure[0].duration * 60);
@@ -41,52 +45,75 @@ export default function PokerTimerModal({ event, onClose }: PokerTimerModalProps
 
   useEffect(() => {
     let timerInterval: NodeJS.Timeout;
-    if (!isPaused) {
+    if (!isPaused && timeLeft > 0) {
       timerInterval = setInterval(() => {
         setTimeLeft(prev => prev - 1);
         setTotalTime(prev => prev + 1);
       }, 1000);
     }
     return () => clearInterval(timerInterval);
-  }, [isPaused]);
+  }, [isPaused, timeLeft]);
 
   useEffect(() => {
-    if (timeLeft <= 0) {
+    if (timeLeft <= 0 && !isPaused) {
       goToNextLevel();
     }
-  }, [timeLeft]);
+  }, [timeLeft, isPaused]);
+  
+  const resetTimerWithNewStructure = (newStructure: BlindLevel[]) => {
+      setStructure(newStructure);
+      setCurrentLevelIndex(0);
+      setTimeLeft(newStructure[0].duration * 60);
+      setIsPaused(true);
+  }
 
   const goToNextLevel = () => {
+    if (structure.length === 0) return;
     const nextLevelIndex = (currentLevelIndex + 1) % structure.length;
     setCurrentLevelIndex(nextLevelIndex);
     setTimeLeft(structure[nextLevelIndex].duration * 60);
   };
 
   const goToPrevLevel = () => {
+    if (structure.length === 0) return;
     const prevLevelIndex = (currentLevelIndex - 1 + structure.length) % structure.length;
     setCurrentLevelIndex(prevLevelIndex);
     setTimeLeft(structure[prevLevelIndex].duration * 60);
   };
   
-  const currentLevel = structure[currentLevelIndex];
-  const nextLevel = structure[(currentLevelIndex + 1) % structure.length];
+  const currentLevel = structure[currentLevelIndex] || { level: 0, smallBlind: 0, bigBlind: 0, duration: 0, isBreak: true };
+  const nextLevel = structure.length > 1 ? structure[(currentLevelIndex + 1) % structure.length] : currentLevel;
 
   const timeToNextBreak = () => {
-    let time = 0;
-    let tempIndex = currentLevelIndex;
-    if (currentLevel.isBreak) return 0;
-
-    time += timeLeft;
-    tempIndex = (tempIndex + 1) % structure.length;
-    while(tempIndex < structure.length && !structure[tempIndex].isBreak) {
+    if (structure.length === 0 || currentLevel.isBreak) return 0;
+    
+    let time = timeLeft;
+    let tempIndex = (currentLevelIndex + 1) % structure.length;
+    
+    // Loop a maximum of structure.length times to prevent infinite loops
+    for(let i=0; i < structure.length; i++) {
+        if(structure[tempIndex].isBreak) {
+            return time;
+        }
         time += structure[tempIndex].duration * 60;
         tempIndex = (tempIndex + 1) % structure.length;
     }
-    return time;
+
+    return time; // No break found in the structure
   };
 
 
   return (
+    <>
+    {isStructureManagerOpen && (
+        <BlindStructureManager 
+            isOpen={isStructureManagerOpen}
+            onClose={() => setIsStructureManagerOpen(false)}
+            structures={blindStructures}
+            activeStructure={structure}
+            onApplyStructure={resetTimerWithNewStructure}
+        />
+    )}
     <Draggable nodeRef={nodeRef} handle=".drag-handle">
       <div
         ref={nodeRef}
@@ -141,7 +168,7 @@ export default function PokerTimerModal({ event, onClose }: PokerTimerModalProps
                 {formatTime(nextLevel.duration * 60)}
               </div>
               <div className="w-1/3 text-center text-gray-300">
-                Next: Level {nextLevel.level}
+                Next: {nextLevel.isBreak ? 'Break' : `Level ${nextLevel.level}`}
               </div>
               <div className="text-right w-1/3">
                 <p className="font-bold">{nextLevel.isBreak ? 'BREAK' : `${nextLevel.smallBlind} / ${nextLevel.bigBlind}`}</p>
@@ -183,12 +210,13 @@ export default function PokerTimerModal({ event, onClose }: PokerTimerModalProps
              </div>
              <div className="flex items-center gap-2">
                 <Button variant="ghost" size="icon"><Volume2 className="h-5 w-5"/></Button>
-                <Button variant="ghost" size="icon"><Settings className="h-5 w-5"/></Button>
+                <Button variant="ghost" size="icon" onClick={() => setIsStructureManagerOpen(true)}><Settings className="h-5 w-5"/></Button>
                 <Button variant="ghost" size="icon"><Maximize className="h-5 w-5"/></Button>
              </div>
           </div>
         </div>
       </div>
     </Draggable>
+    </>
   );
 }

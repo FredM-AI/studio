@@ -1,0 +1,43 @@
+
+[
+    {
+        "id": "std-20-min",
+        "name": "Standard 20min",
+        "levels": [
+            { "level": 1, "smallBlind": 25, "bigBlind": 50, "duration": 20, "isBreak": false },
+            { "level": 2, "smallBlind": 50, "bigBlind": 100, "duration": 20, "isBreak": false },
+            { "level": 3, "smallBlind": 75, "bigBlind": 150, "duration": 20, "isBreak": false },
+            { "level": 4, "smallBlind": 100, "bigBlind": 200, "duration": 20, "isBreak": false },
+            { "level": 5, "smallBlind": 150, "bigBlind": 300, "duration": 20, "isBreak": false },
+            { "level": 0, "smallBlind": 0, "bigBlind": 0, "duration": 10, "isBreak": true },
+            { "level": 6, "smallBlind": 200, "bigBlind": 400, "duration": 15, "isBreak": false },
+            { "level": 7, "smallBlind": 300, "bigBlind": 600, "duration": 15, "isBreak": false },
+            { "level": 8, "smallBlind": 400, "bigBlind": 800, "duration": 15, "isBreak": false },
+            { "level": 9, "smallBlind": 600, "bigBlind": 1200, "duration": 15, "isBreak": false },
+            { "level": 10, "smallBlind": 800, "bigBlind": 1600, "duration": 15, "isBreak": false },
+            { "level": 0, "smallBlind": 0, "bigBlind": 0, "duration": 10, "isBreak": true },
+            { "level": 11, "smallBlind": 1000, "bigBlind": 2000, "duration": 12, "isBreak": false },
+            { "level": 12, "smallBlind": 1500, "bigBlind": 3000, "duration": 12, "isBreak": false },
+            { "level": 13, "smallBlind": 2000, "bigBlind": 4000, "duration": 12, "isBreak": false },
+            { "level": 14, "smallBlind": 3000, "bigBlind": 6000, "duration": 10, "isBreak": false },
+            { "level": 15, "smallBlind": 4000, "bigBlind": 8000, "duration": 10, "isBreak": false }
+        ]
+    },
+    {
+        "id": "turbo-15-min",
+        "name": "Turbo 15min",
+        "levels": [
+            { "level": 1, "smallBlind": 25, "bigBlind": 50, "duration": 15, "isBreak": false },
+            { "level": 2, "smallBlind": 50, "bigBlind": 100, "duration": 15, "isBreak": false },
+            { "level": 3, "smallBlind": 100, "bigBlind": 200, "duration": 15, "isBreak": false },
+            { "level": 4, "smallBlind": 150, "bigBlind": 300, "duration": 15, "isBreak": false },
+            { "level": 5, "smallBlind": 200, "bigBlind": 400, "duration": 15, "isBreak": false },
+            { "level": 0, "smallBlind": 0, "bigBlind": 0, "duration": 5, "isBreak": true },
+            { "level": 6, "smallBlind": 300, "bigBlind": 600, "duration": 12, "isBreak": false },
+            { "level": 7, "smallBlind": 400, "bigBlind": 800, "duration": 12, "isBreak": false },
+            { "level": 8, "smallBlind": 600, "bigBlind": 1200, "duration": 12, "isBreak": false },
+            { "level": 9, "smallBlind": 800, "bigBlind": 1600, "duration": 10, "isBreak": false },
+            { "level": 10, "smallBlind": 1000, "bigBlind": 2000, "duration": 10, "isBreak": false }
+        ]
+    }
+]
