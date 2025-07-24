@@ -70,9 +70,7 @@ export default function LiveTournamentClient({ event: initialEvent, players: all
   };
   
   const [event, setEvent] = React.useState<Event>(() => {
-    // Initialize with the event passed from server props first
     const currentEvent = { ...initialEvent };
-    // Then, try to override with a value from localStorage if it exists
     const savedStartingStack = getInitialState('startingStack', currentEvent.startingStack);
     currentEvent.startingStack = savedStartingStack;
     return currentEvent;
@@ -95,13 +93,14 @@ export default function LiveTournamentClient({ event: initialEvent, players: all
         };
     }).sort((a,b) => a.name.localeCompare(b.name));
 
-    // If we're initializing from event data, save it to localStorage immediately.
     if (typeof window !== 'undefined') {
       try {
         const item = window.localStorage.getItem(storageKey);
         const currentState = item ? JSON.parse(item) : {};
-        currentState.participants = initialParticipants;
-        window.localStorage.setItem(storageKey, JSON.stringify(currentState));
+        if(!currentState.participants) {
+          currentState.participants = initialParticipants;
+          window.localStorage.setItem(storageKey, JSON.stringify(currentState));
+        }
       } catch (error) {
         console.error('Error saving initial participants to localStorage:', error);
       }
@@ -112,26 +111,20 @@ export default function LiveTournamentClient({ event: initialEvent, players: all
   const [availablePlayers, setAvailablePlayers] = React.useState<Player[]>([]);
 
   const [activeStructureId, setActiveStructureId] = React.useState<string>(() => {
-    const savedId = getInitialState('activeStructureId', null);
-    if (savedId) return savedId;
-    return event.blindStructureId || (initialBlindStructures.length > 0 ? initialBlindStructures[0].id : 'custom');
+    return getInitialState('activeStructureId', event.blindStructureId || (initialBlindStructures.length > 0 ? initialBlindStructures[0].id : 'custom'));
   });
   
   const [activeStructure, setActiveStructure] = React.useState<BlindLevel[]>(() => {
     const savedStructure = getInitialState('activeStructure', null);
     if(savedStructure) return savedStructure;
     
-    if (event.blindStructure && event.blindStructure.length > 0) {
-      return event.blindStructure;
-    }
     if (activeStructureId !== 'custom') {
         const found = initialBlindStructures.find(bs => bs.id === activeStructureId);
         if (found) return found.levels;
     }
-    return defaultBlindStructure;
+    return initialEvent.blindStructure || defaultBlindStructure;
   });
 
-  // Save state to localStorage whenever it changes
   React.useEffect(() => {
     if (typeof window !== 'undefined') {
       try {
@@ -195,8 +188,6 @@ export default function LiveTournamentClient({ event: initialEvent, players: all
           isGuest: player.isGuest || false,
           rebuys: 0,
       }].sort((a,b) => a.name.localeCompare(b.name)));
-      
-      setAvailablePlayers(prev => prev.filter(p => p.id !== player.id));
   };
 
   const removeParticipant = (participantId: string) => {
@@ -207,6 +198,46 @@ export default function LiveTournamentClient({ event: initialEvent, players: all
       setParticipants(prev => prev.filter(p => p.id !== participantId));
   };
   
+  const { totalPrizePool, payoutStructure } = React.useMemo(() => {
+    const numParticipants = participants.length;
+    const totalRebuys = participants.reduce((sum, p) => sum + p.rebuys, 0);
+
+    const calculatedPrizePool = (numParticipants * (event.buyIn || 0)) + (totalRebuys * (event.rebuyPrice || 0));
+    
+    const structure: {position: number, prize: number}[] = [];
+
+    if (numParticipants > 0 && calculatedPrizePool > 0) {
+        if (numParticipants < 14) {
+            if (numParticipants >= 3) {
+                structure.push({ position: 1, prize: Math.round(calculatedPrizePool * 0.50) });
+                structure.push({ position: 2, prize: Math.round(calculatedPrizePool * 0.30) });
+                structure.push({ position: 3, prize: Math.round(calculatedPrizePool * 0.20) });
+            } else if (numParticipants === 2) {
+                structure.push({ position: 1, prize: Math.round(calculatedPrizePool * 0.65) });
+                structure.push({ position: 2, prize: Math.round(calculatedPrizePool * 0.35) });
+            } else {
+                structure.push({ position: 1, prize: calculatedPrizePool });
+            }
+        } else {
+            const fourthPrize = event.buyIn || 0;
+            if (calculatedPrizePool > fourthPrize) {
+                const remainingPool = calculatedPrizePool - fourthPrize;
+                structure.push({ position: 1, prize: Math.round(remainingPool * 0.50) });
+                structure.push({ position: 2, prize: Math.round(remainingPool * 0.30) });
+                structure.push({ position: 3, prize: Math.round(remainingPool * 0.20) });
+                structure.push({ position: 4, prize: fourthPrize });
+            } else {
+                structure.push({ position: 1, prize: Math.round(calculatedPrizePool * 0.50) });
+                structure.push({ position: 2, prize: Math.round(calculatedPrizePool * 0.30) });
+                structure.push({ position: 3, prize: Math.round(calculatedPrizePool * 0.20) });
+            }
+        }
+    }
+    
+    return { totalPrizePool: calculatedPrizePool, payoutStructure: structure.sort((a,b) => a.position - b.position) };
+  }, [participants, event.buyIn, event.rebuyPrice]);
+
+
   const totalRebuys = participants.reduce((sum, p) => sum + p.rebuys, 0);
   const totalChips = (participants.length + totalRebuys) * (event.startingStack || 0);
   const avgStack = participants.length > 0 ? Math.floor(totalChips / participants.length) : 0;
@@ -217,8 +248,8 @@ export default function LiveTournamentClient({ event: initialEvent, players: all
             <PokerTimerModal 
                 event={event} 
                 participants={participants}
-                totalPrizePool={0}
-                payoutStructure={[]}
+                totalPrizePool={totalPrizePool}
+                payoutStructure={payoutStructure}
                 blindStructures={blindStructures} 
                 onClose={() => setIsTimerModalOpen(false)} 
                 activeStructure={activeStructure} 
