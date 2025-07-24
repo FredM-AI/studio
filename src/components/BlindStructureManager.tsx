@@ -2,7 +2,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useFormState } from 'react-dom';
+import { useActionState } from 'react';
 import type { BlindLevel, BlindStructureTemplate } from '@/lib/definitions';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
@@ -49,8 +49,7 @@ export default function BlindStructureManager({ isOpen, onClose, structures, act
   const formRef = React.useRef<HTMLFormElement>(null);
 
   const initialState: BlindStructureFormState = { message: null, errors: {}, success: false };
-  const [state, formAction] = useFormState(saveBlindStructureAction, initialState);
-  const isPending = (formRef.current as any)?.formState?.isSubmitting;
+  const [state, formAction, isPending] = useActionState(saveBlindStructureAction, initialState);
 
 
   useEffect(() => {
