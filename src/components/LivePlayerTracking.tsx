@@ -58,6 +58,14 @@ export default function LivePlayerTracking({
         .filter(p => p.eliminatedPosition !== null)
         .sort((a, b) => (b.eliminatedPosition || 0) - (a.eliminatedPosition || 0));
 
+    const lastEliminatedId = React.useMemo(() => {
+        if (eliminatedParticipants.length === 0) return null;
+        const lastEliminated = eliminatedParticipants.reduce((last, current) => 
+            (current.eliminatedPosition || 0) < (last.eliminatedPosition || 0) ? current : last
+        );
+        return lastEliminated.id;
+    }, [eliminatedParticipants]);
+
     if (allPlayers.length === 0) {
         return <p className="text-muted-foreground text-center py-12">No players found in the system.</p>
     }
@@ -160,9 +168,6 @@ export default function LivePlayerTracking({
                 <div className="space-y-3">
                     <div className="flex justify-between items-center">
                         <h4 className="font-medium flex items-center gap-2">Ranking ({eliminatedParticipants.length})</h4>
-                        <Button variant="outline" size="sm" onClick={onUndoLastElimination} disabled={eliminatedParticipants.length === 0}>
-                            <Undo className="mr-2 h-3 w-3" /> Undo Last
-                        </Button>
                     </div>
                      <ScrollArea className="h-[452px] border rounded-md">
                         <Table>
@@ -170,6 +175,7 @@ export default function LivePlayerTracking({
                                 <TableRow>
                                     <TableHead className="w-[60px]">Pos.</TableHead>
                                     <TableHead>Player</TableHead>
+                                    <TableHead className="w-[50px] text-right"> </TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -177,11 +183,18 @@ export default function LivePlayerTracking({
                                     <TableRow key={p.id}>
                                         <TableCell className="font-bold">{p.eliminatedPosition}</TableCell>
                                         <TableCell>{p.name}</TableCell>
+                                        <TableCell className="text-right">
+                                            {p.id === lastEliminatedId && (
+                                                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onUndoLastElimination} title="Undo Elimination">
+                                                    <Undo className="h-4 w-4 text-muted-foreground" />
+                                                </Button>
+                                            )}
+                                        </TableCell>
                                     </TableRow>
                                 ))}
                                 {eliminatedParticipants.length === 0 && (
                                      <TableRow>
-                                        <TableCell colSpan={2} className="h-24 text-center text-muted-foreground">
+                                        <TableCell colSpan={3} className="h-24 text-center text-muted-foreground">
                                             No players eliminated yet.
                                         </TableCell>
                                     </TableRow>

@@ -70,8 +70,8 @@ export default function LiveTournamentClient({ event: initialEvent, players: all
   };
   
   const [event, setEvent] = React.useState<Event>(() => {
-    const savedStartingStack = getInitialState('startingStack', initialEvent.startingStack);
     // Initialize with all properties from initialEvent, then override startingStack if saved value exists
+    const savedStartingStack = getInitialState('startingStack', initialEvent.startingStack);
     return { ...initialEvent, startingStack: savedStartingStack };
   });
 
@@ -100,7 +100,7 @@ export default function LiveTournamentClient({ event: initialEvent, players: all
         // If there are no participants in the saved state, we initialize them.
         if(!currentState.participants) {
           currentState.participants = initialParticipants;
-          currentState.startingStack = initialEvent.startingStack;
+          currentState.startingStack = event.startingStack; // Use event from state
           window.localStorage.setItem(storageKey, JSON.stringify(currentState));
         }
       } catch (error) {
@@ -279,7 +279,8 @@ export default function LiveTournamentClient({ event: initialEvent, players: all
                 onClose={() => setIsTimerModalOpen(false)} 
                 activeStructure={activeStructure} 
                 setActiveStructure={(newStructure, newStructureId) => {
-                  setActiveStructure(newStructure, newStructureId);
+                  setActiveStructure(newStructure);
+                  setEvent(prev => ({...prev, blindStructureId: newStructureId, blindStructure: newStructure}));
                 }}
             />
         )}
@@ -373,7 +374,7 @@ export default function LiveTournamentClient({ event: initialEvent, players: all
                 <CardContent>
                     <LivePrizePool 
                     participants={participants}
-                    buyIn={event.buyIn}
+                    buyIn={event.buyIn || 0}
                     rebuyPrice={event.rebuyPrice}
                     />
                 </CardContent>
