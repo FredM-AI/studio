@@ -3,6 +3,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import type { Event, BlindLevel, BlindStructureTemplate } from '@/lib/definitions';
+import type { ParticipantState } from './LivePlayerTracking';
 import Draggable from 'react-draggable';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -11,6 +12,9 @@ import BlindStructureManager from './BlindStructureManager';
 
 interface PokerTimerModalProps {
   event: Event;
+  participants: ParticipantState[];
+  totalPrizePool: number;
+  payoutStructure: { position: number, prize: number }[];
   blindStructures: BlindStructureTemplate[];
   activeStructure: BlindLevel[];
   setActiveStructure: (structure: BlindLevel[], structureId: string) => void;
@@ -24,7 +28,16 @@ const formatTime = (seconds: number) => {
   return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
 };
 
-export default function PokerTimerModal({ event, blindStructures, activeStructure, setActiveStructure, onClose }: PokerTimerModalProps) {
+export default function PokerTimerModal({ 
+    event, 
+    participants, 
+    totalPrizePool,
+    payoutStructure,
+    blindStructures, 
+    activeStructure, 
+    setActiveStructure, 
+    onClose 
+}: PokerTimerModalProps) {
   const nodeRef = useRef(null);
   const [isStructureManagerOpen, setIsStructureManagerOpen] = useState(false);
   const [currentLevelIndex, setCurrentLevelIndex] = useState(0);
@@ -73,6 +86,7 @@ export default function PokerTimerModal({ event, blindStructures, activeStructur
   
   const currentLevel = activeStructure[currentLevelIndex] || { level: 0, smallBlind: 0, bigBlind: 0, duration: 0, isBreak: true };
   const nextLevel = activeStructure.length > 1 ? activeStructure[(currentLevelIndex + 1) % activeStructure.length] : currentLevel;
+  const totalRebuys = participants.reduce((sum, p) => sum + p.rebuys, 0);
 
   const timeToNextBreak = () => {
     if (activeStructure.length === 0 || currentLevel.isBreak) return 0;
@@ -170,21 +184,22 @@ export default function PokerTimerModal({ event, blindStructures, activeStructur
             <div className="mt-6 grid grid-cols-3 gap-6 text-sm">
                 <div className="bg-black/20 p-3 rounded">
                     <h4 className="font-bold border-b border-gray-500 pb-1 mb-2">Status</h4>
-                    <div className="flex justify-between"><span>Players:</span> <span>0/0</span></div>
-                    <div className="flex justify-between"><span>Rebuys:</span> <span>0</span></div>
+                    <div className="flex justify-between"><span>Players:</span> <span>{participants.length}</span></div>
+                    <div className="flex justify-between"><span>Rebuys:</span> <span>{totalRebuys}</span></div>
                     <div className="flex justify-between"><span>Addons:</span> <span>0</span></div>
                 </div>
                  <div className="bg-black/20 p-3 rounded">
                     <h4 className="font-bold border-b border-gray-500 pb-1 mb-2">Statistics</h4>
                     <div className="flex justify-between"><span>Avg. stack:</span> <span>0</span></div>
                     <div className="flex justify-between"><span>Total chips:</span> <span>0</span></div>
-                    <div className="flex justify-between"><span>Total prize:</span> <span className="font-bold">€0</span></div>
+                    <div className="flex justify-between"><span>Total prize:</span> <span className="font-bold">€{totalPrizePool}</span></div>
                 </div>
                  <div className="bg-black/20 p-3 rounded">
                     <h4 className="font-bold border-b border-gray-500 pb-1 mb-2">Prizes</h4>
-                    <div className="flex justify-between"><span>1st:</span> <span className="font-bold">€0</span></div>
-                    <div className="flex justify-between"><span>2nd:</span> <span className="font-bold">€0</span></div>
-                    <div className="flex justify-between"><span>3rd:</span> <span className="font-bold">€0</span></div>
+                    {payoutStructure.map(p => (
+                       <div className="flex justify-between" key={p.position}><span>{p.position}.</span> <span className="font-bold">€{p.prize}</span></div>
+                    ))}
+                    {payoutStructure.length === 0 && <p className="text-xs text-gray-400">Not enough data</p>}
                 </div>
             </div>
 

@@ -139,11 +139,51 @@ export default function LiveTournamentClient({ event: initialEvent, players: all
       setParticipants(prev => prev.filter(p => p.id !== participantId));
   };
 
+  // Centralized Prize Pool Calculation
+  const { totalPrizePool, payoutStructure } = React.useMemo(() => {
+    const numParticipants = participants.length;
+    const totalRebuys = participants.reduce((sum, p) => sum + p.rebuys, 0);
+    const calculatedPrizePool = (numParticipants * (event.buyIn || 0)) + (totalRebuys * (event.rebuyPrice || 0));
+    const structure = [];
+
+    if (numParticipants > 0 && calculatedPrizePool > 0) {
+        if (numParticipants < 14) {
+            if (numParticipants >= 3) {
+                structure.push({ position: 1, prize: Math.round(calculatedPrizePool * 0.50) });
+                structure.push({ position: 2, prize: Math.round(calculatedPrizePool * 0.30) });
+                structure.push({ position: 3, prize: Math.round(calculatedPrizePool * 0.20) });
+            } else if (numParticipants === 2) {
+                structure.push({ position: 1, prize: Math.round(calculatedPrizePool * 0.65) });
+                structure.push({ position: 2, prize: Math.round(calculatedPrizePool * 0.35) });
+            } else {
+                structure.push({ position: 1, prize: calculatedPrizePool });
+            }
+        } else {
+            const fourthPrize = event.buyIn || 0;
+            if (calculatedPrizePool > fourthPrize) {
+                const remainingPool = calculatedPrizePool - fourthPrize;
+                structure.push({ position: 1, prize: Math.round(remainingPool * 0.50) });
+                structure.push({ position: 2, prize: Math.round(remainingPool * 0.30) });
+                structure.push({ position: 3, prize: Math.round(remainingPool * 0.20) });
+                structure.push({ position: 4, prize: fourthPrize });
+            } else {
+                structure.push({ position: 1, prize: Math.round(calculatedPrizePool * 0.50) });
+                structure.push({ position: 2, prize: Math.round(calculatedPrizePool * 0.30) });
+                structure.push({ position: 3, prize: Math.round(calculatedPrizePool * 0.20) });
+            }
+        }
+    }
+    return { totalPrizePool: calculatedPrizePool, payoutStructure: structure.sort((a,b) => a.position - b.position) };
+  }, [participants, event.buyIn, event.rebuyPrice]);
+
   return (
     <div className="container mx-auto p-4 space-y-8">
         {isTimerModalOpen && (
             <PokerTimerModal 
                 event={event} 
+                participants={participants}
+                totalPrizePool={totalPrizePool}
+                payoutStructure={payoutStructure}
                 blindStructures={blindStructures} 
                 onClose={() => setIsTimerModalOpen(false)} 
                 activeStructure={activeStructure} 
