@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -70,7 +69,6 @@ export default function LiveTournamentClient({ event: initialEvent, players: all
   };
   
   const [event, setEvent] = React.useState<Event>(() => {
-    // Initialize with all properties from initialEvent, then override startingStack if saved value exists
     const savedStartingStack = getInitialState('startingStack', initialEvent.startingStack);
     return { ...initialEvent, startingStack: savedStartingStack };
   });
@@ -97,10 +95,9 @@ export default function LiveTournamentClient({ event: initialEvent, players: all
       try {
         const item = window.localStorage.getItem(storageKey);
         const currentState = item ? JSON.parse(item) : {};
-        // If there are no participants in the saved state, we initialize them.
         if(!currentState.participants) {
           currentState.participants = initialParticipants;
-          currentState.startingStack = event.startingStack; // Use event from state
+          currentState.startingStack = event.startingStack;
           window.localStorage.setItem(storageKey, JSON.stringify(currentState));
         }
       } catch (error) {
@@ -160,7 +157,6 @@ export default function LiveTournamentClient({ event: initialEvent, players: all
       if (selectedStructureTemplate && selectedStructureTemplate.startingStack) {
         setEvent(prevEvent => ({...prevEvent, startingStack: selectedStructureTemplate.startingStack}));
       }
-      console.log(`Applied new structure "${newStructureId}" to live event state.`);
   };
 
   const handleSelectStructure = (structureId: string) => {
@@ -194,17 +190,13 @@ export default function LiveTournamentClient({ event: initialEvent, players: all
   };
 
   const removeParticipant = (participantId: string) => {
-      const playerToRemove = allPlayers.find(p => p.id === participantId);
-      if (playerToRemove) {
-          setAvailablePlayers(prev => [...prev, playerToRemove].sort(sortPlayersWithGuestsLast));
-      }
       setParticipants(prev => prev.filter(p => p.id !== participantId));
   };
   
   const handleEliminatePlayer = (playerId: string) => {
     setParticipants(prev => {
-      const eliminatedCount = prev.filter(p => p.eliminatedPosition !== null).length;
-      const finishingPosition = prev.length - eliminatedCount;
+      const activePlayersCount = prev.filter(p => p.eliminatedPosition === null).length;
+      const finishingPosition = activePlayersCount;
       return prev.map(p => p.id === playerId ? { ...p, eliminatedPosition: finishingPosition } : p);
     });
   };
@@ -268,20 +260,15 @@ export default function LiveTournamentClient({ event: initialEvent, players: all
   const avgStack = activeParticipantsCount > 0 ? Math.floor(totalChips / activeParticipantsCount) : 0;
 
   return (
-    <div className="container mx-auto p-4 space-y-8">
+    <div className="container mx-auto p-4 space-y-6">
         {isTimerModalOpen && (
             <PokerTimerModal 
                 event={event} 
                 participants={participants}
                 totalPrizePool={totalPrizePool}
                 payoutStructure={payoutStructure}
-                blindStructures={blindStructures} 
-                onClose={() => setIsTimerModalOpen(false)} 
                 activeStructure={activeStructure} 
-                setActiveStructure={(newStructure, newStructureId) => {
-                  setActiveStructure(newStructure);
-                  setEvent(prev => ({...prev, blindStructureId: newStructureId, blindStructure: newStructure}));
-                }}
+                onClose={() => setIsTimerModalOpen(false)} 
             />
         )}
         {isStructureManagerOpen && (
@@ -295,36 +282,33 @@ export default function LiveTournamentClient({ event: initialEvent, players: all
         )}
         <div className="flex justify-between items-center">
             <div>
-                <Button variant="outline" asChild>
+                <Button variant="outline" size="sm" asChild>
                     <Link href={`/events/${event.id}`}>
-                        <ArrowLeft className="mr-2 h-4 w-4" /> Back to Event Details
+                        <ArrowLeft className="mr-2 h-4 w-4" /> Back
                     </Link>
                 </Button>
-                <h1 className="font-headline text-4xl font-bold mt-2">{event.name} - Live</h1>
-                <p className="text-muted-foreground">Managing the tournament in real-time.</p>
+                <h1 className="font-headline text-3xl font-bold mt-1">{event.name} - Live</h1>
             </div>
              <Button onClick={() => setIsTimerModalOpen(true)} size="lg">
                 <Clock className="mr-2 h-5 w-5" /> Open Poker Timer
             </Button>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             <Card>
-                <CardHeader className="flex flex-row items-center justify-between pb-4">
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
                     <div>
-                    <CardTitle className="flex items-center"><List className="mr-2"/>Blind Structure</CardTitle>
-                    <CardDescription>The blinds for the event.</CardDescription>
+                    <CardTitle className="flex items-center text-lg"><List className="mr-2"/>Blind Structure</CardTitle>
                     </div>
                     <Button variant="outline" size="sm" onClick={() => setIsStructureManagerOpen(true)}>
                         <Settings className="mr-2 h-4 w-4" /> Manage
                     </Button>
                 </CardHeader>
-                <CardContent>
-                    <div className="space-y-4">
+                <CardContent className="pt-2">
+                    <div className="space-y-3">
                         <div>
-                            <Label htmlFor="structure-select">Select Structure</Label>
                             <Select value={activeStructureId} onValueChange={handleSelectStructure}>
-                                <SelectTrigger id="structure-select">
+                                <SelectTrigger id="structure-select" className="h-9">
                                     <SelectValue placeholder="Select a structure..." />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -337,23 +321,23 @@ export default function LiveTournamentClient({ event: initialEvent, players: all
                                 </SelectContent>
                             </Select>
                         </div>
-                        <ScrollArea className="h-96">
+                        <ScrollArea className="h-64">
                             <Table>
                                 <TableHeader>
                                     <TableRow>
-                                        <TableHead>Lvl</TableHead>
-                                        <TableHead>Blinds</TableHead>
-                                        <TableHead>Ante</TableHead>
-                                        <TableHead>Time</TableHead>
+                                        <TableHead className="p-2">Lvl</TableHead>
+                                        <TableHead className="p-2">Blinds</TableHead>
+                                        <TableHead className="p-2">Ante</TableHead>
+                                        <TableHead className="p-2 text-right">Time</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
                                     {activeStructure.map((level, index) => (
                                         <TableRow key={index}>
-                                            <TableCell className="font-medium">{level.isBreak ? <Badge variant="secondary">Break</Badge> : level.level}</TableCell>
-                                            <TableCell>{level.isBreak ? '-' : `${level.smallBlind}/${level.bigBlind}`}</TableCell>
-                                            <TableCell>{level.ante || '-'}</TableCell>
-                                            <TableCell>{level.duration} min</TableCell>
+                                            <TableCell className="font-medium p-2">{level.isBreak ? <Badge variant="secondary">Break</Badge> : level.level}</TableCell>
+                                            <TableCell className="p-2">{level.isBreak ? '-' : `${level.smallBlind}/${level.bigBlind}`}</TableCell>
+                                            <TableCell className="p-2">{level.ante || '-'}</TableCell>
+                                            <TableCell className="p-2 text-right">{level.duration} min</TableCell>
                                         </TableRow>
                                     ))}
                                 </TableBody>
@@ -364,14 +348,13 @@ export default function LiveTournamentClient({ event: initialEvent, players: all
             </Card>
 
              <Card>
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                    <Banknote className="h-6 w-6 text-primary"/>
+                <CardHeader className="pb-2">
+                    <CardTitle className="flex items-center gap-2 text-lg">
+                    <Banknote className="h-5 w-5 text-primary"/>
                     Live Prize Pool
                     </CardTitle>
-                    <CardDescription>Real-time calculation of prizes.</CardDescription>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="pt-2">
                     <LivePrizePool 
                     participants={participants}
                     buyIn={event.buyIn || 0}
@@ -380,24 +363,23 @@ export default function LiveTournamentClient({ event: initialEvent, players: all
                 </CardContent>
             </Card>
             <Card>
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                        <Cpu className="h-6 w-6 text-primary"/>
+                <CardHeader className="pb-2">
+                    <CardTitle className="flex items-center gap-2 text-lg">
+                        <Cpu className="h-5 w-5 text-primary"/>
                         Live Chip Counts
                     </CardTitle>
-                    <CardDescription>Real-time chip statistics.</CardDescription>
                 </CardHeader>
-                <CardContent>
-                        <div className="space-y-4">
-                        <div className="text-center bg-muted/50 p-4 rounded-lg">
-                            <p className="text-sm text-muted-foreground uppercase tracking-wider">Total Chips in Play</p>
-                            <p className="text-3xl font-bold font-headline text-primary">
+                <CardContent className="pt-2">
+                        <div className="space-y-3">
+                        <div className="text-center bg-muted/50 p-3 rounded-lg">
+                            <p className="text-xs text-muted-foreground uppercase tracking-wider">Total Chips in Play</p>
+                            <p className="text-2xl font-bold font-headline text-primary">
                                 {totalChips.toLocaleString()}
                             </p>
                         </div>
-                        <div className="text-center bg-muted/50 p-4 rounded-lg">
-                            <p className="text-sm text-muted-foreground uppercase tracking-wider">Average Stack</p>
-                            <p className="text-3xl font-bold font-headline text-primary">
+                        <div className="text-center bg-muted/50 p-3 rounded-lg">
+                            <p className="text-xs text-muted-foreground uppercase tracking-wider">Average Stack</p>
+                            <p className="text-2xl font-bold font-headline text-primary">
                                 {avgStack.toLocaleString()}
                             </p>
                         </div>
@@ -407,9 +389,8 @@ export default function LiveTournamentClient({ event: initialEvent, players: all
         </div>
 
         <Card>
-            <CardHeader>
+            <CardHeader className="pb-4">
                 <CardTitle>Player Tracking</CardTitle>
-                <CardDescription>Manage buy-ins, rebuys, and eliminations.</CardDescription>
             </CardHeader>
             <CardContent>
                 <LivePlayerTracking 
