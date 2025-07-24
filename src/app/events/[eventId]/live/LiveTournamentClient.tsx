@@ -71,6 +71,7 @@ export default function LiveTournamentClient({ event: initialEvent, players: all
   
   const [event, setEvent] = React.useState<Event>(() => {
     const savedStartingStack = getInitialState('startingStack', initialEvent.startingStack);
+    // Initialize with all properties from initialEvent, then override startingStack if saved value exists
     return { ...initialEvent, startingStack: savedStartingStack };
   });
 
@@ -96,6 +97,7 @@ export default function LiveTournamentClient({ event: initialEvent, players: all
       try {
         const item = window.localStorage.getItem(storageKey);
         const currentState = item ? JSON.parse(item) : {};
+        // If there are no participants in the saved state, we initialize them.
         if(!currentState.participants) {
           currentState.participants = initialParticipants;
           currentState.startingStack = initialEvent.startingStack;
