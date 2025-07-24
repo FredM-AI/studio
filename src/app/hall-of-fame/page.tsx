@@ -8,7 +8,7 @@ import Link from 'next/link';
 import { Crown, TrendingUp, Gem, Shield, Repeat, Award, Trophy, Banknote, TrendingDown, Crosshair, Anchor } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
-import AnimatedGradientBackground from '@/components/AnimatedGradientBackground';
+import CardParticleBackground from '@/components/CardParticleBackground';
 
 
 const getInitials = (firstName: string, lastName: string) => {
@@ -102,7 +102,7 @@ export default async function HallOfFamePage() {
     const stats = await calculateHallOfFameStats(allPlayers, allEvents);
 
     return (
-        <AnimatedGradientBackground>
+        <CardParticleBackground>
             <div className="space-y-8 relative z-10">
                 <div className="text-center">
                     <Trophy className="mx-auto h-16 w-16 text-primary mb-4 drop-shadow-[0_0_15px_hsl(var(--primary))] animate-pulse" />
@@ -198,6 +198,6 @@ export default async function HallOfFamePage() {
                     </div>
                 </div>
             </div>
-        </AnimatedGradientBackground>
+        </CardParticleBackground>
     );
 }
