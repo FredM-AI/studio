@@ -43,6 +43,14 @@ export type EventResult = {
 export type EventStatus = "draft" | "active" | "completed" | "cancelled";
 export const eventStatuses: EventStatus[] = ["draft", "active", "completed", "cancelled"];
 
+export type BlindLevel = {
+  level: number;
+  smallBlind: number;
+  bigBlind: number;
+  ante?: number;
+  duration: number; // in minutes
+  isBreak: boolean;
+};
 
 export type Event = {
   id: string; // UUID
@@ -61,6 +69,7 @@ export type Event = {
     distributionType: "automatic" | "custom";
     distribution: PrizeDistribution[]; // Only if custom
   };
+  blindStructure?: BlindLevel[];
   participants: string[]; // Array of Player IDs
   results: EventResult[]; // Only if completed
   createdAt: string; // ISO Date string

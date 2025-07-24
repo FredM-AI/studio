@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { getEvents, getPlayers, getSeasons } from "@/lib/data-service"; // Added getSeasons
 import type { Event, Player, Season } from "@/lib/definitions"; // Added Season
-import { ArrowLeft, Edit, Users, DollarSign, CalendarDays, Trophy, Info, Tag, CheckCircle, XCircle, Trash2, Star, Gift, BarChart3, HelpCircle } from "lucide-react"; // Added BarChart3
+import { ArrowLeft, Edit, Users, DollarSign, CalendarDays, Trophy, Info, Tag, CheckCircle, XCircle, Trash2, Star, Gift, BarChart3, HelpCircle, PlayCircle } from "lucide-react"; // Added BarChart3
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -91,6 +91,13 @@ export default async function EventDetailsPage({ params }: { params: { eventId: 
             </div>
             {isAuthenticated && (
               <div className="flex flex-col sm:flex-row gap-2 mt-4 md:mt-0">
+                {event.status === 'active' && (
+                  <Button asChild className="w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white">
+                    <Link href={`/events/${event.id}/live`}>
+                      <PlayCircle className="mr-2 h-4 w-4" /> Manage Live
+                    </Link>
+                  </Button>
+                )}
                 <Button asChild variant="outline" className="w-full sm:w-auto">
                   <Link href={`/events/${event.id}/edit`}>
                     <Edit className="mr-2 h-4 w-4" /> Edit Event
