@@ -56,7 +56,7 @@ export default function LivePlayerTracking({
     const activeParticipants = participants.filter(p => p.eliminatedPosition === null);
     const eliminatedParticipants = participants
         .filter(p => p.eliminatedPosition !== null)
-        .sort((a, b) => (b.eliminatedPosition || 0) - (a.eliminatedPosition || 0));
+        .sort((a, b) => (a.eliminatedPosition || 0) - (b.eliminatedPosition || 0));
 
     const lastEliminatedId = React.useMemo(() => {
         if (eliminatedParticipants.length === 0) return null;
@@ -68,8 +68,9 @@ export default function LivePlayerTracking({
 
 
     return (
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
-            <div className="md:col-span-2 space-y-3">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Column 1: Available Players */}
+            <div className="space-y-2">
                 <h4 className="font-medium flex items-center gap-2 text-sm"><UserPlus className="h-4 w-4 text-primary"/>Available Players ({filteredAvailablePlayers.length})</h4>
                  <div className="relative">
                     <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -80,7 +81,7 @@ export default function LivePlayerTracking({
                         className="pl-8 h-9"
                     />
                 </div>
-                <ScrollArea className="h-80 border rounded-md">
+                <ScrollArea className="h-[30rem] border rounded-md">
                     <Table>
                         <TableBody>
                             {filteredAvailablePlayers.length > 0 ? filteredAvailablePlayers.map(p => (
@@ -107,9 +108,10 @@ export default function LivePlayerTracking({
                 </ScrollArea>
             </div>
             
-            <div className="md:col-span-3 space-y-3">
+            {/* Column 2: Active Players */}
+            <div className="space-y-2">
                  <h4 className="font-medium flex items-center gap-2 text-sm"><UserCheck className="h-4 w-4 text-green-500" />Active Players ({activeParticipants.length})</h4>
-                <ScrollArea className="h-[19.5rem] border rounded-md">
+                <ScrollArea className="h-[32.5rem] border rounded-md">
                     <Table>
                          <TableHeader>
                             <TableRow>
@@ -156,42 +158,43 @@ export default function LivePlayerTracking({
                         </TableBody>
                     </Table>
                 </ScrollArea>
-                <div className="space-y-3">
-                     <h4 className="font-medium flex items-center gap-2 text-sm">Ranking ({eliminatedParticipants.length})</h4>
-                     <ScrollArea className="h-32 border rounded-md">
-                        <Table>
-                             <TableHeader>
-                                <TableRow>
-                                    <TableHead className="w-[50px] p-2">Pos.</TableHead>
-                                    <TableHead className="p-2">Player</TableHead>
-                                    <TableHead className="w-[50px] text-right p-2"></TableHead>
+            </div>
+            {/* Column 3: Ranking */}
+            <div className="space-y-2">
+                <h4 className="font-medium flex items-center gap-2 text-sm">Ranking ({eliminatedParticipants.length})</h4>
+                <ScrollArea className="h-[32.5rem] border rounded-md">
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead className="w-[50px] p-2">Pos.</TableHead>
+                                <TableHead className="p-2">Player</TableHead>
+                                <TableHead className="w-[50px] text-right p-2"></TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {eliminatedParticipants.map(p => (
+                                <TableRow key={p.id}>
+                                    <TableCell className="font-bold p-2 text-sm">{p.eliminatedPosition}</TableCell>
+                                    <TableCell className="p-2 text-sm">{p.name}</TableCell>
+                                    <TableCell className="text-right p-2">
+                                        {p.id === lastEliminatedId && (
+                                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onUndoLastElimination} title="Undo Elimination">
+                                                <Undo className="h-4 w-4 text-muted-foreground" />
+                                            </Button>
+                                        )}
+                                    </TableCell>
                                 </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {eliminatedParticipants.map(p => (
-                                    <TableRow key={p.id}>
-                                        <TableCell className="font-bold p-2 text-sm">{p.eliminatedPosition}</TableCell>
-                                        <TableCell className="p-2 text-sm">{p.name}</TableCell>
-                                        <TableCell className="text-right p-2">
-                                            {p.id === lastEliminatedId && (
-                                                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onUndoLastElimination} title="Undo Elimination">
-                                                    <Undo className="h-4 w-4 text-muted-foreground" />
-                                                </Button>
-                                            )}
-                                        </TableCell>
-                                    </TableRow>
-                                ))}
-                                {eliminatedParticipants.length === 0 && (
-                                     <TableRow>
-                                        <TableCell colSpan={3} className="h-24 text-center text-muted-foreground text-sm p-2">
-                                            No players eliminated.
-                                        </TableCell>
-                                    </TableRow>
-                                )}
-                            </TableBody>
-                        </Table>
-                     </ScrollArea>
-                </div>
+                            ))}
+                            {eliminatedParticipants.length === 0 && (
+                                    <TableRow>
+                                    <TableCell colSpan={3} className="h-24 text-center text-muted-foreground text-sm p-2">
+                                        No players eliminated.
+                                    </TableCell>
+                                </TableRow>
+                            )}
+                        </TableBody>
+                    </Table>
+                </ScrollArea>
             </div>
         </div>
     );
