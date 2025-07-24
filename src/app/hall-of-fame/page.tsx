@@ -65,7 +65,7 @@ const StatCard = ({ icon, title, description, stat, formatValue, unit, className
                             <div className="flex items-center gap-4">
                                 <Link href={`/players/${player.id}`}>
                                     <Avatar className="h-16 w-16 border-2 border-primary transition-transform duration-300 group-hover:scale-110">
-                                        <AvatarImage src={player.avatar} alt={getPlayerDisplayName(player)} />
+                                        {player.avatar && <AvatarImage src={player.avatar} alt={getPlayerDisplayName(player)} />}
                                         <AvatarFallback className="text-xl bg-muted">{getInitials(player.firstName, player.lastName)}</AvatarFallback>
                                     </Avatar>
                                 </Link>

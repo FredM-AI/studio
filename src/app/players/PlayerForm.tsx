@@ -146,7 +146,7 @@ export default function PlayerForm({ player, action, formTitle, formDescription,
           {avatarUrl && (
             <div className="flex items-center justify-center p-4 bg-muted/50 rounded-lg">
                 <Avatar className="h-28 w-28 border-4 border-background shadow-md">
-                    <AvatarImage src={avatarUrl} alt="Avatar preview" />
+                    {avatarUrl && <AvatarImage src={avatarUrl} alt="Avatar preview" />}
                     <AvatarFallback className="text-3xl bg-primary text-primary-foreground">
                         {getInitials()}
                     </AvatarFallback>

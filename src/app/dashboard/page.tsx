@@ -124,7 +124,7 @@ export default async function DashboardPage() {
                   <div key={result.playerId} className="flex items-center gap-4 p-3 rounded-lg bg-muted/50">
                     <Award className={`h-8 w-8 ${result.position === 1 ? 'text-yellow-500' : result.position === 2 ? 'text-gray-400' : 'text-orange-400'}`} />
                     <Avatar className="h-12 w-12 border">
-                       <AvatarImage src={result.player?.avatar} alt={getPlayerDisplayName(result.player)} />
+                       {result.player?.avatar && <AvatarImage src={result.player.avatar} alt={getPlayerDisplayName(result.player)} />}
                        <AvatarFallback>{getInitials(result.player?.firstName, result.player?.lastName)}</AvatarFallback>
                     </Avatar>
                     <div>
