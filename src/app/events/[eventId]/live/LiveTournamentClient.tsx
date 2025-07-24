@@ -70,10 +70,8 @@ export default function LiveTournamentClient({ event: initialEvent, players: all
   };
   
   const [event, setEvent] = React.useState<Event>(() => {
-    const currentEvent = { ...initialEvent };
-    const savedStartingStack = getInitialState('startingStack', currentEvent.startingStack);
-    currentEvent.startingStack = savedStartingStack;
-    return currentEvent;
+    const savedStartingStack = getInitialState('startingStack', initialEvent.startingStack);
+    return { ...initialEvent, startingStack: savedStartingStack };
   });
 
   const [participants, setParticipants] = React.useState<ParticipantState[]>(() => {
@@ -98,7 +96,6 @@ export default function LiveTournamentClient({ event: initialEvent, players: all
       try {
         const item = window.localStorage.getItem(storageKey);
         const currentState = item ? JSON.parse(item) : {};
-        // Only set participants in localStorage if they weren't there before
         if(!currentState.participants) {
           currentState.participants = initialParticipants;
           currentState.startingStack = initialEvent.startingStack;
@@ -215,7 +212,6 @@ export default function LiveTournamentClient({ event: initialEvent, players: all
         const eliminatedPlayers = prev.filter(p => p.eliminatedPosition !== null);
         if (eliminatedPlayers.length === 0) return prev;
         
-        // Find the player with the "best" (lowest number) elimination position, which is the last one eliminated
         const lastEliminated = eliminatedPlayers.reduce((last, current) => 
             (current.eliminatedPosition || 0) < (last.eliminatedPosition || 0) ? current : last
         );
@@ -223,7 +219,6 @@ export default function LiveTournamentClient({ event: initialEvent, players: all
         return prev.map(p => p.id === lastEliminated.id ? { ...p, eliminatedPosition: null } : p);
     });
   };
-
 
   const { totalPrizePool, payoutStructure } = React.useMemo(() => {
     const numParticipants = participants.length;
@@ -267,7 +262,8 @@ export default function LiveTournamentClient({ event: initialEvent, players: all
 
   const totalRebuys = participants.reduce((sum, p) => sum + p.rebuys, 0);
   const totalChips = (participants.length + totalRebuys) * (event.startingStack || 0);
-  const avgStack = participants.length > 0 ? Math.floor(totalChips / participants.filter(p => p.eliminatedPosition === null).length) : 0;
+  const activeParticipantsCount = participants.filter(p => p.eliminatedPosition === null).length;
+  const avgStack = activeParticipantsCount > 0 ? Math.floor(totalChips / activeParticipantsCount) : 0;
 
   return (
     <div className="container mx-auto p-4 space-y-8">
@@ -281,8 +277,7 @@ export default function LiveTournamentClient({ event: initialEvent, players: all
                 onClose={() => setIsTimerModalOpen(false)} 
                 activeStructure={activeStructure} 
                 setActiveStructure={(newStructure, newStructureId) => {
-                  setActiveStructure(newStructure);
-                  setActiveStructureId(newStructureId);
+                  setActiveStructure(newStructure, newStructureId);
                 }}
             />
         )}
@@ -311,126 +306,121 @@ export default function LiveTournamentClient({ event: initialEvent, players: all
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div className="lg:col-span-1 space-y-6">
-                 <Card>
-                    <CardHeader className="flex flex-row items-center justify-between pb-4">
-                      <div>
-                        <CardTitle className="flex items-center"><List className="mr-2"/>Blind Structure</CardTitle>
-                        <CardDescription>The blinds for the event.</CardDescription>
-                      </div>
-                       <Button variant="outline" size="sm" onClick={() => setIsStructureManagerOpen(true)}>
-                            <Settings className="mr-2 h-4 w-4" /> Manage
-                       </Button>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="space-y-4">
-                            <div>
-                                <Label htmlFor="structure-select">Select Structure</Label>
-                                <Select value={activeStructureId} onValueChange={handleSelectStructure}>
-                                    <SelectTrigger id="structure-select">
-                                        <SelectValue placeholder="Select a structure..." />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {blindStructures.map(s => (
-                                            <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
-                                        ))}
-                                        {activeStructureId === 'custom' && (
-                                            <SelectItem value="custom" disabled>Custom</SelectItem>
-                                        )}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                            <ScrollArea className="h-96">
-                                <Table>
-                                    <TableHeader>
-                                        <TableRow>
-                                            <TableHead>Lvl</TableHead>
-                                            <TableHead>Blinds</TableHead>
-                                            <TableHead>Ante</TableHead>
-                                            <TableHead>Time</TableHead>
-                                        </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                        {activeStructure.map((level, index) => (
-                                            <TableRow key={index}>
-                                                <TableCell className="font-medium">{level.isBreak ? <Badge variant="secondary">Break</Badge> : level.level}</TableCell>
-                                                <TableCell>{level.isBreak ? '-' : `${level.smallBlind}/${level.bigBlind}`}</TableCell>
-                                                <TableCell>{level.ante || '-'}</TableCell>
-                                                <TableCell>{level.duration} min</TableCell>
-                                            </TableRow>
-                                        ))}
-                                    </TableBody>
-                                </Table>
-                            </ScrollArea>
+            <Card>
+                <CardHeader className="flex flex-row items-center justify-between pb-4">
+                    <div>
+                    <CardTitle className="flex items-center"><List className="mr-2"/>Blind Structure</CardTitle>
+                    <CardDescription>The blinds for the event.</CardDescription>
+                    </div>
+                    <Button variant="outline" size="sm" onClick={() => setIsStructureManagerOpen(true)}>
+                        <Settings className="mr-2 h-4 w-4" /> Manage
+                    </Button>
+                </CardHeader>
+                <CardContent>
+                    <div className="space-y-4">
+                        <div>
+                            <Label htmlFor="structure-select">Select Structure</Label>
+                            <Select value={activeStructureId} onValueChange={handleSelectStructure}>
+                                <SelectTrigger id="structure-select">
+                                    <SelectValue placeholder="Select a structure..." />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {blindStructures.map(s => (
+                                        <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                                    ))}
+                                    {activeStructureId === 'custom' && (
+                                        <SelectItem value="custom" disabled>Custom</SelectItem>
+                                    )}
+                                </SelectContent>
+                            </Select>
                         </div>
-                    </CardContent>
-                </Card>
-            </div>
+                        <ScrollArea className="h-96">
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>Lvl</TableHead>
+                                        <TableHead>Blinds</TableHead>
+                                        <TableHead>Ante</TableHead>
+                                        <TableHead>Time</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {activeStructure.map((level, index) => (
+                                        <TableRow key={index}>
+                                            <TableCell className="font-medium">{level.isBreak ? <Badge variant="secondary">Break</Badge> : level.level}</TableCell>
+                                            <TableCell>{level.isBreak ? '-' : `${level.smallBlind}/${level.bigBlind}`}</TableCell>
+                                            <TableCell>{level.ante || '-'}</TableCell>
+                                            <TableCell>{level.duration} min</TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        </ScrollArea>
+                    </div>
+                </CardContent>
+            </Card>
 
-            <div className="lg:col-span-2 space-y-6">
-                 <Card>
-                    <CardHeader>
-                        <CardTitle>Player Tracking</CardTitle>
-                        <CardDescription>Manage buy-ins, rebuys, and eliminations.</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <LivePlayerTracking 
-                          allPlayers={allPlayers}
-                          participants={participants}
-                          availablePlayers={availablePlayers}
-                          onAddParticipant={addParticipant}
-                          onRemoveParticipant={removeParticipant}
-                          onRebuyChange={handleRebuyChange}
-                          onEliminatePlayer={handleEliminatePlayer}
-                          onUndoLastElimination={handleUndoLastElimination}
-                        />
-                    </CardContent>
-                </Card>
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2">
-                            <Banknote className="h-6 w-6 text-primary"/>
-                            Live Prize Pool
-                            </CardTitle>
-                            <CardDescription>Real-time calculation of prizes.</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <LivePrizePool 
-                            participants={participants}
-                            buyIn={event.buyIn}
-                            rebuyPrice={event.rebuyPrice}
-                            />
-                        </CardContent>
-                    </Card>
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2">
-                                <Cpu className="h-6 w-6 text-primary"/>
-                                Live Chip Counts
-                            </CardTitle>
-                            <CardDescription>Real-time chip statistics.</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                             <div className="space-y-4">
-                                <div className="text-center bg-muted/50 p-4 rounded-lg">
-                                    <p className="text-sm text-muted-foreground uppercase tracking-wider">Total Chips in Play</p>
-                                    <p className="text-3xl font-bold font-headline text-primary">
-                                        {totalChips.toLocaleString()}
-                                    </p>
-                                </div>
-                                <div className="text-center bg-muted/50 p-4 rounded-lg">
-                                    <p className="text-sm text-muted-foreground uppercase tracking-wider">Average Stack</p>
-                                    <p className="text-3xl font-bold font-headline text-primary">
-                                        {avgStack.toLocaleString()}
-                                    </p>
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
-                 </div>
-            </div>
+             <Card>
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                    <Banknote className="h-6 w-6 text-primary"/>
+                    Live Prize Pool
+                    </CardTitle>
+                    <CardDescription>Real-time calculation of prizes.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <LivePrizePool 
+                    participants={participants}
+                    buyIn={event.buyIn}
+                    rebuyPrice={event.rebuyPrice}
+                    />
+                </CardContent>
+            </Card>
+            <Card>
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                        <Cpu className="h-6 w-6 text-primary"/>
+                        Live Chip Counts
+                    </CardTitle>
+                    <CardDescription>Real-time chip statistics.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                        <div className="space-y-4">
+                        <div className="text-center bg-muted/50 p-4 rounded-lg">
+                            <p className="text-sm text-muted-foreground uppercase tracking-wider">Total Chips in Play</p>
+                            <p className="text-3xl font-bold font-headline text-primary">
+                                {totalChips.toLocaleString()}
+                            </p>
+                        </div>
+                        <div className="text-center bg-muted/50 p-4 rounded-lg">
+                            <p className="text-sm text-muted-foreground uppercase tracking-wider">Average Stack</p>
+                            <p className="text-3xl font-bold font-headline text-primary">
+                                {avgStack.toLocaleString()}
+                            </p>
+                        </div>
+                    </div>
+                </CardContent>
+            </Card>
         </div>
+
+        <Card>
+            <CardHeader>
+                <CardTitle>Player Tracking</CardTitle>
+                <CardDescription>Manage buy-ins, rebuys, and eliminations.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <LivePlayerTracking 
+                    allPlayers={allPlayers}
+                    participants={participants}
+                    availablePlayers={availablePlayers}
+                    onAddParticipant={addParticipant}
+                    onRemoveParticipant={removeParticipant}
+                    onRebuyChange={handleRebuyChange}
+                    onEliminatePlayer={handleEliminatePlayer}
+                    onUndoLastElimination={handleUndoLastElimination}
+                />
+            </CardContent>
+        </Card>
     </div>
   );
 }
