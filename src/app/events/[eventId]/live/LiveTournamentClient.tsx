@@ -69,9 +69,13 @@ export default function LiveTournamentClient({ event: initialEvent, players: all
     return initialValue;
   };
   
-   const [event, setEvent] = React.useState<Event>(() => {
-    const savedStartingStack = getInitialState('startingStack', initialEvent.startingStack);
-    return { ...initialEvent, startingStack: savedStartingStack };
+  const [event, setEvent] = React.useState<Event>(() => {
+    // Initialize with the event passed from server props first
+    const currentEvent = { ...initialEvent };
+    // Then, try to override with a value from localStorage if it exists
+    const savedStartingStack = getInitialState('startingStack', currentEvent.startingStack);
+    currentEvent.startingStack = savedStartingStack;
+    return currentEvent;
   });
 
   const [participants, setParticipants] = React.useState<ParticipantState[]>(() => {
@@ -202,49 +206,10 @@ export default function LiveTournamentClient({ event: initialEvent, players: all
       }
       setParticipants(prev => prev.filter(p => p.id !== participantId));
   };
-
-  const { totalPrizePool, payoutStructure } = React.useMemo(() => {
-    const numParticipants = participants.length;
-    const totalRebuys = participants.reduce((sum, p) => sum + p.rebuys, 0);
-    const calculatedPrizePool = (numParticipants * (event.buyIn || 0)) + (totalRebuys * (event.rebuyPrice || 0));
-    const structure = [];
-
-    if (numParticipants > 0 && calculatedPrizePool > 0) {
-        if (numParticipants < 14) {
-            if (numParticipants >= 3) {
-                structure.push({ position: 1, prize: Math.round(calculatedPrizePool * 0.50) });
-                structure.push({ position: 2, prize: Math.round(calculatedPrizePool * 0.30) });
-                structure.push({ position: 3, prize: Math.round(calculatedPrizePool * 0.20) });
-            } else if (numParticipants === 2) {
-                structure.push({ position: 1, prize: Math.round(calculatedPrizePool * 0.65) });
-                structure.push({ position: 2, prize: Math.round(calculatedPrizePool * 0.35) });
-            } else {
-                structure.push({ position: 1, prize: calculatedPrizePool });
-            }
-        } else {
-            const fourthPrize = event.buyIn || 0;
-            if (calculatedPrizePool > fourthPrize) {
-                const remainingPool = calculatedPrizePool - fourthPrize;
-                structure.push({ position: 1, prize: Math.round(remainingPool * 0.50) });
-                structure.push({ position: 2, prize: Math.round(remainingPool * 0.30) });
-                structure.push({ position: 3, prize: Math.round(remainingPool * 0.20) });
-                structure.push({ position: 4, prize: fourthPrize });
-            } else {
-                structure.push({ position: 1, prize: Math.round(calculatedPrizePool * 0.50) });
-                structure.push({ position: 2, prize: Math.round(calculatedPrizePool * 0.30) });
-                structure.push({ position: 3, prize: Math.round(calculatedPrizePool * 0.20) });
-            }
-        }
-    }
-    return { totalPrizePool: calculatedPrizePool, payoutStructure: structure.sort((a,b) => a.position - b.position) };
-  }, [participants, event.buyIn, event.rebuyPrice]);
   
-  const { totalChips, avgStack } = React.useMemo(() => {
-    const totalRebuys = participants.reduce((sum, p) => sum + p.rebuys, 0);
-    const calculatedTotalChips = (participants.length + totalRebuys) * (event.startingStack || 0);
-    const calculatedAvgStack = participants.length > 0 ? Math.floor(calculatedTotalChips / participants.length) : 0;
-    return { totalChips: calculatedTotalChips, avgStack: calculatedAvgStack };
-  }, [participants, event.startingStack]);
+  const totalRebuys = participants.reduce((sum, p) => sum + p.rebuys, 0);
+  const totalChips = (participants.length + totalRebuys) * (event.startingStack || 0);
+  const avgStack = participants.length > 0 ? Math.floor(totalChips / participants.length) : 0;
 
   return (
     <div className="container mx-auto p-4 space-y-8">
@@ -252,8 +217,8 @@ export default function LiveTournamentClient({ event: initialEvent, players: all
             <PokerTimerModal 
                 event={event} 
                 participants={participants}
-                totalPrizePool={totalPrizePool}
-                payoutStructure={payoutStructure}
+                totalPrizePool={0}
+                payoutStructure={[]}
                 blindStructures={blindStructures} 
                 onClose={() => setIsTimerModalOpen(false)} 
                 activeStructure={activeStructure} 
