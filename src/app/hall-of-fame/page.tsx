@@ -46,7 +46,7 @@ const StatCard = ({ icon, title, description, stat, formatValue, unit, className
     return (
         <div className={cn("group perspective-1000", className)}>
              <div className={cn(
-                "relative w-full h-full rounded-xl border border-white/10 bg-green-900/20 backdrop-blur-sm shadow-lg",
+                "relative w-full h-full rounded-xl border border-white/10 bg-green-800/30 backdrop-blur-sm shadow-lg",
                 "transition-all duration-300 ease-in-out transform-style-3d",
                 "group-hover:shadow-2xl group-hover:shadow-primary/30 group-hover:-translate-y-2 group-hover:rotate-x-[-4deg] group-hover:rotate-y-[4deg]"
              )}>
@@ -113,7 +113,7 @@ export default async function HallOfFamePage() {
                     </p>
                 </div>
 
-                <Card className="hover:shadow-lg transition-shadow bg-white/5 backdrop-blur-sm border-white/10">
+                <Card className="hover:shadow-lg transition-shadow bg-green-800/30 backdrop-blur-sm border-white/10">
                     <CardHeader>
                         <div className="flex items-center gap-4">
                             <Banknote className="h-10 w-10 text-green-500 drop-shadow-[0_0_8px_rgba(74,222,128,0.5)]" />
