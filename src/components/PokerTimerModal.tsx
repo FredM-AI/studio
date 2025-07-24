@@ -7,7 +7,7 @@ import type { ParticipantState } from './LivePlayerTracking';
 import Draggable from 'react-draggable';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { X, Play, Pause, FastForward, Rewind, Settings, Volume2, Maximize, VolumeX } from 'lucide-react';
+import { X, Play, Pause, FastForward, Rewind, Settings, Maximize } from 'lucide-react';
 import BlindStructureManager from './BlindStructureManager';
 import { Slider } from '@/components/ui/slider';
 
@@ -43,9 +43,6 @@ export default function PokerTimerModal({
   const [isStructureManagerOpen, setIsStructureManagerOpen] = useState(false);
   const timerStorageKey = `poker-timer-state-${event.id}`;
   
-  const audioRefLevelEnd = useRef<HTMLAudioElement>(null);
-  const audioRefWarning = useRef<HTMLAudioElement>(null);
-
   const getInitialTimerState = <T,>(key: string, defaultValue: T): T => {
     if (typeof window === 'undefined') return defaultValue;
     try {
@@ -69,23 +66,17 @@ export default function PokerTimerModal({
   });
   const [totalTime, setTotalTime] = useState(() => getInitialTimerState('totalTime', 0));
   const [isPaused, setIsPaused] = useState(() => getInitialTimerState('isPaused', true));
-  const [volume, setVolume] = useState(() => getInitialTimerState('volume', 0.5));
   
   useEffect(() => {
     if (typeof window !== 'undefined') {
       try {
-        const timerState = { currentLevelIndex, timeLeft, totalTime, isPaused, volume };
+        const timerState = { currentLevelIndex, timeLeft, totalTime, isPaused };
         window.localStorage.setItem(timerStorageKey, JSON.stringify(timerState));
       } catch (e) {
         console.error("Failed to save timer state to localStorage", e);
       }
     }
-  }, [currentLevelIndex, timeLeft, totalTime, isPaused, volume, timerStorageKey]);
-  
-  useEffect(() => {
-    if (audioRefLevelEnd.current) audioRefLevelEnd.current.volume = volume;
-    if (audioRefWarning.current) audioRefWarning.current.volume = volume;
-  }, [volume]);
+  }, [currentLevelIndex, timeLeft, totalTime, isPaused, timerStorageKey]);
 
   useEffect(() => {
     let timerInterval: NodeJS.Timeout;
@@ -95,12 +86,7 @@ export default function PokerTimerModal({
         setTotalTime(prev => prev + 1);
       }, 1000);
 
-      if(timeLeft === 10) {
-        audioRefWarning.current?.play().catch(e => console.log("Audio play failed:", e));
-      }
-
     } else if (timeLeft <= 0 && !isPaused) {
-        audioRefLevelEnd.current?.play().catch(e => console.log("Audio play failed:", e));
         goToNextLevel();
     }
     return () => clearInterval(timerInterval);
@@ -183,8 +169,6 @@ export default function PokerTimerModal({
         className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-full max-w-4xl"
         style={{ cursor: 'move' }}
       >
-        <audio ref={audioRefLevelEnd} src="/sounds/level_end.mp3" preload="auto"></audio>
-        <audio ref={audioRefWarning} src="/sounds/warning.mp3" preload="auto"></audio>
         <div className="bg-gray-800 text-white rounded-xl shadow-2xl overflow-hidden border-4 border-gray-700">
           <div className="drag-handle p-4 bg-gray-900 flex justify-between items-center">
             <div className="flex gap-6 items-center">
@@ -285,16 +269,6 @@ export default function PokerTimerModal({
                  />
              </div>
              <div className="flex items-center gap-2">
-                <Button variant="ghost" size="icon" onClick={() => setVolume(v => v > 0 ? 0 : 0.5)} className="h-8 w-8">
-                    {volume > 0 ? <Volume2 className="h-5 w-5"/> : <VolumeX className="h-5 w-5" />}
-                </Button>
-                <Slider 
-                    value={[volume]}
-                    max={1}
-                    step={0.05}
-                    className="w-24"
-                    onValueChange={(value) => setVolume(value[0])}
-                />
                 <Button variant="ghost" size="icon" onClick={() => { /* Settings action to be defined */ }} className="h-8 w-8 opacity-50 cursor-not-allowed">
                   <Settings className="h-5 w-5"/>
                 </Button>
@@ -307,3 +281,5 @@ export default function PokerTimerModal({
     </>
   );
 }
+
+    
