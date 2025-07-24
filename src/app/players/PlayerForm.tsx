@@ -2,6 +2,7 @@
 'use client';
 
 import type { Player, PlayerFormState } from '@/lib/definitions';
+import * as React from 'react';
 import { useActionState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -9,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import Link from 'next/link';
 import { Switch } from '@/components/ui/switch';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 interface PlayerFormProps {
   player?: Player;
@@ -21,6 +23,20 @@ interface PlayerFormProps {
 export default function PlayerForm({ player, action, formTitle, formDescription, submitButtonText }: PlayerFormProps) {
   const initialState: PlayerFormState = { message: null, errors: {} };
   const [state, dispatch] = useActionState(action, initialState);
+  
+  const [avatarUrl, setAvatarUrl] = React.useState(player?.avatar || '');
+
+  React.useEffect(() => {
+    setAvatarUrl(player?.avatar || '');
+  }, [player?.avatar]);
+
+  const getInitials = () => {
+      // Attempt to get names from the form if possible, otherwise from player prop
+      const firstName = (document.getElementById('firstName') as HTMLInputElement)?.value || player?.firstName || '';
+      const lastName = (document.getElementById('lastName') as HTMLInputElement)?.value || player?.lastName || '';
+      return `${firstName?.[0] || ''}${lastName?.[0] || ''}`.toUpperCase();
+  };
+
 
   return (
     <Card className="max-w-2xl mx-auto">
@@ -115,7 +131,8 @@ export default function PlayerForm({ player, action, formTitle, formDescription,
               id="avatar" 
               name="avatar" 
               type="url" 
-              defaultValue={player?.avatar} 
+              value={avatarUrl}
+              onChange={(e) => setAvatarUrl(e.target.value)}
               placeholder="https://example.com/avatar.png"
               aria-describedby="avatar-error"
             />
@@ -125,6 +142,18 @@ export default function PlayerForm({ player, action, formTitle, formDescription,
               </p>
             )}
           </div>
+
+          {avatarUrl && (
+            <div className="flex items-center justify-center p-4 bg-muted/50 rounded-lg">
+                <Avatar className="h-28 w-28 border-4 border-background shadow-md">
+                    <AvatarImage src={avatarUrl} alt="Avatar preview" />
+                    <AvatarFallback className="text-3xl bg-primary text-primary-foreground">
+                        {getInitials()}
+                    </AvatarFallback>
+                </Avatar>
+            </div>
+          )}
+
 
           <div className="flex items-center space-x-2">
             <Switch 
