@@ -49,7 +49,7 @@ const StatCard = ({ icon, title, description, stat, formatValue, unit, className
                 "relative w-full h-full rounded-xl border border-black/10 backdrop-blur-sm shadow-lg",
                 "transition-all duration-300 ease-in-out transform-style-3d",
                 "group-hover:shadow-2xl group-hover:shadow-primary/30 group-hover:-translate-y-2 group-hover:rotate-x-[-4deg] group-hover:rotate-y-[4deg]"
-             )} style={{ backgroundColor: '#e0eec2' }}>
+             )} style={{ backgroundColor: '#dcdcdc' }}>
                 <div className="p-6 flex flex-col h-full backface-hidden">
                     <div className="flex items-center gap-4 mb-4">
                         <div className="p-2 bg-primary/10 rounded-lg text-primary drop-shadow-[0_0_4px_hsl(var(--primary))]">
@@ -113,7 +113,7 @@ export default async function HallOfFamePage() {
                     </p>
                 </div>
 
-                <Card className="hover:shadow-lg transition-shadow backdrop-blur-sm border-black/10" style={{ backgroundColor: '#e0eec2' }}>
+                <Card className="hover:shadow-lg transition-shadow backdrop-blur-sm border-black/10" style={{ backgroundColor: '#dcdcdc' }}>
                     <CardHeader>
                         <div className="flex items-center gap-4">
                             <Banknote className="h-10 w-10 text-green-600 drop-shadow-[0_0_8px_rgba(74,222,128,0.5)]" />
