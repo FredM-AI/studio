@@ -2,12 +2,11 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import type { Event, BlindLevel, BlindStructureTemplate } from '@/lib/definitions';
+import type { Event, BlindLevel } from '@/lib/definitions';
 import type { ParticipantState } from './LivePlayerTracking';
 import Draggable from 'react-draggable';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { X, Play, Pause, FastForward, Rewind, Settings, Maximize } from 'lucide-react';
+import { X, Play, Pause, FastForward, Rewind, Settings } from 'lucide-react';
 import { Slider } from '@/components/ui/slider';
 
 interface PokerTimerModalProps {
@@ -113,11 +112,8 @@ export default function PokerTimerModal({
   const timeToNextBreak = () => {
     if (activeStructure.length === 0 || currentLevel.isBreak) return 0;
     
-    let time = timeLeft;
-    let tempIndex = currentLevelIndex;
-    
     for(let i=0; i < activeStructure.length; i++) {
-        const checkingIndex = (tempIndex + i) % activeStructure.length;
+        const checkingIndex = (currentLevelIndex + i) % activeStructure.length;
         const levelToCheck = activeStructure[checkingIndex];
         
         if (levelToCheck.isBreak) {
