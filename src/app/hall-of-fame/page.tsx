@@ -46,18 +46,18 @@ const StatCard = ({ icon, title, description, stat, formatValue, unit, className
     return (
         <div className={cn("group perspective-1000", className)}>
              <div className={cn(
-                "relative w-full h-full rounded-xl border border-white/10 bg-green-800/30 backdrop-blur-sm shadow-lg",
+                "relative w-full h-full rounded-xl border border-black/10 backdrop-blur-sm shadow-lg",
                 "transition-all duration-300 ease-in-out transform-style-3d",
                 "group-hover:shadow-2xl group-hover:shadow-primary/30 group-hover:-translate-y-2 group-hover:rotate-x-[-4deg] group-hover:rotate-y-[4deg]"
-             )}>
+             )} style={{ backgroundColor: '#e9fced' }}>
                 <div className="p-6 flex flex-col h-full backface-hidden">
                     <div className="flex items-center gap-4 mb-4">
                         <div className="p-2 bg-primary/10 rounded-lg text-primary drop-shadow-[0_0_4px_hsl(var(--primary))]">
                             {icon}
                         </div>
                         <div>
-                            <h3 className="font-bold text-lg text-foreground">{title}</h3>
-                            <p className="text-sm text-muted-foreground">{description}</p>
+                            <h3 className="font-bold text-lg text-black">{title}</h3>
+                            <p className="text-sm text-gray-700">{description}</p>
                         </div>
                     </div>
                     {stat && player ? (
@@ -71,23 +71,23 @@ const StatCard = ({ icon, title, description, stat, formatValue, unit, className
                                 </Link>
                                 <div>
                                     <Link href={`/players/${player.id}`} className="hover:underline">
-                                        <p className="text-xl font-bold">{getPlayerDisplayName(player)}</p>
+                                        <p className="text-xl font-bold text-black">{getPlayerDisplayName(player)}</p>
                                     </Link>
                                     <p className={cn("text-3xl font-headline drop-shadow-[0_0_8px_currentColor]", valueClassName)}>
                                         {formatValue ? formatValue(value!) : value}
-                                        {unit && <span className="text-base text-muted-foreground ml-1">{unit}</span>}
+                                        {unit && <span className="text-base text-gray-600 ml-1">{unit}</span>}
                                     </p>
                                 </div>
                             </div>
                             {event && (
                                 <Link href={`/events/${event.id}`} className="hover:underline">
-                                    <p className="text-xs text-muted-foreground mt-2 text-right">in "{event.name}" on {format(new Date(event.date), 'dd/MM/yyyy')}</p>
+                                    <p className="text-xs text-gray-600 mt-2 text-right">in "{event.name}" on {format(new Date(event.date), 'dd/MM/yyyy')}</p>
                                 </Link>
                             )}
                         </div>
                     ) : (
                         <div className="flex-grow flex items-center justify-center">
-                            <p className="text-muted-foreground text-center py-4">Not enough data.</p>
+                            <p className="text-gray-500 text-center py-4">Not enough data.</p>
                         </div>
                     )}
                 </div>
@@ -113,13 +113,13 @@ export default async function HallOfFamePage() {
                     </p>
                 </div>
 
-                <Card className="hover:shadow-lg transition-shadow bg-green-800/30 backdrop-blur-sm border-white/10">
+                <Card className="hover:shadow-lg transition-shadow backdrop-blur-sm border-black/10" style={{ backgroundColor: '#e9fced' }}>
                     <CardHeader>
                         <div className="flex items-center gap-4">
-                            <Banknote className="h-10 w-10 text-green-500 drop-shadow-[0_0_8px_rgba(74,222,128,0.5)]" />
+                            <Banknote className="h-10 w-10 text-green-600 drop-shadow-[0_0_8px_rgba(74,222,128,0.5)]" />
                             <div>
-                                <CardTitle>Total Wagered</CardTitle>
-                                <CardDescription>Cumulative prize money across all completed events.</CardDescription>
+                                <CardTitle className="text-black">Total Wagered</CardTitle>
+                                <CardDescription className="text-gray-700">Cumulative prize money across all completed events.</CardDescription>
                             </div>
                         </div>
                     </CardHeader>
@@ -139,7 +139,7 @@ export default async function HallOfFamePage() {
                             description="The player with the most 1st place finishes."
                             stat={stats.mostWins}
                             unit="wins"
-                            valueClassName="text-green-400"
+                            valueClassName="text-green-600"
                         />
                         <StatCard 
                             icon={<TrendingUp className="h-10 w-10" />}
@@ -147,7 +147,7 @@ export default async function HallOfFamePage() {
                             description="The most profitable player of all time."
                             stat={stats.highestNet}
                             formatValue={(v) => `€${v.toLocaleString()}`}
-                            valueClassName="text-green-400"
+                            valueClassName="text-green-600"
                         />
                         <StatCard 
                             icon={<Crosshair className="h-10 w-10" />}
@@ -155,7 +155,7 @@ export default async function HallOfFamePage() {
                             description="Player with the highest total value from bounties."
                             stat={stats.mostBountiesWon}
                             formatValue={(v) => `€${v.toLocaleString()}`}
-                            valueClassName="text-green-400"
+                            valueClassName="text-green-600"
                         />
                         <StatCard 
                             icon={<Shield className="h-10 w-10" />}
@@ -163,7 +163,7 @@ export default async function HallOfFamePage() {
                             description="Most top 3 finishes."
                             stat={stats.mostPodiums}
                             unit="podiums"
-                            valueClassName="text-green-400"
+                            valueClassName="text-green-600"
                         />
                         <StatCard 
                             icon={<TrendingDown className="h-10 w-10" />}
@@ -179,7 +179,7 @@ export default async function HallOfFamePage() {
                             description="Largest net gain in a single event."
                             stat={stats.biggestSingleWin}
                             formatValue={(v) => `€${v.toLocaleString()}`}
-                            valueClassName="text-green-400"
+                            valueClassName="text-green-600"
                         />
                         <StatCard 
                             icon={<Repeat className="h-10 w-10" />}
@@ -187,7 +187,7 @@ export default async function HallOfFamePage() {
                             description="Player who has spent the most on buy-ins & rebuys."
                             stat={stats.mostSpent}
                             formatValue={(v) => `€${v.toLocaleString()}`}
-                            valueClassName="text-green-400"
+                            valueClassName="text-green-600"
                         />
                         <StatCard 
                             icon={<Award className="h-10 w-10" />}
@@ -195,7 +195,7 @@ export default async function HallOfFamePage() {
                             description="The player with the most games played."
                             stat={stats.mostGamesPlayed}
                             unit="games"
-                            valueClassName="text-green-400"
+                            valueClassName="text-green-600"
                         />
                         <StatCard 
                             icon={<Anchor className="h-10 w-10" />}
@@ -203,7 +203,7 @@ export default async function HallOfFamePage() {
                             description="Best average position (min. 3 games)."
                             stat={stats.mostConsistent}
                             formatValue={(v) => v.toFixed(2)}
-                            valueClassName="text-green-400"
+                            valueClassName="text-green-600"
                         />
                     </div>
                 </div>
