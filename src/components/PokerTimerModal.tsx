@@ -57,7 +57,11 @@ export default function PokerTimerModal({
   };
   
   const [currentLevelIndex, setCurrentLevelIndex] = useState(() => getInitialTimerState('currentLevelIndex', 0));
-  const [timeLeft, setTimeLeft] = useState(() => getInitialTimerState('timeLeft', activeStructure[0]?.duration * 60 || 0));
+  const [timeLeft, setTimeLeft] = useState(() => {
+    const savedTime = getInitialTimerState('timeLeft', undefined);
+    const structureDuration = activeStructure[currentLevelIndex]?.duration * 60;
+    return savedTime !== undefined ? savedTime : (structureDuration || 0);
+  });
   const [totalTime, setTotalTime] = useState(() => getInitialTimerState('totalTime', 0));
   const [isPaused, setIsPaused] = useState(() => getInitialTimerState('isPaused', true));
   
@@ -76,19 +80,15 @@ export default function PokerTimerModal({
 
   // Sync with external structure changes from parent
   useEffect(() => {
-    const savedLevelIndex = getInitialTimerState('currentLevelIndex', 0);
-    const newStructureDuration = activeStructure[savedLevelIndex]?.duration * 60;
-    
-    // Only reset timer if the structure fundamentally changes, otherwise respect saved state
-    // A simple check is to see if the duration for the current level is different.
-    if (activeStructure[currentLevelIndex]?.duration * 60 !== timeLeft && !getInitialTimerState('timeLeft', undefined)) {
+    const newStructureDuration = activeStructure[currentLevelIndex]?.duration * 60;
+
+    // When the activeStructure prop changes, we check if we need to reset the timer.
+    // This is a simple way to detect if a new structure has been applied.
+    if (timeLeft > newStructureDuration) {
        resetTimerWithNewStructure(activeStructure);
-    } else {
-       // Ensure currentLevelIndex is not out of bounds for the new structure
-       if(currentLevelIndex >= activeStructure.length) {
-          setCurrentLevelIndex(0);
-          setTimeLeft(activeStructure[0]?.duration * 60);
-       }
+    } else if(currentLevelIndex >= activeStructure.length) {
+       // If the index is out of bounds (e.g., shorter structure applied), reset.
+       resetTimerWithNewStructure(activeStructure);
     }
   }, [activeStructure]);
 
@@ -107,10 +107,11 @@ export default function PokerTimerModal({
 
   
   const resetTimerWithNewStructure = (newStructure: BlindLevel[]) => {
-      setCurrentLevelIndex(0);
-      setTimeLeft(newStructure.length > 0 ? newStructure[0].duration * 60 : 0);
+      const newIndex = 0;
+      setCurrentLevelIndex(newIndex);
+      setTimeLeft(newStructure.length > 0 ? newStructure[newIndex].duration * 60 : 0);
       setIsPaused(true);
-      setTotalTime(0);
+      // We don't reset totalTime to preserve it across structure changes.
   }
 
   const goToNextLevel = () => {
@@ -138,17 +139,28 @@ export default function PokerTimerModal({
     if (activeStructure.length === 0 || currentLevel.isBreak) return 0;
     
     let time = timeLeft;
-    let tempIndex = (currentLevelIndex + 1) % activeStructure.length;
+    let tempIndex = currentLevelIndex;
     
+    // Check from current level onwards
     for(let i=0; i < activeStructure.length; i++) {
-        if(activeStructure[tempIndex].isBreak) {
-            return time;
+        const checkingIndex = (tempIndex + i) % activeStructure.length;
+        const levelToCheck = activeStructure[checkingIndex];
+        
+        if (levelToCheck.isBreak) {
+            // Found a break, now calculate time to it
+            let timeToIt = 0;
+            // Add time left in current level if it's not the break level itself
+            if(i > 0) timeToIt += timeLeft;
+            
+            // Add duration of all levels between current and break
+            for(let j=1; j < i; j++) {
+                timeToIt += activeStructure[(currentLevelIndex + j) % activeStructure.length].duration * 60;
+            }
+            return timeToIt;
         }
-        time += activeStructure[tempIndex].duration * 60;
-        tempIndex = (tempIndex + 1) % activeStructure.length;
     }
 
-    return time; // No break found in the structure
+    return 0; // No break found in the structure
   };
 
   return (
