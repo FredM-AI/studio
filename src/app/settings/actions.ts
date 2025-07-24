@@ -19,14 +19,23 @@ const BlindStructureSchema = z.object({
   id: z.string().min(1, 'ID is required.'),
   name: z.string().min(3, 'Name must be at least 3 characters.'),
   levels: z.string().transform((val, ctx) => {
+    if (!val) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Levels data is missing.' });
+        return z.NEVER;
+    }
     try {
       const parsed = JSON.parse(val);
       const validated = z.array(BlindLevelSchema).safeParse(parsed);
       if (!validated.success) {
+        console.log("Zod validation error on levels: ", validated.error.flatten());
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: 'Invalid level data in JSON.',
+          message: 'Invalid level data in JSON. Please check all fields.',
         });
+        return z.NEVER;
+      }
+      if (validated.data.length === 0) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'A structure must have at least one level.' });
         return z.NEVER;
       }
       return validated.data;
@@ -45,6 +54,7 @@ export type BlindStructureFormState = {
   };
   message?: string | null;
   success?: boolean;
+  newStructure?: BlindStructureTemplate; // Return the new/updated structure on success
 };
 
 export async function saveBlindStructureAction(prevState: BlindStructureFormState, formData: FormData): Promise<BlindStructureFormState> {
@@ -80,10 +90,11 @@ export async function saveBlindStructureAction(prevState: BlindStructureFormStat
   revalidatePath('/events/new');
   revalidatePath('/events/.*edit');
   revalidatePath('/events/.*live');
-  revalidatePath('/settings'); // Or wherever structures are managed
+  revalidatePath('/settings'); 
 
   return {
     message: `Structure "${name}" saved successfully.`,
     success: true,
+    newStructure: structureToSave, // Return the saved structure
   };
 }

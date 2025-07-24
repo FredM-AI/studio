@@ -18,7 +18,7 @@ import { Label } from '@/components/ui/label';
 interface LiveTournamentClientProps {
     event: Event;
     players: Player[];
-    blindStructures: BlindStructureTemplate[];
+    initialBlindStructures: BlindStructureTemplate[];
 }
 
 const defaultBlindStructure: BlindLevel[] = [
@@ -26,30 +26,33 @@ const defaultBlindStructure: BlindLevel[] = [
     { level: 2, smallBlind: 20, bigBlind: 40, duration: 20, isBreak: false },
 ];
 
-export default function LiveTournamentClient({ event, players, blindStructures }: LiveTournamentClientProps) {
+export default function LiveTournamentClient({ event, players, initialBlindStructures }: LiveTournamentClientProps) {
   const [isTimerModalOpen, setIsTimerModalOpen] = React.useState(false);
   const [isStructureManagerOpen, setIsStructureManagerOpen] = React.useState(false);
+  const [blindStructures, setBlindStructures] = React.useState<BlindStructureTemplate[]>(initialBlindStructures);
 
-  const [activeStructureId, setActiveStructureId] = React.useState<string>(
-    event.blindStructureId || (blindStructures.length > 0 ? blindStructures[0].id : 'custom')
-  );
+  const [activeStructureId, setActiveStructureId] = React.useState<string>(() => {
+    // If the event has a specific structure ID, use it. Otherwise, default to the first available one, or 'custom'.
+    return event.blindStructureId || (initialBlindStructures.length > 0 ? initialBlindStructures[0].id : 'custom');
+  });
   
   const [activeStructure, setActiveStructure] = React.useState<BlindLevel[]>(() => {
+    // Priority: 1. Event's embedded structure, 2. Look up by ID, 3. Default
     if (event.blindStructure && event.blindStructure.length > 0) {
       return event.blindStructure;
     }
-    if (event.blindStructureId) {
-        const found = blindStructures.find(bs => bs.id === event.blindStructureId);
+    if (activeStructureId) {
+        const found = initialBlindStructures.find(bs => bs.id === activeStructureId);
         if (found) return found.levels;
     }
     return defaultBlindStructure;
   });
 
-  const handleApplyStructure = (newStructureTemplate: BlindStructureTemplate) => {
-      setActiveStructure(newStructureTemplate.levels);
-      setActiveStructureId(newStructureTemplate.id);
-      // Note: This won't persist yet. We need a server action later to save to the event.
-      console.log(`Applied new structure "${newStructureTemplate.name}" to live event state.`);
+  const handleApplyStructure = (newLevels: BlindLevel[], newStructureId: string) => {
+      setActiveStructure(newLevels);
+      setActiveStructureId(newStructureId);
+      // Here you could also trigger a server action to persist this change to the event document
+      console.log(`Applied new structure "${newStructureId}" to live event state.`);
   };
 
   const handleSelectStructure = (structureId: string) => {
@@ -63,18 +66,26 @@ export default function LiveTournamentClient({ event, players, blindStructures }
 
   return (
     <div className="container mx-auto p-4 space-y-8">
-        {isTimerModalOpen && <PokerTimerModal event={event} blindStructures={blindStructures} onClose={() => setIsTimerModalOpen(false)} activeStructure={activeStructure} setActiveStructure={setActiveStructure} />}
+        {isTimerModalOpen && (
+            <PokerTimerModal 
+                event={event} 
+                blindStructures={blindStructures} 
+                onClose={() => setIsTimerModalOpen(false)} 
+                activeStructure={activeStructure} 
+                setActiveStructure={(newStructure) => {
+                    setActiveStructure(newStructure);
+                    // When structure is changed from timer, we might not have an ID. Mark as custom.
+                    setActiveStructureId('custom');
+                }}
+            />
+        )}
         {isStructureManagerOpen && (
             <BlindStructureManager
                 isOpen={isStructureManagerOpen}
                 onClose={() => setIsStructureManagerOpen(false)}
                 structures={blindStructures}
                 activeStructure={activeStructure}
-                onApplyStructure={(levels) => {
-                    // This function from BlindManager might be deprecated if we save directly from it.
-                    // For now, it updates the local state if needed.
-                    setActiveStructure(levels);
-                }}
+                onApplyStructure={handleApplyStructure}
             />
         )}
         <div className="flex justify-between items-center">
@@ -117,8 +128,8 @@ export default function LiveTournamentClient({ event, players, blindStructures }
                                             <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
                                         ))}
                                         {/* You can add a 'Custom' option if the current structure doesn't match any saved one */}
-                                        {!blindStructures.some(bs => bs.id === activeStructureId) && (
-                                            <SelectItem value={activeStructureId} disabled>Custom</SelectItem>
+                                        {!blindStructures.some(bs => bs.id === activeStructureId) && activeStructureId === 'custom' && (
+                                            <SelectItem value="custom" disabled>Custom</SelectItem>
                                         )}
                                     </SelectContent>
                                 </Select>

@@ -13,7 +13,7 @@ interface PokerTimerModalProps {
   event: Event;
   blindStructures: BlindStructureTemplate[];
   activeStructure: BlindLevel[];
-  setActiveStructure: (structure: BlindLevel[]) => void;
+  setActiveStructure: (structure: BlindLevel[], structureId: string) => void;
   onClose: () => void;
 }
 
@@ -52,8 +52,6 @@ export default function PokerTimerModal({ event, blindStructures, activeStructur
 
   
   const resetTimerWithNewStructure = (newStructure: BlindLevel[]) => {
-      // This function is now called by the parent component via props
-      // It resets the timer based on the new structure provided
       setCurrentLevelIndex(0);
       setTimeLeft(newStructure.length > 0 ? newStructure[0].duration * 60 : 0);
       setIsPaused(true);
@@ -101,8 +99,8 @@ export default function PokerTimerModal({ event, blindStructures, activeStructur
             onClose={() => setIsStructureManagerOpen(false)}
             structures={blindStructures}
             activeStructure={activeStructure}
-            onApplyStructure={(newStructure) => {
-                setActiveStructure(newStructure);
+            onApplyStructure={(newStructure, newStructureId) => {
+                setActiveStructure(newStructure, newStructureId);
                 resetTimerWithNewStructure(newStructure);
             }}
         />

@@ -15,6 +15,7 @@ import { PlusCircle, Trash2, Save, X, Loader2, AlertCircle, CheckCircle } from '
 import { Switch } from './ui/switch';
 import { saveBlindStructureAction, type BlindStructureFormState } from '@/app/settings/actions';
 import { useToast } from '@/hooks/use-toast';
+import { getBlindStructures } from '@/lib/data-service';
 
 
 interface BlindStructureManagerProps {
@@ -22,7 +23,7 @@ interface BlindStructureManagerProps {
   onClose: () => void;
   structures: BlindStructureTemplate[];
   activeStructure: BlindLevel[];
-  onApplyStructure: (levels: BlindLevel[]) => void;
+  onApplyStructure: (levels: BlindLevel[], structureId: string) => void;
 }
 
 const createNewLevel = (lastLevel: number): BlindLevel => ({
@@ -42,33 +43,44 @@ export default function BlindStructureManager({ isOpen, onClose, structures, act
   const [selectedStructureId, setSelectedStructureId] = useState<string>(structures.length > 0 ? structures[0].id : BLANK_STRUCTURE_ID);
   const [currentLevels, setCurrentLevels] = useState<BlindLevel[]>(activeStructure);
   const [structureName, setStructureName] = useState<string>('New Custom Structure');
+  const [formStructureId, setFormStructureId] = useState<string>(crypto.randomUUID());
   
   const formRef = React.useRef<HTMLFormElement>(null);
 
   const initialState: BlindStructureFormState = { message: null, errors: {}, success: false };
-  const [state, formAction, isPending] = useFormState(saveBlindStructureAction, initialState);
+  const [state, formAction] = useFormState(saveBlindStructureAction, initialState);
+  const isPending = (formRef.current as any)?.formState?.isSubmitting;
+
 
   useEffect(() => {
-    // When the selected template changes, update the editor
     if (selectedStructureId === BLANK_STRUCTURE_ID) {
       setCurrentLevels([createNewLevel(0)]);
       setStructureName('New Custom Structure');
+      setFormStructureId(crypto.randomUUID()); // Assign a new ID for a new potential structure
     } else {
       const selected = availableStructures.find(s => s.id === selectedStructureId);
       if (selected) {
         setCurrentLevels(JSON.parse(JSON.stringify(selected.levels))); // Deep copy
         setStructureName(selected.name);
+        setFormStructureId(selected.id);
       }
     }
   }, [selectedStructureId, availableStructures]);
 
   useEffect(() => {
     if (state.message) {
-      if(state.success) {
+      if(state.success && state.newStructure) {
         toast({ title: 'Success', description: state.message, variant: 'default' });
-        // After successful save, we may need to refresh the list of structures if a new one was added.
-        // For simplicity, we can close the dialog or rely on revalidation.
-      } else {
+        // Refresh structures list from server to get the most up-to-date list
+        getBlindStructures().then(updatedStructures => {
+            setAvailableStructures(updatedStructures);
+            // If we just created a new structure, select it.
+            if(selectedStructureId === BLANK_STRUCTURE_ID && state.newStructure) {
+                setSelectedStructureId(state.newStructure.id);
+                setFormStructureId(state.newStructure.id);
+            }
+        });
+      } else if (!state.success) {
         toast({ title: 'Error', description: state.message, variant: 'destructive' });
       }
     }
@@ -89,6 +101,8 @@ export default function BlindStructureManager({ isOpen, onClose, structures, act
         const numValue = parseInt(value, 10);
         if (!isNaN(numValue)) {
             (levelToUpdate as any)[field] = numValue;
+        } else if(value === '') {
+            (levelToUpdate as any)[field] = 0; // Set to 0 if input is cleared
         }
     }
 
@@ -105,7 +119,10 @@ export default function BlindStructureManager({ isOpen, onClose, structures, act
     setCurrentLevels(currentLevels.filter((_, i) => i !== index));
   };
   
-  const structureIdForForm = selectedStructureId === BLANK_STRUCTURE_ID ? crypto.randomUUID() : selectedStructureId;
+  const handleApply = () => {
+    onApplyStructure(currentLevels, formStructureId);
+    onClose();
+  }
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -118,11 +135,11 @@ export default function BlindStructureManager({ isOpen, onClose, structures, act
         </DialogHeader>
         
         <form action={formAction} ref={formRef} className="flex flex-col gap-4 flex-grow min-h-0">
-          <input type="hidden" name="id" value={structureIdForForm} />
+          <input type="hidden" name="id" value={formStructureId} />
           <input type="hidden" name="levels" value={JSON.stringify(currentLevels)} />
 
           {/* Top Controls */}
-          <div className="flex flex-col sm:flex-row gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-end">
             <div className="flex-grow">
               <Label>Load or Edit Structure</Label>
               <Select value={selectedStructureId} onValueChange={setSelectedStructureId}>
@@ -145,19 +162,19 @@ export default function BlindStructureManager({ isOpen, onClose, structures, act
           </div>
 
           {/* Structure Editor */}
-          <div className="flex flex-col gap-4 flex-grow min-h-0">
+          <div className="flex flex-col gap-2 flex-grow min-h-0">
             <Label>Levels</Label>
-             {state.errors?.levels && <p className="text-xs text-destructive mt-1">{state.errors.levels.join(', ')}</p>}
+             {state.errors?.levels && <p className="text-xs text-destructive">{state.errors.levels.join(', ')}</p>}
             <ScrollArea className="border rounded-md flex-grow">
               <Table>
-                <TableHeader className="sticky top-0 bg-muted">
+                <TableHeader className="sticky top-0 bg-muted z-10">
                   <TableRow>
                     <TableHead className="w-[80px]">Level</TableHead>
                     <TableHead>Small</TableHead>
                     <TableHead>Big</TableHead>
                     <TableHead>Ante</TableHead>
                     <TableHead>Duration</TableHead>
-                    <TableHead>Break</TableHead>
+                    <TableHead className="w-[80px]">Break</TableHead>
                     <TableHead className="w-[50px]"></TableHead>
                   </TableRow>
                 </TableHeader>
@@ -165,7 +182,7 @@ export default function BlindStructureManager({ isOpen, onClose, structures, act
                   {currentLevels.map((level, index) => (
                     <TableRow key={index}>
                       <TableCell>
-                         <Input type="number" value={level.isBreak ? 'Break' : level.level} onChange={e => handleLevelChange(index, 'level', e.target.value)} disabled={level.isBreak} className="h-8"/>
+                         <Input type="text" value={level.isBreak ? 'Break' : level.level} onChange={e => handleLevelChange(index, 'level', e.target.value)} disabled={level.isBreak} className="h-8 text-center"/>
                       </TableCell>
                        <TableCell>
                           <Input type="number" value={level.smallBlind} onChange={e => handleLevelChange(index, 'smallBlind', e.target.value)} disabled={level.isBreak} className="h-8"/>
@@ -179,7 +196,7 @@ export default function BlindStructureManager({ isOpen, onClose, structures, act
                       <TableCell>
                           <Input type="number" value={level.duration} onChange={e => handleLevelChange(index, 'duration', e.target.value)} className="h-8"/>
                       </TableCell>
-                       <TableCell>
+                       <TableCell className="text-center">
                           <Switch checked={level.isBreak} onCheckedChange={value => handleLevelChange(index, 'isBreak', value)} />
                       </TableCell>
                       <TableCell>
@@ -192,11 +209,16 @@ export default function BlindStructureManager({ isOpen, onClose, structures, act
                 </TableBody>
               </Table>
             </ScrollArea>
-            <Button variant="outline" type="button" onClick={addLevel}><PlusCircle className="mr-2 h-4 w-4" /> Add Level</Button>
+             <div className="flex-shrink-0">
+                <Button variant="outline" type="button" onClick={addLevel} className="w-full">
+                    <PlusCircle className="mr-2 h-4 w-4" /> Add Level
+                </Button>
+            </div>
           </div>
        
-          <DialogFooter>
+          <DialogFooter className="flex-shrink-0">
             <Button variant="outline" onClick={onClose}>Close</Button>
+            <Button type="button" onClick={handleApply}>Apply to Timer</Button>
             <Button type="submit" disabled={isPending}>
               {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               <Save className="mr-2 h-4 w-4"/> Save Structure

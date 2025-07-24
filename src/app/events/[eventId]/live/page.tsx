@@ -48,5 +48,5 @@ export default async function LiveTournamentPage({ params }: { params: { eventId
   }
 
   // Pass the server-fetched data to the client component
-  return <LiveTournamentClient event={event} players={players} blindStructures={blindStructures} />;
+  return <LiveTournamentClient event={event} players={players} initialBlindStructures={blindStructures} />;
 }
