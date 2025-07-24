@@ -13,7 +13,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Switch } from '@/components/ui/switch';
-import { Trophy, PlusCircle, MinusCircle, Users, DollarSign, CalendarDays, Settings, Info, Repeat, Star, Gift, BarChart3, HelpCircle, Clock, Hash } from 'lucide-react'; 
+import { Trophy, PlusCircle, MinusCircle, Users, DollarSign, CalendarDays, Settings, Info, Repeat, Star, Gift, BarChart3, HelpCircle, Clock, Hash, PlayCircle } from 'lucide-react'; 
 import Link from 'next/link';
 import { eventStatuses } from '@/lib/definitions';
 
@@ -359,6 +359,7 @@ export default function EventForm({ event, allPlayers, allSeasons, blindStructur
     });
   const resultsJson = JSON.stringify(finalResultsForJson);
 
+  const isCreating = !event?.id;
 
   return (
     <Card className="max-w-4xl mx-auto">
@@ -762,7 +763,19 @@ export default function EventForm({ event, allPlayers, allSeasons, blindStructur
           <Button variant="outline" asChild>
             <Link href={event ? `/events/${event.id}` : "/events"}>Cancel</Link>
           </Button>
-          <Button type="submit">{submitButtonText}</Button>
+          <Button type="submit" name="submitAction" value="create">
+            {submitButtonText}
+          </Button>
+           {isCreating && (
+              <Button 
+                type="submit" 
+                name="submitAction" 
+                value="createAndGoLive" 
+                className="bg-green-600 hover:bg-green-700"
+              >
+                <PlayCircle className="mr-2 h-4 w-4" /> Create and Go Live
+              </Button>
+            )}
         </CardFooter>
       </form>
     </Card>

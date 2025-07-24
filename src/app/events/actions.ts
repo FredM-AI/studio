@@ -83,6 +83,7 @@ const EventFormSchema = z.object({
       return z.NEVER;
     }
   }).pipe(z.array(EventResultInputSchema).optional().default([])),
+  submitAction: z.string().optional(), // Used to determine which button was clicked
 }).refine(data => {
   if (data.status === 'completed' && data.participantIds.length > 0 && (!data.resultsJson || data.resultsJson.length === 0)) {
     // This validation might need adjustment based on exact requirements
@@ -120,9 +121,7 @@ const EventFormSchema = z.object({
 
 export async function createEvent(prevState: EventFormState, formData: FormData): Promise<EventFormState> {
   const rawFormData = Object.fromEntries(formData.entries());
-  const participantIdsValue = rawFormData.participantIds;
-  rawFormData.participantIds = typeof participantIdsValue === 'string' && participantIdsValue ? participantIdsValue.split(',').filter(id => id.trim() !== '') : (Array.isArray(val) ? val : []);
-
+  
   const validatedFields = EventFormSchema.safeParse(rawFormData);
 
   if (!validatedFields.success) {
@@ -156,7 +155,7 @@ export async function createEvent(prevState: EventFormState, formData: FormData)
     startingStack: data.startingStack,
     includeBountiesInNet: data.includeBountiesInNet,
     maxPlayers: data.maxPlayers,
-    status: data.status as EventStatus,
+    status: data.submitAction === 'createAndGoLive' ? 'active' : data.status as EventStatus,
     seasonId: seasonIdValue,
     blindStructureId: data.blindStructureId,
     blindStructure: blindStructure,
@@ -198,13 +197,16 @@ export async function createEvent(prevState: EventFormState, formData: FormData)
   revalidatePath('/events');
   revalidatePath('/dashboard');
   revalidatePath('/seasons');
-  redirect('/events');
+  
+  if (data.submitAction === 'createAndGoLive') {
+    redirect(`/events/${eventId}/live`);
+  } else {
+    redirect('/events');
+  }
 }
 
 export async function updateEvent(prevState: EventFormState, formData: FormData): Promise<EventFormState> {
   const rawFormData = Object.fromEntries(formData.entries());
-  const participantIdsValue = rawFormData.participantIds;
-  rawFormData.participantIds = typeof participantIdsValue === 'string' && participantIdsValue ? participantIdsValue.split(',').filter(id => id.trim() !== '') : (Array.isArray(val) ? val : []);
 
   const validatedFields = EventFormSchema.safeParse(rawFormData);
 
