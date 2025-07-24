@@ -90,6 +90,7 @@ export default function LiveTournamentClient({ event: initialEvent, players: all
             name: getPlayerDisplayName(player),
             isGuest: player?.isGuest || false,
             rebuys: result?.rebuys || 0,
+            eliminatedPosition: null, // Initially not eliminated
         };
     }).sort((a,b) => a.name.localeCompare(b.name));
 
@@ -97,8 +98,10 @@ export default function LiveTournamentClient({ event: initialEvent, players: all
       try {
         const item = window.localStorage.getItem(storageKey);
         const currentState = item ? JSON.parse(item) : {};
+        // Only set participants in localStorage if they weren't there before
         if(!currentState.participants) {
           currentState.participants = initialParticipants;
+          currentState.startingStack = initialEvent.startingStack;
           window.localStorage.setItem(storageKey, JSON.stringify(currentState));
         }
       } catch (error) {
@@ -187,6 +190,7 @@ export default function LiveTournamentClient({ event: initialEvent, players: all
           name: getPlayerDisplayName(player),
           isGuest: player.isGuest || false,
           rebuys: 0,
+          eliminatedPosition: null,
       }].sort((a,b) => a.name.localeCompare(b.name)));
   };
 
@@ -198,6 +202,29 @@ export default function LiveTournamentClient({ event: initialEvent, players: all
       setParticipants(prev => prev.filter(p => p.id !== participantId));
   };
   
+  const handleEliminatePlayer = (playerId: string) => {
+    setParticipants(prev => {
+      const eliminatedCount = prev.filter(p => p.eliminatedPosition !== null).length;
+      const finishingPosition = prev.length - eliminatedCount;
+      return prev.map(p => p.id === playerId ? { ...p, eliminatedPosition: finishingPosition } : p);
+    });
+  };
+
+  const handleUndoLastElimination = () => {
+    setParticipants(prev => {
+        const eliminatedPlayers = prev.filter(p => p.eliminatedPosition !== null);
+        if (eliminatedPlayers.length === 0) return prev;
+        
+        // Find the player with the "best" (lowest number) elimination position, which is the last one eliminated
+        const lastEliminated = eliminatedPlayers.reduce((last, current) => 
+            (current.eliminatedPosition || 0) < (last.eliminatedPosition || 0) ? current : last
+        );
+
+        return prev.map(p => p.id === lastEliminated.id ? { ...p, eliminatedPosition: null } : p);
+    });
+  };
+
+
   const { totalPrizePool, payoutStructure } = React.useMemo(() => {
     const numParticipants = participants.length;
     const totalRebuys = participants.reduce((sum, p) => sum + p.rebuys, 0);
@@ -240,7 +267,7 @@ export default function LiveTournamentClient({ event: initialEvent, players: all
 
   const totalRebuys = participants.reduce((sum, p) => sum + p.rebuys, 0);
   const totalChips = (participants.length + totalRebuys) * (event.startingStack || 0);
-  const avgStack = participants.length > 0 ? Math.floor(totalChips / participants.length) : 0;
+  const avgStack = participants.length > 0 ? Math.floor(totalChips / participants.filter(p => p.eliminatedPosition === null).length) : 0;
 
   return (
     <div className="container mx-auto p-4 space-y-8">
@@ -344,7 +371,7 @@ export default function LiveTournamentClient({ event: initialEvent, players: all
                  <Card>
                     <CardHeader>
                         <CardTitle>Player Tracking</CardTitle>
-                        <CardDescription>Manage buy-ins, rebuys, and add-ons.</CardDescription>
+                        <CardDescription>Manage buy-ins, rebuys, and eliminations.</CardDescription>
                     </CardHeader>
                     <CardContent>
                         <LivePlayerTracking 
@@ -354,6 +381,8 @@ export default function LiveTournamentClient({ event: initialEvent, players: all
                           onAddParticipant={addParticipant}
                           onRemoveParticipant={removeParticipant}
                           onRebuyChange={handleRebuyChange}
+                          onEliminatePlayer={handleEliminatePlayer}
+                          onUndoLastElimination={handleUndoLastElimination}
                         />
                     </CardContent>
                 </Card>

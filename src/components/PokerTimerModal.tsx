@@ -127,10 +127,12 @@ export default function PokerTimerModal({
   const safeCurrentLevelIndex = Math.min(currentLevelIndex, activeStructure.length - 1);
   const currentLevel = activeStructure[safeCurrentLevelIndex] || { level: 0, smallBlind: 0, bigBlind: 0, duration: 0, isBreak: true };
   const nextLevel = activeStructure.length > 1 ? activeStructure[(safeCurrentLevelIndex + 1) % activeStructure.length] : currentLevel;
+  
+  const activeParticipants = participants.filter(p => p.eliminatedPosition === null);
   const totalRebuys = participants.reduce((sum, p) => sum + p.rebuys, 0);
 
   const totalChips = (participants.length + totalRebuys) * (event.startingStack || 0);
-  const avgStack = participants.length > 0 ? Math.floor(totalChips / participants.length) : 0;
+  const avgStack = activeParticipants.length > 0 ? Math.floor(totalChips / activeParticipants.length) : 0;
 
   const timeToNextBreak = () => {
     if (activeStructure.length === 0 || currentLevel.isBreak) return 0;
@@ -239,7 +241,7 @@ export default function PokerTimerModal({
             <div className="mt-6 grid grid-cols-3 gap-6 text-sm">
                 <div className="bg-black/20 p-3 rounded">
                     <h4 className="font-bold border-b border-gray-500 pb-1 mb-2">Status</h4>
-                    <div className="flex justify-between"><span>Players:</span> <span>{participants.length}</span></div>
+                    <div className="flex justify-between"><span>Players:</span> <span>{activeParticipants.length} / {participants.length}</span></div>
                     <div className="flex justify-between"><span>Rebuys:</span> <span>{totalRebuys}</span></div>
                     <div className="flex justify-between"><span>Addons:</span> <span>0</span></div>
                 </div>
