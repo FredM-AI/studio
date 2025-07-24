@@ -63,7 +63,7 @@ export default async function PlayerDetailPage({ params }: { params: { playerId:
       <Card className="overflow-hidden shadow-lg">
         <CardHeader className="bg-muted/50 p-6 flex flex-col md:flex-row items-start md:items-center gap-6">
           <Avatar className="h-24 w-24 border-4 border-background shadow-md">
-            <AvatarImage src={player.avatar} alt={`${player.firstName} ${player.lastName}`} data-ai-hint="person avatar"/>
+            <AvatarImage src={player.avatar} alt={`${player.firstName} ${player.lastName}`} />
             <AvatarFallback className="text-3xl font-semibold bg-primary text-primary-foreground">
               {getInitials(player.firstName, player.lastName)}
             </AvatarFallback>
