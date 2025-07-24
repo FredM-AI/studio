@@ -148,6 +148,10 @@ export default function LiveTournamentClient({ event: initialEvent, players: all
   const handleApplyStructure = (newLevels: BlindLevel[], newStructureId: string) => {
       setActiveStructure(newLevels);
       setActiveStructureId(newStructureId);
+      const selectedStructureTemplate = blindStructures.find(bs => bs.id === newStructureId);
+      if (selectedStructureTemplate && selectedStructureTemplate.startingStack) {
+        setEvent(prevEvent => ({...prevEvent, startingStack: selectedStructureTemplate.startingStack}));
+      }
       console.log(`Applied new structure "${newStructureId}" to live event state.`);
   };
 
@@ -157,6 +161,9 @@ export default function LiveTournamentClient({ event: initialEvent, players: all
     if(selected) {
         setActiveStructureId(selected.id);
         setActiveStructure(selected.levels);
+        if (selected.startingStack) {
+           setEvent(prevEvent => ({...prevEvent, startingStack: selected.startingStack}));
+        }
     }
   }
 
