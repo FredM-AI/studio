@@ -6,7 +6,7 @@ import type { Event, Player, BlindLevel, BlindStructureTemplate } from "@/lib/de
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { ArrowLeft, Clock, Settings, List } from "lucide-react";
+import { ArrowLeft, Clock, Settings, List, Banknote } from "lucide-react";
 import PokerTimerModal from '@/components/PokerTimerModal';
 import BlindStructureManager from '@/components/BlindStructureManager';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -14,7 +14,8 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
-import LivePlayerTracking from '@/components/LivePlayerTracking';
+import LivePlayerTracking, { type ParticipantState } from '@/components/LivePlayerTracking';
+import LivePrizePool from '@/components/LivePrizePool';
 
 interface LiveTournamentClientProps {
     event: Event;
@@ -27,12 +28,35 @@ const defaultBlindStructure: BlindLevel[] = [
     { level: 2, smallBlind: 20, bigBlind: 40, duration: 20, isBreak: false },
 ];
 
-export default function LiveTournamentClient({ event: initialEvent, players, initialBlindStructures }: LiveTournamentClientProps) {
+const getPlayerDisplayName = (player: Player | undefined): string => {
+  if (!player) return "Unknown Player";
+  if (player.nickname && player.nickname.trim() !== '') return player.nickname;
+  if (player.firstName) return `${player.firstName}${player.lastName ? ' ' + player.lastName.charAt(0) + '.' : ''}`;
+  if (player.lastName) return player.lastName;
+  return "Unnamed";
+};
+
+const sortPlayersWithGuestsLast = (a: Player, b: Player): number => {
+    const aIsGuest = a.isGuest || false;
+    const bIsGuest = b.isGuest || false;
+    if (aIsGuest !== bIsGuest) {
+      return aIsGuest ? 1 : -1;
+    }
+    return getPlayerDisplayName(a).localeCompare(getPlayerDisplayName(b));
+};
+
+
+export default function LiveTournamentClient({ event: initialEvent, players: allPlayers, initialBlindStructures }: LiveTournamentClientProps) {
   const [event, setEvent] = React.useState<Event>(initialEvent);
   const [isTimerModalOpen, setIsTimerModalOpen] = React.useState(false);
   const [isStructureManagerOpen, setIsStructureManagerOpen] = React.useState(false);
   const [blindStructures, setBlindStructures] = React.useState<BlindStructureTemplate[]>(initialBlindStructures);
 
+  // State for participants, lifted up from LivePlayerTracking
+  const [participants, setParticipants] = React.useState<ParticipantState[]>([]);
+  const [availablePlayers, setAvailablePlayers] = React.useState<Player[]>([]);
+
+  // State for blind structures
   const [activeStructureId, setActiveStructureId] = React.useState<string>(() => {
     return event.blindStructureId || (initialBlindStructures.length > 0 ? initialBlindStructures[0].id : 'custom');
   });
@@ -41,12 +65,36 @@ export default function LiveTournamentClient({ event: initialEvent, players, ini
     if (event.blindStructure && event.blindStructure.length > 0) {
       return event.blindStructure;
     }
-    if (activeStructureId) {
+    if (activeStructureId !== 'custom') {
         const found = initialBlindStructures.find(bs => bs.id === activeStructureId);
         if (found) return found.levels;
     }
     return defaultBlindStructure;
   });
+
+  // Effect to initialize participants and available players
+  React.useEffect(() => {
+      const participantIds = new Set(event.participants);
+      
+      const initialParticipants = event.participants.map(playerId => {
+          const player = allPlayers.find(p => p.id === playerId);
+          const result = event.results.find(r => r.playerId === playerId);
+          return {
+              id: playerId,
+              name: getPlayerDisplayName(player),
+              isGuest: player?.isGuest || false,
+              rebuys: result?.rebuys || 0,
+          };
+      }).sort((a,b) => a.name.localeCompare(b.name));
+
+      const initialAvailablePlayers = allPlayers
+          .filter(p => !participantIds.has(p.id))
+          .sort(sortPlayersWithGuestsLast);
+
+      setParticipants(initialParticipants);
+      setAvailablePlayers(initialAvailablePlayers);
+  }, [event, allPlayers]);
+
 
   const handleApplyStructure = (newLevels: BlindLevel[], newStructureId: string) => {
       setActiveStructure(newLevels);
@@ -55,6 +103,7 @@ export default function LiveTournamentClient({ event: initialEvent, players, ini
   };
 
   const handleSelectStructure = (structureId: string) => {
+    if (structureId === 'custom') return;
     const selected = blindStructures.find(s => s.id === structureId);
     if(selected) {
         setActiveStructureId(selected.id);
@@ -62,6 +111,33 @@ export default function LiveTournamentClient({ event: initialEvent, players, ini
     }
   }
 
+  // Participant management functions
+  const handleRebuyChange = (playerId: string, delta: number) => {
+      setParticipants(prevParticipants => 
+          prevParticipants.map(p => 
+              p.id === playerId ? { ...p, rebuys: Math.max(0, p.rebuys + delta) } : p
+          )
+      );
+  };
+  
+  const addParticipant = (player: Player) => {
+      setParticipants(prev => [...prev, {
+          id: player.id,
+          name: getPlayerDisplayName(player),
+          isGuest: player.isGuest || false,
+          rebuys: 0,
+      }].sort((a,b) => a.name.localeCompare(b.name)));
+      
+      setAvailablePlayers(prev => prev.filter(p => p.id !== player.id));
+  };
+
+  const removeParticipant = (participantId: string) => {
+      const playerToRemove = allPlayers.find(p => p.id === participantId);
+      if (playerToRemove) {
+          setAvailablePlayers(prev => [...prev, playerToRemove].sort(sortPlayersWithGuestsLast));
+      }
+      setParticipants(prev => prev.filter(p => p.id !== participantId));
+  };
 
   return (
     <div className="container mx-auto p-4 space-y-8">
@@ -71,9 +147,9 @@ export default function LiveTournamentClient({ event: initialEvent, players, ini
                 blindStructures={blindStructures} 
                 onClose={() => setIsTimerModalOpen(false)} 
                 activeStructure={activeStructure} 
-                setActiveStructure={(newStructure) => {
-                    setActiveStructure(newStructure);
-                    setActiveStructureId('custom');
+                setActiveStructure={(newStructure, newStructureId) => {
+                  setActiveStructure(newStructure);
+                  setActiveStructureId(newStructureId);
                 }}
             />
         )}
@@ -125,7 +201,7 @@ export default function LiveTournamentClient({ event: initialEvent, players, ini
                                         {blindStructures.map(s => (
                                             <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
                                         ))}
-                                        {!blindStructures.some(bs => bs.id === activeStructureId) && activeStructureId === 'custom' && (
+                                        {activeStructureId === 'custom' && (
                                             <SelectItem value="custom" disabled>Custom</SelectItem>
                                         )}
                                     </SelectContent>
@@ -165,16 +241,30 @@ export default function LiveTournamentClient({ event: initialEvent, players, ini
                         <CardDescription>Manage buy-ins, rebuys, and add-ons.</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <LivePlayerTracking event={event} allPlayers={players} />
+                        <LivePlayerTracking 
+                          allPlayers={allPlayers}
+                          participants={participants}
+                          availablePlayers={availablePlayers}
+                          onAddParticipant={addParticipant}
+                          onRemoveParticipant={removeParticipant}
+                          onRebuyChange={handleRebuyChange}
+                        />
                     </CardContent>
                 </Card>
                  <Card>
                     <CardHeader>
-                        <CardTitle>Live Prize Pool</CardTitle>
-                        <CardDescription>Real-time calculation of prizes.</CardDescription>
+                        <CardTitle className="flex items-center gap-2">
+                          <Banknote className="h-6 w-6 text-primary"/>
+                          Live Prize Pool
+                        </CardTitle>
+                        <CardDescription>Real-time calculation of prizes based on entries and rebuys.</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <p className="text-muted-foreground text-center py-12">Live prize pool and payout distribution will be here.</p>
+                        <LivePrizePool 
+                           participants={participants}
+                           buyIn={event.buyIn}
+                           rebuyPrice={event.rebuyPrice}
+                        />
                     </CardContent>
                 </Card>
             </div>
