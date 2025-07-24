@@ -64,7 +64,7 @@ export default function PokerTimerModal({
   const [timeLeft, setTimeLeft] = useState(() => {
     const savedTime = getInitialTimerState('timeLeft', undefined);
     const safeIndex = Math.min(currentLevelIndex, activeStructure.length - 1);
-    const structureDuration = activeStructure[safeIndex]?.duration * 60;
+    const structureDuration = activeStructure.length > 0 ? activeStructure[safeIndex]?.duration * 60 : 0;
     return savedTime !== undefined ? savedTime : (structureDuration || 0);
   });
   const [totalTime, setTotalTime] = useState(() => getInitialTimerState('totalTime', 0));
@@ -228,7 +228,7 @@ export default function PokerTimerModal({
 
             <div className="bg-gray-600/70 text-white rounded-lg p-2 flex items-center justify-between text-sm mt-4">
                <div className="font-mono text-xl font-bold w-1/3">
-                {formatTime(nextLevel.duration * 60)}
+                {nextLevel.duration ? formatTime(nextLevel.duration * 60) : '00:00'}
               </div>
               <div className="w-1/3 text-center text-gray-300">
                 Next: {nextLevel.isBreak ? 'Break' : `Level ${nextLevel.level}`}
@@ -295,7 +295,9 @@ export default function PokerTimerModal({
                     className="w-24"
                     onValueChange={(value) => setVolume(value[0])}
                 />
-                <Button variant="ghost" size="icon" onClick={() => setIsStructureManagerOpen(true)} className="h-8 w-8"><Settings className="h-5 w-5"/></Button>
+                <Button variant="ghost" size="icon" onClick={() => { /* Settings action to be defined */ }} className="h-8 w-8 opacity-50 cursor-not-allowed">
+                  <Settings className="h-5 w-5"/>
+                </Button>
                 <Button variant="ghost" size="icon" onClick={onClose} className="h-8 w-8"><X className="h-5 w-5"/></Button>
              </div>
           </div>
@@ -305,4 +307,3 @@ export default function PokerTimerModal({
     </>
   );
 }
-
