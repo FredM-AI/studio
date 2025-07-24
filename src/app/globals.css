@@ -115,25 +115,4 @@ body {
   .backface-hidden {
     backface-visibility: hidden;
   }
-  
-  @keyframes fall {
-    0% {
-      opacity: 0;
-      transform: translateY(-20vh) rotate(0deg);
-    }
-    10% {
-      opacity: 1;
-    }
-    100% {
-      opacity: 0.5;
-      transform: translateY(120vh) rotate(360deg);
-    }
-  }
-
-  .particle {
-    animation: fall linear;
-    position: absolute;
-    top: 0;
-    left: 0;
-  }
 }
