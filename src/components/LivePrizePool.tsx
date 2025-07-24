@@ -51,14 +51,14 @@ export default function LivePrizePool({ participants, buyIn, rebuyPrice }: LiveP
             }
         }
         
-        return { totalPrizePool: calculatedPrizePool, payoutStructure: structure };
+        return { totalPrizePool: calculatedPrizePool, payoutStructure: structure.sort((a,b) => a.position - b.position) };
     }, [participants, buyIn, rebuyPrice]);
 
     return (
         <div className="space-y-4">
             <div className="text-center bg-muted/50 p-4 rounded-lg">
                 <p className="text-sm text-muted-foreground uppercase tracking-wider">Total Prize Pool</p>
-                <p className="text-4xl font-bold font-headline text-primary">
+                <p className="text-3xl font-bold font-headline text-primary">
                     €{totalPrizePool.toLocaleString()}
                 </p>
             </div>
@@ -66,15 +66,15 @@ export default function LivePrizePool({ participants, buyIn, rebuyPrice }: LiveP
                 <h4 className="font-medium text-center mb-2">Estimated Payouts</h4>
                  {payoutStructure.length > 0 ? (
                     <ul className="space-y-2">
-                        {payoutStructure.sort((a,b) => a.position - b.position).map(({ position, prize }) => (
-                            <li key={position} className="flex justify-between items-center text-lg bg-card p-3 rounded-md shadow-sm">
+                        {payoutStructure.map(({ position, prize }) => (
+                            <li key={position} className="flex justify-between items-center text-md bg-card p-2 rounded-md shadow-sm">
                                 <span className="font-semibold text-muted-foreground">{position}.</span>
                                 <span className="font-bold">€{prize.toLocaleString()}</span>
                             </li>
                         ))}
                     </ul>
                 ) : (
-                    <p className="text-muted-foreground text-center py-4">
+                    <p className="text-muted-foreground text-center py-4 text-sm">
                         Not enough participants to determine payout structure.
                     </p>
                 )}

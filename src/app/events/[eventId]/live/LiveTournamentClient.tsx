@@ -6,7 +6,7 @@ import type { Event, Player, BlindLevel, BlindStructureTemplate } from "@/lib/de
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { ArrowLeft, Clock, Settings, List, Banknote } from "lucide-react";
+import { ArrowLeft, Clock, Settings, List, Banknote, Chip } from "lucide-react";
 import PokerTimerModal from '@/components/PokerTimerModal';
 import BlindStructureManager from '@/components/BlindStructureManager';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -69,7 +69,7 @@ export default function LiveTournamentClient({ event: initialEvent, players: all
     return initialValue;
   };
   
-  const [event, setEvent] = React.useState<Event>(() => {
+   const [event, setEvent] = React.useState<Event>(() => {
     const savedStartingStack = getInitialState('startingStack', initialEvent.startingStack);
     return { ...initialEvent, startingStack: savedStartingStack };
   });
@@ -79,8 +79,8 @@ export default function LiveTournamentClient({ event: initialEvent, players: all
     if (savedParticipants) {
         return savedParticipants;
     }
-    // If nothing in localStorage, initialize from event data
-    return initialEvent.participants.map(playerId => {
+
+    const initialParticipants = initialEvent.participants.map(playerId => {
         const player = allPlayers.find(p => p.id === playerId);
         const result = initialEvent.results.find(r => r.playerId === playerId);
         return {
@@ -90,6 +90,19 @@ export default function LiveTournamentClient({ event: initialEvent, players: all
             rebuys: result?.rebuys || 0,
         };
     }).sort((a,b) => a.name.localeCompare(b.name));
+
+    // If we're initializing from event data, save it to localStorage immediately.
+    if (typeof window !== 'undefined') {
+      try {
+        const item = window.localStorage.getItem(storageKey);
+        const currentState = item ? JSON.parse(item) : {};
+        currentState.participants = initialParticipants;
+        window.localStorage.setItem(storageKey, JSON.stringify(currentState));
+      } catch (error) {
+        console.error('Error saving initial participants to localStorage:', error);
+      }
+    }
+    return initialParticipants;
   });
   
   const [availablePlayers, setAvailablePlayers] = React.useState<Player[]>([]);
@@ -133,8 +146,6 @@ export default function LiveTournamentClient({ event: initialEvent, players: all
 
 
   React.useEffect(() => {
-    // This effect now simply syncs the available players list based on the current participants.
-    // The initialization of participants is handled in the useState initializer.
     const participantIds = new Set(participants.map(p => p.id));
     const currentAvailablePlayers = allPlayers
         .filter(p => !participantIds.has(p.id))
@@ -227,6 +238,13 @@ export default function LiveTournamentClient({ event: initialEvent, players: all
     }
     return { totalPrizePool: calculatedPrizePool, payoutStructure: structure.sort((a,b) => a.position - b.position) };
   }, [participants, event.buyIn, event.rebuyPrice]);
+  
+  const { totalChips, avgStack } = React.useMemo(() => {
+    const totalRebuys = participants.reduce((sum, p) => sum + p.rebuys, 0);
+    const calculatedTotalChips = (participants.length + totalRebuys) * (event.startingStack || 0);
+    const calculatedAvgStack = participants.length > 0 ? Math.floor(calculatedTotalChips / participants.length) : 0;
+    return { totalChips: calculatedTotalChips, avgStack: calculatedAvgStack };
+  }, [participants, event.startingStack]);
 
   return (
     <div className="container mx-auto p-4 space-y-8">
@@ -343,22 +361,49 @@ export default function LiveTournamentClient({ event: initialEvent, players: all
                         />
                     </CardContent>
                 </Card>
-                 <Card>
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                          <Banknote className="h-6 w-6 text-primary"/>
-                          Live Prize Pool
-                        </CardTitle>
-                        <CardDescription>Real-time calculation of prizes based on entries and rebuys.</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <LivePrizePool 
-                           participants={participants}
-                           buyIn={event.buyIn}
-                           rebuyPrice={event.rebuyPrice}
-                        />
-                    </CardContent>
-                </Card>
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2">
+                            <Banknote className="h-6 w-6 text-primary"/>
+                            Live Prize Pool
+                            </CardTitle>
+                            <CardDescription>Real-time calculation of prizes.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <LivePrizePool 
+                            participants={participants}
+                            buyIn={event.buyIn}
+                            rebuyPrice={event.rebuyPrice}
+                            />
+                        </CardContent>
+                    </Card>
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2">
+                                <Chip className="h-6 w-6 text-primary"/>
+                                Live Chip Counts
+                            </CardTitle>
+                            <CardDescription>Real-time chip statistics.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                             <div className="space-y-4">
+                                <div className="text-center bg-muted/50 p-4 rounded-lg">
+                                    <p className="text-sm text-muted-foreground uppercase tracking-wider">Total Chips in Play</p>
+                                    <p className="text-3xl font-bold font-headline text-primary">
+                                        {totalChips.toLocaleString()}
+                                    </p>
+                                </div>
+                                <div className="text-center bg-muted/50 p-4 rounded-lg">
+                                    <p className="text-sm text-muted-foreground uppercase tracking-wider">Average Stack</p>
+                                    <p className="text-3xl font-bold font-headline text-primary">
+                                        {avgStack.toLocaleString()}
+                                    </p>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+                 </div>
             </div>
         </div>
     </div>
