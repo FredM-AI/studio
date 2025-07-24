@@ -43,6 +43,7 @@ export default function BlindStructureManager({ isOpen, onClose, structures, act
   const [selectedStructureId, setSelectedStructureId] = useState<string>(structures.length > 0 ? structures[0].id : BLANK_STRUCTURE_ID);
   const [currentLevels, setCurrentLevels] = useState<BlindLevel[]>(activeStructure);
   const [structureName, setStructureName] = useState<string>('New Custom Structure');
+  const [startingStack, setStartingStack] = useState<string>('10000');
   const [formStructureId, setFormStructureId] = useState<string>(crypto.randomUUID());
   
   const formRef = React.useRef<HTMLFormElement>(null);
@@ -56,12 +57,14 @@ export default function BlindStructureManager({ isOpen, onClose, structures, act
     if (selectedStructureId === BLANK_STRUCTURE_ID) {
       setCurrentLevels([createNewLevel(0)]);
       setStructureName('New Custom Structure');
+      setStartingStack('10000');
       setFormStructureId(crypto.randomUUID()); // Assign a new ID for a new potential structure
     } else {
       const selected = availableStructures.find(s => s.id === selectedStructureId);
       if (selected) {
         setCurrentLevels(JSON.parse(JSON.stringify(selected.levels))); // Deep copy
         setStructureName(selected.name);
+        setStartingStack(selected.startingStack?.toString() || '10000');
         setFormStructureId(selected.id);
       }
     }
@@ -139,25 +142,30 @@ export default function BlindStructureManager({ isOpen, onClose, structures, act
           <input type="hidden" name="levels" value={JSON.stringify(currentLevels)} />
 
           {/* Top Controls */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-end">
-            <div className="flex-grow">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end">
+             <div className="flex-grow sm:col-span-1">
               <Label>Load or Edit Structure</Label>
               <Select value={selectedStructureId} onValueChange={setSelectedStructureId}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select a structure..." />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value={BLANK_STRUCTURE_ID}>-- Create New Structure --</SelectItem>
                   {availableStructures.map(s => (
                     <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
                   ))}
-                  <SelectItem value={BLANK_STRUCTURE_ID}>-- Create New Structure --</SelectItem>
                 </SelectContent>
               </Select>
             </div>
-            <div className="flex-grow">
+            <div className="flex-grow sm:col-span-1">
               <Label htmlFor="structureName">Structure Name</Label>
               <Input id="structureName" name="name" value={structureName} onChange={(e) => setStructureName(e.target.value)} />
                {state.errors?.name && <p className="text-xs text-destructive mt-1">{state.errors.name.join(', ')}</p>}
+            </div>
+            <div className="flex-grow sm:col-span-1">
+                <Label htmlFor="startingStack">Starting Stack</Label>
+                <Input id="startingStack" name="startingStack" type="number" value={startingStack} onChange={e => setStartingStack(e.target.value)} />
+                {state.errors?.startingStack && <p className="text-xs text-destructive mt-1">{state.errors.startingStack.join(', ')}</p>}
             </div>
           </div>
 
@@ -209,19 +217,18 @@ export default function BlindStructureManager({ isOpen, onClose, structures, act
                 </TableBody>
               </Table>
             </ScrollArea>
-             <div className="flex-shrink-0">
+             <div className="flex-shrink-0 mt-2">
                 <Button variant="outline" type="button" onClick={addLevel} className="w-full">
                     <PlusCircle className="mr-2 h-4 w-4" /> Add Level
                 </Button>
             </div>
           </div>
        
-          <DialogFooter className="flex-shrink-0">
-            <Button variant="outline" onClick={onClose}>Close</Button>
-            <Button type="button" onClick={handleApply}>Apply to Timer</Button>
+          <DialogFooter className="flex-shrink-0 pt-4 border-t">
+            <Button variant="outline" type="button" onClick={onClose}>Close</Button>
             <Button type="submit" disabled={isPending}>
-              {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              <Save className="mr-2 h-4 w-4"/> Save Structure
+              {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4"/>}
+              Save Structure
             </Button>
           </DialogFooter>
         </form>

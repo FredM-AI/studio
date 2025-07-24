@@ -57,6 +57,7 @@ export type BlindStructureTemplate = {
   id: string;
   name: string;
   levels: BlindLevel[];
+  startingStack?: number;
 }
 
 export type Event = {
@@ -69,6 +70,7 @@ export type Event = {
   mysteryKo?: number; // Value of a single mystery KO for the event
   includeBountiesInNet?: boolean; // If true, bounty/mko costs are part of investment
   maxPlayers?: number; // Made optional
+  startingStack?: number; // Add startingStack to the event
   status: EventStatus;
   seasonId?: string | null; // Changed to allow null for no season
   prizePool: {
@@ -118,6 +120,7 @@ export type EventFormState = {
     rebuyPrice?: string[];
     bounties?: string[];
     mysteryKo?: string[];
+    startingStack?: string[];
     includeBountiesInNet?: string[];
     maxPlayers?: string[];
     prizePoolTotal?: string[];

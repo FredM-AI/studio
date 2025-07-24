@@ -18,6 +18,7 @@ const BlindLevelSchema = z.object({
 const BlindStructureSchema = z.object({
   id: z.string().min(1, 'ID is required.'),
   name: z.string().min(3, 'Name must be at least 3 characters.'),
+  startingStack: z.coerce.number().int().positive('Starting stack must be a positive number.').optional(),
   levels: z.string().transform((val, ctx) => {
     if (!val) {
         ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Levels data is missing.' });
@@ -50,6 +51,7 @@ export type BlindStructureFormState = {
   errors?: {
     name?: string[];
     levels?: string[];
+    startingStack?: string[];
     _form?: string[];
   };
   message?: string | null;
@@ -61,6 +63,7 @@ export async function saveBlindStructureAction(prevState: BlindStructureFormStat
   const validatedFields = BlindStructureSchema.safeParse({
     id: formData.get('id'),
     name: formData.get('name'),
+    startingStack: formData.get('startingStack'),
     levels: formData.get('levels'),
   });
 
@@ -72,9 +75,9 @@ export async function saveBlindStructureAction(prevState: BlindStructureFormStat
     };
   }
 
-  const { id, name, levels } = validatedFields.data;
+  const { id, name, levels, startingStack } = validatedFields.data;
 
-  const structureToSave: BlindStructureTemplate = { id, name, levels };
+  const structureToSave: BlindStructureTemplate = { id, name, levels, startingStack };
 
   try {
     await saveBlindStructure(structureToSave);

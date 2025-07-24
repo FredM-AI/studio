@@ -62,6 +62,7 @@ export async function getEvents(): Promise<Event[]> {
       mysteryKo: data.mysteryKo,
       includeBountiesInNet: data.includeBountiesInNet,
       maxPlayers: data.maxPlayers,
+      startingStack: data.startingStack,
       status: data.status,
       seasonId: data.seasonId,
       prizePool: data.prizePool || { total: 0, distributionType: 'automatic', distribution: [] },
@@ -134,6 +135,7 @@ export async function getBlindStructures(): Promise<BlindStructureTemplate[]> {
             id: doc.id,
             name: data.name,
             levels: data.levels || [],
+            startingStack: data.startingStack
         } as BlindStructureTemplate;
     });
     return blindList;

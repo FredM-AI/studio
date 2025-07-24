@@ -13,7 +13,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Switch } from '@/components/ui/switch';
-import { Trophy, PlusCircle, MinusCircle, Users, DollarSign, CalendarDays, Settings, Info, Repeat, Star, Gift, BarChart3, HelpCircle, Clock } from 'lucide-react'; 
+import { Trophy, PlusCircle, MinusCircle, Users, DollarSign, CalendarDays, Settings, Info, Repeat, Star, Gift, BarChart3, HelpCircle, Clock, Hash } from 'lucide-react'; 
 import Link from 'next/link';
 import { eventStatuses } from '@/lib/definitions';
 
@@ -98,6 +98,9 @@ export default function EventForm({ event, allPlayers, allSeasons, blindStructur
   );
   const [mysteryKoValue, setMysteryKoValue] = React.useState<string>(
     event?.mysteryKo?.toString() || '0'
+  );
+  const [startingStackValue, setStartingStackValue] = React.useState<string>(
+    event?.startingStack?.toString() || '10000'
   );
   const [totalPrizePoolValue, setTotalPrizePoolValue] = React.useState<string>(
     event?.prizePool.total?.toString() || '0'
@@ -295,6 +298,16 @@ export default function EventForm({ event, allPlayers, allSeasons, blindStructur
       return newDistributedResults;
     });
   }, [totalPrizePoolValue, enrichedParticipants.length, buyInValue]);
+
+  // Effect to update starting stack when a blind structure is selected
+  React.useEffect(() => {
+      if (selectedBlindStructureId !== 'NONE') {
+          const selected = blindStructures.find(bs => bs.id === selectedBlindStructureId);
+          if (selected && selected.startingStack) {
+              setStartingStackValue(selected.startingStack.toString());
+          }
+      }
+  }, [selectedBlindStructureId, blindStructures]);
 
 
   const handleAddPlayer = (player: Player) => {
@@ -500,7 +513,23 @@ export default function EventForm({ event, allPlayers, allSeasons, blindStructur
                 />
                 {state.errors?.mysteryKo && <p id="mysteryKo-error" className="text-sm text-destructive mt-1">{state.errors.mysteryKo.join(', ')}</p>}
               </div>
-              <div className="flex items-center space-x-2 pt-2">
+               <div>
+                    <Label htmlFor="startingStack" className="flex items-center"><Hash className="mr-1 h-4 w-4" />Starting Stack</Label>
+                    <Input
+                        id="startingStack"
+                        name="startingStack"
+                        type="number"
+                        step="1000"
+                        min="0"
+                        placeholder="10000"
+                        value={startingStackValue}
+                        onChange={(e) => setStartingStackValue(e.target.value)}
+                        aria-describedby="startingStack-error"
+                        className="h-9"
+                    />
+                    {state.errors?.startingStack && <p id="startingStack-error" className="text-sm text-destructive mt-1">{state.errors.startingStack.join(', ')}</p>}
+                </div>
+              <div className="flex items-center space-x-2 pt-2 md:col-span-2">
                   <Switch
                       id="includeBountiesInNet"
                       name="includeBountiesInNet"

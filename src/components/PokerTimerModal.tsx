@@ -131,6 +131,9 @@ export default function PokerTimerModal({
   const nextLevel = activeStructure.length > 1 ? activeStructure[(currentLevelIndex + 1) % activeStructure.length] : currentLevel;
   const totalRebuys = participants.reduce((sum, p) => sum + p.rebuys, 0);
 
+  const totalChips = (participants.length + totalRebuys) * (event.startingStack || 0);
+  const avgStack = participants.length > 0 ? Math.floor(totalChips / participants.length) : 0;
+
   const timeToNextBreak = () => {
     if (activeStructure.length === 0 || currentLevel.isBreak) return 0;
     
@@ -233,8 +236,8 @@ export default function PokerTimerModal({
                 </div>
                  <div className="bg-black/20 p-3 rounded">
                     <h4 className="font-bold border-b border-gray-500 pb-1 mb-2">Statistics</h4>
-                    <div className="flex justify-between"><span>Avg. stack:</span> <span>0</span></div>
-                    <div className="flex justify-between"><span>Total chips:</span> <span>0</span></div>
+                    <div className="flex justify-between"><span>Avg. stack:</span> <span>{avgStack.toLocaleString()}</span></div>
+                    <div className="flex justify-between"><span>Total chips:</span> <span>{totalChips.toLocaleString()}</span></div>
                     <div className="flex justify-between"><span>Total prize:</span> <span className="font-bold">€{totalPrizePool}</span></div>
                 </div>
                  <div className="bg-black/20 p-3 rounded">
