@@ -43,11 +43,11 @@ const EventTableRow = ({ event, isAuthenticated, allPlayers }: { event: Event, i
 
   return (
     <TableRow>
-      <TableCell className="font-medium">{event.name}</TableCell>
-      <TableCell>{new Date(event.date).toLocaleDateString()}</TableCell>
-      <TableCell>€{event.buyIn}</TableCell>
-      <TableCell>{event.participants.length}</TableCell>
-      <TableCell>
+      <TableCell className="font-medium py-2 px-3">{event.name}</TableCell>
+      <TableCell className="py-2 px-3">{new Date(event.date).toLocaleDateString()}</TableCell>
+      <TableCell className="py-2 px-3">€{event.buyIn}</TableCell>
+      <TableCell className="py-2 px-3">{event.participants.length}</TableCell>
+      <TableCell className="py-2 px-3">
         {winnerName !== "N/A" ? (
           <span className="flex items-center">
             <Trophy className="h-4 w-4 mr-1.5 text-yellow-500" />
@@ -57,7 +57,7 @@ const EventTableRow = ({ event, isAuthenticated, allPlayers }: { event: Event, i
           <span className="text-muted-foreground">{winnerName}</span>
         )}
       </TableCell>
-      <TableCell>
+      <TableCell className="py-2 px-3">
         <Badge
           variant={
             event.status === 'completed' ? 'default' :
@@ -76,14 +76,14 @@ const EventTableRow = ({ event, isAuthenticated, allPlayers }: { event: Event, i
           {event.status.charAt(0).toUpperCase() + event.status.slice(1)}
         </Badge>
       </TableCell>
-      <TableCell className="text-right space-x-2">
-        <Button variant="outline" size="icon" asChild title="View Event">
+      <TableCell className="text-right space-x-2 py-2 px-3">
+        <Button variant="outline" size="icon" className="h-8 w-8" asChild title="View Event">
           <Link href={`/events/${event.id}`}>
             <Eye className="h-4 w-4" />
           </Link>
         </Button>
         {isAuthenticated && (
-          <Button variant="outline" size="icon" asChild title="Edit Event">
+          <Button variant="outline" size="icon" className="h-8 w-8" asChild title="Edit Event">
             <Link href={`/events/${event.id}/edit`}>
               <Edit className="h-4 w-4" />
             </Link>
@@ -102,13 +102,13 @@ const EventTable = ({ events, isAuthenticated, allPlayers }: { events: Event[], 
     <Table>
       <TableHeader>
         <TableRow>
-          <TableHead>Name</TableHead>
-          <TableHead>Date</TableHead>
-          <TableHead>Buy-in</TableHead>
-          <TableHead>Participants</TableHead>
-          <TableHead>Winner</TableHead>
-          <TableHead>Status</TableHead>
-          <TableHead className="text-right">Actions</TableHead>
+          <TableHead className="py-2 px-3">Name</TableHead>
+          <TableHead className="py-2 px-3">Date</TableHead>
+          <TableHead className="py-2 px-3">Buy-in</TableHead>
+          <TableHead className="py-2 px-3">Participants</TableHead>
+          <TableHead className="py-2 px-3">Winner</TableHead>
+          <TableHead className="py-2 px-3">Status</TableHead>
+          <TableHead className="text-right py-2 px-3">Actions</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -144,7 +144,7 @@ export default async function EventsPage() {
   const activeSeasonIds = allSeasons.filter(season => season.isActive).map(season => season.id);
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="font-headline text-3xl font-bold">Events</h1>
         {isAuthenticated && (
@@ -174,7 +174,7 @@ export default async function EventsPage() {
           </CardContent>
         </Card>
       ) : (
-        <Accordion type="multiple" defaultValue={activeSeasonIds} className="w-full space-y-6">
+        <Accordion type="multiple" defaultValue={activeSeasonIds} className="w-full space-y-4">
           {allSeasons.map(season => {
             const seasonEvents = eventsBySeason.get(season.id) || [];
             // if (seasonEvents.length === 0 && !isAuthenticated) return null; // Keep this line if you want to hide empty seasons for guests
@@ -183,9 +183,9 @@ export default async function EventsPage() {
               <AccordionItem value={season.id} key={season.id} className="border rounded-lg overflow-hidden">
                 <Card className="border-none rounded-none shadow-none">
                   <AccordionTrigger className="p-0 hover:no-underline">
-                    <CardHeader className="w-full text-left">
-                      <CardTitle className="font-headline text-2xl flex items-center">
-                        <BarChart3 className="mr-3 h-6 w-6 text-primary"/>
+                    <CardHeader className="w-full text-left p-4">
+                      <CardTitle className="font-headline text-xl flex items-center">
+                        <BarChart3 className="mr-3 h-5 w-5 text-primary"/>
                         Season: {season.name}
                         {season.isActive && <Badge className="ml-3 bg-green-500 text-white">Active</Badge>}
                       </CardTitle>
@@ -194,7 +194,7 @@ export default async function EventsPage() {
                       </CardDescription>
                     </CardHeader>
                   </AccordionTrigger>
-                  <AccordionContent>
+                  <AccordionContent className="p-0">
                     <CardContent className="pt-0">
                       {seasonEvents.length > 0 ? (
                         <EventTable events={seasonEvents} isAuthenticated={isAuthenticated} allPlayers={allPlayers} />
@@ -212,15 +212,15 @@ export default async function EventsPage() {
             <AccordionItem value="unassigned-events" className="border rounded-lg overflow-hidden">
               <Card className="border-none rounded-none shadow-none">
                 <AccordionTrigger className="p-0 hover:no-underline">
-                  <CardHeader className="w-full text-left">
-                    <CardTitle className="font-headline text-2xl flex items-center">
-                        <FolderOpen className="mr-3 h-6 w-6 text-primary"/>
+                  <CardHeader className="w-full text-left p-4">
+                    <CardTitle className="font-headline text-xl flex items-center">
+                        <FolderOpen className="mr-3 h-5 w-5 text-primary"/>
                         Other Events
                     </CardTitle>
                     <CardDescription>Events not currently assigned to a specific season.</CardDescription>
                   </CardHeader>
                 </AccordionTrigger>
-                <AccordionContent>
+                <AccordionContent className="p-0">
                   <CardContent className="pt-0">
                     <EventTable events={unassignedEvents} isAuthenticated={isAuthenticated} allPlayers={allPlayers}/>
                   </CardContent>
@@ -234,3 +234,4 @@ export default async function EventsPage() {
   );
 }
 
+    

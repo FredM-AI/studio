@@ -368,7 +368,7 @@ export default function EventForm({ event, allPlayers, allSeasons, blindStructur
         <CardDescription>{formDescription}</CardDescription>
       </CardHeader>
       <form action={dispatch}>
-        <CardContent className="space-y-6">
+        <CardContent className="space-y-4">
           {event?.id && <input type="hidden" name="id" defaultValue={event.id} />}
           <input type="hidden" name="resultsJson" value={resultsJson} />
           <input type="hidden" name="seasonId" value={selectedSeasonId === NO_SEASON_SELECTED_VALUE ? "" : selectedSeasonId} />
@@ -585,23 +585,23 @@ export default function EventForm({ event, allPlayers, allSeasons, blindStructur
             <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
               <div className="md:col-span-2">
                 <Label>Available Players ({availablePlayers.length})</Label>
-                <ScrollArea className="h-72 w-full rounded-md border p-1.5">
+                <ScrollArea className="h-60 w-full rounded-md border p-1.5">
                   {filteredAvailablePlayers.length > 0 ? filteredAvailablePlayers.map(player => (
-                    <div key={player.id} className="flex items-center justify-between p-1.5 hover:bg-muted/50 rounded-md">
+                    <div key={player.id} className="flex items-center justify-between p-1.5 hover:bg-muted/50 rounded-md text-sm">
                       <span>{getPlayerDisplayName(player)}</span>
-                      <Button type="button" variant="outline" size="sm" onClick={() => handleAddPlayer(player)} title="Add player"
+                      <Button type="button" variant="outline" size="icon" className="h-7 w-7" onClick={() => handleAddPlayer(player)} title="Add player"
                         disabled={enrichedParticipants.some(ep => ep.player.id === player.id)}>
                         <PlusCircle className="h-4 w-4" />
                       </Button>
                     </div>
-                  )) : <p className="text-muted-foreground p-2">No players available or matching search.</p>}
+                  )) : <p className="text-muted-foreground p-2 text-sm">No players available or matching search.</p>}
                 </ScrollArea>
               </div>
               <div className="md:col-span-3">
                 <Label>Selected Participants ({enrichedParticipants.length})</Label>
-                <ScrollArea className="h-72 w-full rounded-md border p-1.5">
+                <ScrollArea className="h-60 w-full rounded-md border p-1.5">
                   {enrichedParticipants.length > 0 ? enrichedParticipants.map(ep => (
-                    <div key={ep.player.id} className="flex items-center justify-between p-1.5 hover:bg-muted/50 rounded-md gap-2">
+                    <div key={ep.player.id} className="flex items-center justify-between p-1.5 hover:bg-muted/50 rounded-md gap-2 text-sm">
                       <span className="flex-grow">{getPlayerDisplayName(ep.player)}</span>
                        <div className="flex items-center gap-1 w-28">
                          <Label htmlFor={`rebuy-${ep.player.id}`} className="sr-only">Rebuys</Label>
@@ -619,11 +619,11 @@ export default function EventForm({ event, allPlayers, allSeasons, blindStructur
                          />
                          <Repeat className="h-3 w-3 text-muted-foreground" />
                        </div>
-                      <Button type="button" variant="outline" size="sm" onClick={() => handleRemovePlayer(ep)} title="Remove player">
+                      <Button type="button" variant="outline" size="icon" className="h-7 w-7" onClick={() => handleRemovePlayer(ep)} title="Remove player">
                         <MinusCircle className="h-4 w-4" />
                       </Button>
                     </div>
-                  )) : <p className="text-muted-foreground p-2">No participants selected.</p>}
+                  )) : <p className="text-muted-foreground p-2 text-sm">No participants selected.</p>}
                 </ScrollArea>
               </div>
             </div>
@@ -638,13 +638,13 @@ export default function EventForm({ event, allPlayers, allSeasons, blindStructur
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="w-[8%] text-center">Pos</TableHead>
-                      <TableHead className="w-[25%]">Player</TableHead>
-                      <TableHead className="w-[12%] text-center">Rebuys</TableHead>
-                      <TableHead className="w-[15%] text-right">Prize (€)</TableHead>
-                      <TableHead className="w-[15%] text-right">Bounty (€)</TableHead>
-                      <TableHead className="w-[15%] text-right">MSKO (€)</TableHead>
-                      <TableHead className="w-[15%] text-right">Net (€)</TableHead>
+                      <TableHead className="w-[8%] text-center p-2">Pos</TableHead>
+                      <TableHead className="w-[25%] p-2">Player</TableHead>
+                      <TableHead className="w-[12%] text-center p-2">Rebuys</TableHead>
+                      <TableHead className="w-[15%] text-right p-2">Prize (€)</TableHead>
+                      <TableHead className="w-[15%] text-right p-2">Bounty (€)</TableHead>
+                      <TableHead className="w-[15%] text-right p-2">MSKO (€)</TableHead>
+                      <TableHead className="w-[15%] text-right p-2">Net (€)</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -679,13 +679,13 @@ export default function EventForm({ event, allPlayers, allSeasons, blindStructur
 
                       return (
                         <TableRow key={row.position}>
-                          <TableCell className="font-medium py-1 text-center">{row.position}</TableCell>
-                          <TableCell className="py-1">
+                          <TableCell className="font-medium py-1 px-2 text-center">{row.position}</TableCell>
+                          <TableCell className="py-1 px-2">
                             <Select
                               value={row.playerId || NO_PLAYER_SELECTED_VALUE}
                               onValueChange={(value) => handlePositionalResultChange(row.position, 'playerId', value)}
                             >
-                              <SelectTrigger className="w-full h-9">
+                              <SelectTrigger className="w-full h-8 text-xs">
                                 <SelectValue placeholder="-- Select Player --" />
                               </SelectTrigger>
                               <SelectContent>
@@ -700,50 +700,50 @@ export default function EventForm({ event, allPlayers, allSeasons, blindStructur
                               </SelectContent>
                             </Select>
                           </TableCell>
-                          <TableCell className="py-1 text-center">
+                          <TableCell className="py-1 px-2 text-center">
                             <Input
                               type="text"
                               value={rebuysDisplay}
                               readOnly
-                              className="h-9 text-center bg-muted/50 border-none"
+                              className="h-8 text-center bg-muted/50 border-none"
                             />
                           </TableCell>
-                          <TableCell className="py-1">
+                          <TableCell className="py-1 px-2">
                             <Input
                               type="number"
                               step="1" min="0" placeholder="0"
                               value={row.prize}
                               onChange={(e) => handlePositionalResultChange(row.position, 'prize', e.target.value)}
-                              className="text-right h-9"
+                              className="text-right h-8"
                               disabled={!row.playerId || row.playerId === NO_PLAYER_SELECTED_VALUE}
                             />
                           </TableCell>
-                          <TableCell className="py-1">
+                          <TableCell className="py-1 px-2">
                             <Input
                               type="number"
                               step="1" min="0" placeholder="0"
                               value={row.bountiesWon}
                               onChange={(e) => handlePositionalResultChange(row.position, 'bountiesWon', e.target.value)}
-                              className="text-right h-9"
+                              className="text-right h-8"
                               disabled={!row.playerId || row.playerId === NO_PLAYER_SELECTED_VALUE}
                             />
                           </TableCell>
-                          <TableCell className="py-1">
+                          <TableCell className="py-1 px-2">
                             <Input
                               type="number"
                               step="1" min="0" placeholder="0"
                               value={row.mysteryKoWon}
                               onChange={(e) => handlePositionalResultChange(row.position, 'mysteryKoWon', e.target.value)}
-                              className="text-right h-9"
+                              className="text-right h-8"
                               disabled={!row.playerId || row.playerId === NO_PLAYER_SELECTED_VALUE}
                             />
                           </TableCell>
-                          <TableCell className="py-1 text-right">
+                          <TableCell className="py-1 px-2 text-right">
                              <Input
                               type="text"
                               value={finalResultDisplay}
                               readOnly
-                              className="h-9 text-right bg-muted/50 border-none"
+                              className="h-8 text-right bg-muted/50 border-none"
                             />
                           </TableCell>
                         </TableRow>
@@ -759,7 +759,7 @@ export default function EventForm({ event, allPlayers, allSeasons, blindStructur
           {state.message && <p className="text-sm text-destructive mt-2 text-center p-2 bg-destructive/10 rounded-md">{state.message}</p>}
           {state.errors?._form && <p className="text-sm text-destructive mt-2 text-center p-2 bg-destructive/10 rounded-md">{state.errors._form.join(', ')}</p>}
         </CardContent>
-        <CardFooter className="flex justify-end gap-4 p-6 border-t">
+        <CardFooter className="flex justify-end gap-4 p-4 border-t">
           <Button variant="outline" asChild>
             <Link href={event ? `/events/${event.id}` : "/events"}>Cancel</Link>
           </Button>
@@ -781,3 +781,5 @@ export default function EventForm({ event, allPlayers, allSeasons, blindStructur
     </Card>
   );
 }
+
+    

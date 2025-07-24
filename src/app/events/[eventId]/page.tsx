@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { getEvents, getPlayers, getSeasons } from "@/lib/data-service"; // Added getSeasons
@@ -40,8 +41,8 @@ export default async function EventDetailsPage({ params }: { params: { eventId: 
 
   if (!event) {
     return (
-      <div className="space-y-6 text-center">
-         <Button variant="outline" asChild className="mb-6 mr-auto">
+      <div className="space-y-4 text-center">
+         <Button variant="outline" asChild className="mb-4 mr-auto">
           <Link href="/events">
             <ArrowLeft className="mr-2 h-4 w-4" /> Back to Events List
           </Link>
@@ -52,7 +53,7 @@ export default async function EventDetailsPage({ params }: { params: { eventId: 
           </CardHeader>
           <CardContent>
             <p className="text-muted-foreground">The event you are looking for does not exist.</p>
-             <Button asChild className="mt-6">
+             <Button asChild className="mt-4">
                 <Link href="/events">
                     <ArrowLeft className="mr-2 h-4 w-4" /> Go to Events
                 </Link>
@@ -69,18 +70,18 @@ export default async function EventDetailsPage({ params }: { params: { eventId: 
   const includeBountiesInNetCalc = event.includeBountiesInNet ?? true;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <Button variant="outline" asChild>
         <Link href="/events">
           <ArrowLeft className="mr-2 h-4 w-4" /> Back to Events
         </Link>
       </Button>
       <Card className="max-w-4xl mx-auto shadow-lg">
-        <CardHeader className="bg-muted/30 p-6">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <CardHeader className="bg-muted/30 p-4">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-2">
             <div>
-              <CardTitle className="font-headline text-3xl mb-1">{event.name}</CardTitle>
-              <CardDescription className="text-lg text-muted-foreground">
+              <CardTitle className="font-headline text-2xl mb-1">{event.name}</CardTitle>
+              <CardDescription className="text-md text-muted-foreground">
                 {new Date(event.date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
               </CardDescription>
               {linkedSeason && (
@@ -90,27 +91,27 @@ export default async function EventDetailsPage({ params }: { params: { eventId: 
               )}
             </div>
             {isAuthenticated && (
-              <div className="flex flex-col sm:flex-row gap-2 mt-4 md:mt-0">
+              <div className="flex flex-col sm:flex-row gap-2 mt-2 md:mt-0">
                 {event.status === 'active' && (
-                  <Button asChild className="w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white">
+                  <Button asChild size="sm" className="w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white">
                     <Link href={`/events/${event.id}/live`}>
                       <PlayCircle className="mr-2 h-4 w-4" /> Manage Live
                     </Link>
                   </Button>
                 )}
-                <Button asChild variant="outline" className="w-full sm:w-auto">
+                <Button asChild size="sm" variant="outline" className="w-full sm:w-auto">
                   <Link href={`/events/${event.id}/edit`}>
                     <Edit className="mr-2 h-4 w-4" /> Edit Event
                   </Link>
                 </Button>
-                <DeleteEventButton eventId={event.id} eventName={event.name} className="w-full sm:w-auto" />
+                <DeleteEventButton eventId={event.id} eventName={event.name} className="w-full sm:w-auto" size="sm" />
               </div>
             )}
           </div>
         </CardHeader>
-        <CardContent className="p-6 grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
-          <div className="space-y-4">
-            <h3 className="font-headline text-xl text-primary flex items-center"><Info className="mr-2 h-5 w-5"/>Details</h3>
+        <CardContent className="p-4 grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+          <div className="space-y-3">
+            <h3 className="font-headline text-lg text-primary flex items-center"><Info className="mr-2 h-5 w-5"/>Details</h3>
             <div className="flex items-center justify-between text-sm">
               <span className="text-muted-foreground flex items-center"><DollarSign className="mr-2 h-4 w-4"/>Buy-in (Main Pool):</span>
               <span className="font-medium">€{event.buyIn}</span>
@@ -166,10 +167,10 @@ export default async function EventDetailsPage({ params }: { params: { eventId: 
             </div>
           </div>
 
-          <div className="space-y-4">
-            <h3 className="font-headline text-xl text-primary flex items-center"><Users className="mr-2 h-5 w-5"/>Participants ({event.participants.length})</h3>
+          <div className="space-y-3">
+            <h3 className="font-headline text-lg text-primary flex items-center"><Users className="mr-2 h-5 w-5"/>Participants ({event.participants.length})</h3>
             {event.participants.length > 0 ? (
-              <ScrollArea className="h-40 w-full rounded-md border p-2">
+              <ScrollArea className="h-36 w-full rounded-md border p-2">
                 <ul className="space-y-1">
                   {event.participants.map(playerId => (
                     <li key={playerId} className="text-sm p-1 hover:bg-muted/50 rounded-md">
@@ -186,13 +187,13 @@ export default async function EventDetailsPage({ params }: { params: { eventId: 
           </div>
 
           {event.status === 'completed' && sortedResults.length > 0 && (
-            <div className="md:col-span-2 space-y-4 pt-4 border-t mt-4">
-              <h3 className="font-headline text-xl text-primary flex items-center"><Trophy className="mr-2 h-5 w-5"/>Results</h3>
+            <div className="md:col-span-2 space-y-3 pt-3 border-t mt-3">
+              <h3 className="font-headline text-lg text-primary flex items-center"><Trophy className="mr-2 h-5 w-5"/>Results</h3>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead className="bg-muted">
                     <tr>
-                      <th className="p-2 text-left font-semibold">Position</th>
+                      <th className="p-2 text-left font-semibold">Pos</th>
                       <th className="p-2 text-left font-semibold">Player</th>
                       <th className="p-2 text-center font-semibold">Rebuys</th>
                       <th className="p-2 text-right font-semibold">Prize (€)</th>
@@ -250,15 +251,15 @@ export default async function EventDetailsPage({ params }: { params: { eventId: 
             </div>
           )}
            {event.status === 'completed' && sortedResults.length === 0 && event.participants.length > 0 && (
-             <div className="md:col-span-2 space-y-4 pt-4 border-t mt-4">
-                <h3 className="font-headline text-xl text-primary flex items-center"><Trophy className="mr-2 h-5 w-5"/>Results</h3>
+             <div className="md:col-span-2 space-y-3 pt-3 border-t mt-3">
+                <h3 className="font-headline text-lg text-primary flex items-center"><Trophy className="mr-2 h-5 w-5"/>Results</h3>
                 <p className="text-sm text-muted-foreground">Results have not been entered for this completed event.</p>
              </div>
            )}
 
 
         </CardContent>
-         <CardFooter className="p-4 bg-muted/30 border-t">
+         <CardFooter className="p-3 bg-muted/30 border-t">
             <p className="text-xs text-muted-foreground">
                 Created: {new Date(event.createdAt).toLocaleDateString()} | Last Updated: {new Date(event.updatedAt).toLocaleDateString()}
             </p>
@@ -267,4 +268,5 @@ export default async function EventDetailsPage({ params }: { params: { eventId: 
     </div>
   );
 }
+
     
