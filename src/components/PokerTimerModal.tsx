@@ -7,8 +7,9 @@ import type { ParticipantState } from './LivePlayerTracking';
 import Draggable from 'react-draggable';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { X, Play, Pause, FastForward, Rewind, Settings, Volume2, Maximize } from 'lucide-react';
+import { X, Play, Pause, FastForward, Rewind, Settings, Volume2, Maximize, VolumeX } from 'lucide-react';
 import BlindStructureManager from './BlindStructureManager';
+import { Slider } from '@/components/ui/slider';
 
 interface PokerTimerModalProps {
   event: Event;
@@ -41,6 +42,9 @@ export default function PokerTimerModal({
   const nodeRef = useRef(null);
   const [isStructureManagerOpen, setIsStructureManagerOpen] = useState(false);
   const timerStorageKey = `poker-timer-state-${event.id}`;
+  
+  const audioRefLevelEnd = useRef<HTMLAudioElement>(null);
+  const audioRefWarning = useRef<HTMLAudioElement>(null);
 
   const getInitialTimerState = <T,>(key: string, defaultValue: T): T => {
     if (typeof window === 'undefined') return defaultValue;
@@ -59,34 +63,29 @@ export default function PokerTimerModal({
   const [currentLevelIndex, setCurrentLevelIndex] = useState(() => getInitialTimerState('currentLevelIndex', 0));
   const [timeLeft, setTimeLeft] = useState(() => {
     const savedTime = getInitialTimerState('timeLeft', undefined);
-    // Ensure index is valid for activeStructure
     const safeIndex = Math.min(currentLevelIndex, activeStructure.length - 1);
     const structureDuration = activeStructure[safeIndex]?.duration * 60;
     return savedTime !== undefined ? savedTime : (structureDuration || 0);
   });
   const [totalTime, setTotalTime] = useState(() => getInitialTimerState('totalTime', 0));
   const [isPaused, setIsPaused] = useState(() => getInitialTimerState('isPaused', true));
+  const [volume, setVolume] = useState(() => getInitialTimerState('volume', 0.5));
   
-  // Effect to save timer state to localStorage
   useEffect(() => {
     if (typeof window !== 'undefined') {
       try {
-        const timerState = { currentLevelIndex, timeLeft, totalTime, isPaused };
+        const timerState = { currentLevelIndex, timeLeft, totalTime, isPaused, volume };
         window.localStorage.setItem(timerStorageKey, JSON.stringify(timerState));
       } catch (e) {
         console.error("Failed to save timer state to localStorage", e);
       }
     }
-  }, [currentLevelIndex, timeLeft, totalTime, isPaused, timerStorageKey]);
-
-
-  // Sync with external structure changes from parent
+  }, [currentLevelIndex, timeLeft, totalTime, isPaused, volume, timerStorageKey]);
+  
   useEffect(() => {
-    const newStructureDuration = activeStructure[currentLevelIndex]?.duration * 60;
-    if (timeLeft > newStructureDuration || currentLevelIndex >= activeStructure.length) {
-       resetTimerWithNewStructure(activeStructure);
-    }
-  }, [activeStructure]);
+    if (audioRefLevelEnd.current) audioRefLevelEnd.current.volume = volume;
+    if (audioRefWarning.current) audioRefWarning.current.volume = volume;
+  }, [volume]);
 
   useEffect(() => {
     let timerInterval: NodeJS.Timeout;
@@ -95,19 +94,23 @@ export default function PokerTimerModal({
         setTimeLeft(prev => prev - 1);
         setTotalTime(prev => prev + 1);
       }, 1000);
+
+      if(timeLeft === 10) {
+        audioRefWarning.current?.play().catch(e => console.log("Audio play failed:", e));
+      }
+
     } else if (timeLeft <= 0 && !isPaused) {
+        audioRefLevelEnd.current?.play().catch(e => console.log("Audio play failed:", e));
         goToNextLevel();
     }
     return () => clearInterval(timerInterval);
   }, [isPaused, timeLeft]);
 
-  
   const resetTimerWithNewStructure = (newStructure: BlindLevel[]) => {
       const newIndex = 0;
       setCurrentLevelIndex(newIndex);
       setTimeLeft(newStructure.length > 0 ? newStructure[newIndex].duration * 60 : 0);
       setIsPaused(true);
-      // We don't reset totalTime to preserve it across structure changes.
   }
 
   const goToNextLevel = () => {
@@ -140,27 +143,25 @@ export default function PokerTimerModal({
     let time = timeLeft;
     let tempIndex = currentLevelIndex;
     
-    // Check from current level onwards
     for(let i=0; i < activeStructure.length; i++) {
         const checkingIndex = (tempIndex + i) % activeStructure.length;
         const levelToCheck = activeStructure[checkingIndex];
         
         if (levelToCheck.isBreak) {
-            // Found a break, now calculate time to it
             let timeToIt = 0;
-            // Add time left in current level if it's not the break level itself
             if(i > 0) timeToIt += timeLeft;
             
-            // Add duration of all levels between current and break
             for(let j=1; j < i; j++) {
                 timeToIt += activeStructure[(currentLevelIndex + j) % activeStructure.length].duration * 60;
             }
             return timeToIt;
         }
     }
-
-    return 0; // No break found in the structure
+    return 0;
   };
+  
+  const timerProgress = currentLevel.duration > 0 ? ((currentLevel.duration * 60 - timeLeft) / (currentLevel.duration * 60)) * 100 : 0;
+
 
   return (
     <>
@@ -182,6 +183,8 @@ export default function PokerTimerModal({
         className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-full max-w-4xl"
         style={{ cursor: 'move' }}
       >
+        <audio ref={audioRefLevelEnd} src="/sounds/level_end.mp3" preload="auto"></audio>
+        <audio ref={audioRefWarning} src="/sounds/warning.mp3" preload="auto"></audio>
         <div className="bg-gray-800 text-white rounded-xl shadow-2xl overflow-hidden border-4 border-gray-700">
           <div className="drag-handle p-4 bg-gray-900 flex justify-between items-center">
             <div className="flex gap-6 items-center">
@@ -204,7 +207,6 @@ export default function PokerTimerModal({
           </div>
 
           <div className="p-6 bg-gray-800/50 backdrop-blur-sm" style={{ backgroundImage: "url('/poker-table-background.webp')", backgroundSize: 'cover', backgroundBlendMode: 'overlay'}}>
-             {/* Current Level Display */}
             <div className="bg-gray-200/90 text-gray-900 rounded-lg p-4 flex items-center justify-between shadow-lg mb-2">
               <div className="font-mono text-7xl font-bold tracking-tighter w-1/3">
                 {formatTime(timeLeft)}
@@ -224,7 +226,6 @@ export default function PokerTimerModal({
               </div>
             </div>
 
-            {/* Next Level Preview */}
             <div className="bg-gray-600/70 text-white rounded-lg p-2 flex items-center justify-between text-sm mt-4">
                <div className="font-mono text-xl font-bold w-1/3">
                 {formatTime(nextLevel.duration * 60)}
@@ -263,18 +264,39 @@ export default function PokerTimerModal({
           </div>
 
           <div className="p-3 bg-gray-900 flex justify-between items-center">
-             <div className="flex items-center gap-2">
-                <p className="text-xs mr-2 text-gray-400">Controls:</p>
-                <Button variant="ghost" size="icon" onClick={goToPrevLevel}><Rewind className="h-5 w-5"/></Button>
-                 <Button variant="ghost" size="icon" onClick={() => setIsPaused(!isPaused)}>
+             <div className="flex items-center gap-4">
+                <p className="text-xs mr-2 text-gray-400">Level</p>
+                 <Button variant="ghost" size="icon" onClick={goToPrevLevel} className="h-8 w-8"><Rewind className="h-5 w-5"/></Button>
+                 <Button variant="ghost" size="icon" onClick={() => setIsPaused(!isPaused)} className="h-8 w-8">
                     {isPaused ? <Play className="h-5 w-5"/> : <Pause className="h-5 w-5"/>}
                 </Button>
-                <Button variant="ghost" size="icon" onClick={goToNextLevel}><FastForward className="h-5 w-5"/></Button>
+                <Button variant="ghost" size="icon" onClick={goToNextLevel} className="h-8 w-8"><FastForward className="h-5 w-5"/></Button>
+             </div>
+             <div className="flex-1 px-4">
+                <Slider 
+                    value={[timerProgress]} 
+                    max={100} 
+                    step={1} 
+                    className="w-full"
+                    onValueChange={(value) => {
+                        const newTime = Math.round((currentLevel.duration * 60) * (1 - value[0] / 100));
+                        setTimeLeft(newTime);
+                    }}
+                 />
              </div>
              <div className="flex items-center gap-2">
-                <Button variant="ghost" size="icon"><Volume2 className="h-5 w-5"/></Button>
-                <Button variant="ghost" size="icon" onClick={() => setIsStructureManagerOpen(true)}><Settings className="h-5 w-5"/></Button>
-                <Button variant="ghost" size="icon"><Maximize className="h-5 w-5"/></Button>
+                <Button variant="ghost" size="icon" onClick={() => setVolume(v => v > 0 ? 0 : 0.5)} className="h-8 w-8">
+                    {volume > 0 ? <Volume2 className="h-5 w-5"/> : <VolumeX className="h-5 w-5" />}
+                </Button>
+                <Slider 
+                    value={[volume]}
+                    max={1}
+                    step={0.05}
+                    className="w-24"
+                    onValueChange={(value) => setVolume(value[0])}
+                />
+                <Button variant="ghost" size="icon" onClick={() => setIsStructureManagerOpen(true)} className="h-8 w-8"><Settings className="h-5 w-5"/></Button>
+                <Button variant="ghost" size="icon" onClick={onClose} className="h-8 w-8"><X className="h-5 w-5"/></Button>
              </div>
           </div>
         </div>
@@ -283,3 +305,4 @@ export default function PokerTimerModal({
     </>
   );
 }
+
