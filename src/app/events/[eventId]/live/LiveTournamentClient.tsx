@@ -12,6 +12,8 @@ import BlindStructureManager from '@/components/BlindStructureManager';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
 
 interface LiveTournamentClientProps {
     event: Event;
@@ -27,13 +29,37 @@ const defaultBlindStructure: BlindLevel[] = [
 export default function LiveTournamentClient({ event, players, blindStructures }: LiveTournamentClientProps) {
   const [isTimerModalOpen, setIsTimerModalOpen] = React.useState(false);
   const [isStructureManagerOpen, setIsStructureManagerOpen] = React.useState(false);
-  const [activeStructure, setActiveStructure] = React.useState<BlindLevel[]>(event.blindStructure || defaultBlindStructure);
 
-  const handleApplyStructure = (newStructure: BlindLevel[]) => {
-      setActiveStructure(newStructure);
-      // Note: This won't persist yet. We need a server action later.
-      console.log("Applied new structure to live event state.");
+  const [activeStructureId, setActiveStructureId] = React.useState<string>(
+    event.blindStructureId || (blindStructures.length > 0 ? blindStructures[0].id : 'custom')
+  );
+  
+  const [activeStructure, setActiveStructure] = React.useState<BlindLevel[]>(() => {
+    if (event.blindStructure && event.blindStructure.length > 0) {
+      return event.blindStructure;
+    }
+    if (event.blindStructureId) {
+        const found = blindStructures.find(bs => bs.id === event.blindStructureId);
+        if (found) return found.levels;
+    }
+    return defaultBlindStructure;
+  });
+
+  const handleApplyStructure = (newStructureTemplate: BlindStructureTemplate) => {
+      setActiveStructure(newStructureTemplate.levels);
+      setActiveStructureId(newStructureTemplate.id);
+      // Note: This won't persist yet. We need a server action later to save to the event.
+      console.log(`Applied new structure "${newStructureTemplate.name}" to live event state.`);
   };
+
+  const handleSelectStructure = (structureId: string) => {
+    const selected = blindStructures.find(s => s.id === structureId);
+    if(selected) {
+        setActiveStructureId(selected.id);
+        setActiveStructure(selected.levels);
+    }
+  }
+
 
   return (
     <div className="container mx-auto p-4 space-y-8">
@@ -44,7 +70,11 @@ export default function LiveTournamentClient({ event, players, blindStructures }
                 onClose={() => setIsStructureManagerOpen(false)}
                 structures={blindStructures}
                 activeStructure={activeStructure}
-                onApplyStructure={handleApplyStructure}
+                onApplyStructure={(levels) => {
+                    // This function from BlindManager might be deprecated if we save directly from it.
+                    // For now, it updates the local state if needed.
+                    setActiveStructure(levels);
+                }}
             />
         )}
         <div className="flex justify-between items-center">
@@ -65,7 +95,7 @@ export default function LiveTournamentClient({ event, players, blindStructures }
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-1 space-y-6">
                  <Card>
-                    <CardHeader className="flex flex-row items-center justify-between">
+                    <CardHeader className="flex flex-row items-center justify-between pb-4">
                       <div>
                         <CardTitle className="flex items-center"><List className="mr-2"/>Blind Structure</CardTitle>
                         <CardDescription>The blinds for the event.</CardDescription>
@@ -75,28 +105,47 @@ export default function LiveTournamentClient({ event, players, blindStructures }
                        </Button>
                     </CardHeader>
                     <CardContent>
-                        <ScrollArea className="h-96">
-                             <Table>
-                                <TableHeader>
-                                    <TableRow>
-                                        <TableHead>Lvl</TableHead>
-                                        <TableHead>Blinds</TableHead>
-                                        <TableHead>Ante</TableHead>
-                                        <TableHead>Time</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {activeStructure.map((level, index) => (
-                                        <TableRow key={index}>
-                                            <TableCell className="font-medium">{level.isBreak ? <Badge variant="secondary">Break</Badge> : level.level}</TableCell>
-                                            <TableCell>{level.isBreak ? '-' : `${level.smallBlind}/${level.bigBlind}`}</TableCell>
-                                            <TableCell>{level.ante || '-'}</TableCell>
-                                            <TableCell>{level.duration} min</TableCell>
+                        <div className="space-y-4">
+                            <div>
+                                <Label htmlFor="structure-select">Select Structure</Label>
+                                <Select value={activeStructureId} onValueChange={handleSelectStructure}>
+                                    <SelectTrigger id="structure-select">
+                                        <SelectValue placeholder="Select a structure..." />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {blindStructures.map(s => (
+                                            <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                                        ))}
+                                        {/* You can add a 'Custom' option if the current structure doesn't match any saved one */}
+                                        {!blindStructures.some(bs => bs.id === activeStructureId) && (
+                                            <SelectItem value={activeStructureId} disabled>Custom</SelectItem>
+                                        )}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <ScrollArea className="h-96">
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHead>Lvl</TableHead>
+                                            <TableHead>Blinds</TableHead>
+                                            <TableHead>Ante</TableHead>
+                                            <TableHead>Time</TableHead>
                                         </TableRow>
-                                    ))}
-                                </TableBody>
-                            </Table>
-                        </ScrollArea>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {activeStructure.map((level, index) => (
+                                            <TableRow key={index}>
+                                                <TableCell className="font-medium">{level.isBreak ? <Badge variant="secondary">Break</Badge> : level.level}</TableCell>
+                                                <TableCell>{level.isBreak ? '-' : `${level.smallBlind}/${level.bigBlind}`}</TableCell>
+                                                <TableCell>{level.ante || '-'}</TableCell>
+                                                <TableCell>{level.duration} min</TableCell>
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                            </ScrollArea>
+                        </div>
                     </CardContent>
                 </Card>
             </div>
