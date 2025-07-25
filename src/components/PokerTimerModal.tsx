@@ -5,7 +5,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import type { Event, BlindLevel, Player } from '@/lib/definitions';
 import type { ParticipantState } from './LivePlayerTracking';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogClose, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { X, Play, Pause, FastForward, Rewind, Settings, Expand, Shrink, Volume2, VolumeX, Sun, Moon, Users } from 'lucide-react';
 import { Slider } from '@/components/ui/slider';
 import { cn } from '@/lib/utils';
@@ -194,7 +194,7 @@ export default function PokerTimerModal({
   };
   
  const toggleFullScreen = () => {
-    const contentElement = modalRef.current?.closest('.poker-timer-modal');
+    const contentElement = modalRef.current;
     if (!contentElement) return;
 
     if (!document.fullscreenElement) {
@@ -270,6 +270,12 @@ export default function PokerTimerModal({
             <Button onClick={toggleFullScreen} variant="ghost" size="icon" className="timer-header-button h-7 w-7 text-gray-400 hover:text-white">
                 {isFullScreen ? <Shrink className="h-5 w-5"/> : <Expand className="h-5 w-5"/>}
             </Button>
+             <DialogClose asChild>
+                <Button variant="ghost" size="icon" className="timer-header-button h-7 w-7 text-gray-400 hover:text-white">
+                    <X className="h-5 w-5"/>
+                    <span className="sr-only">Close</span>
+                </Button>
+            </DialogClose>
         </div>
 
 
@@ -418,4 +424,3 @@ export default function PokerTimerModal({
     </Dialog>
   );
 }
-
