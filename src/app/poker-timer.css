@@ -3,13 +3,8 @@
 @tailwind components;
 @tailwind utilities;
 
-.poker-timer-modal-container {
-    @apply w-[980px] h-[720px] shadow-2xl rounded-xl border-4 border-gray-700 relative resize overflow-hidden;
-    -webkit-app-region: no-drag;
-}
-
-.poker-timer-modal {
-    @apply flex flex-col h-full overflow-hidden transition-colors duration-300;
+.poker-timer-modal .poker-timer-content-wrapper {
+    @apply flex flex-col h-full w-full overflow-hidden transition-colors duration-300 relative;
 }
 
 .poker-timer-modal[data-fullscreen='true'] {
@@ -183,6 +178,7 @@
     ring-color: var(--slider-range);
     ring-offset-color: var(--settings-bg);
 }
+
 
 
 

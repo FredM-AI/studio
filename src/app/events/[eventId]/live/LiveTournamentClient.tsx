@@ -280,23 +280,22 @@ export default function LiveTournamentClient({ event: initialEvent, players: all
 
   return (
     <div className="container mx-auto p-4 space-y-6">
-        {isTimerModalOpen && (
-            <PokerTimerModal 
-                event={event} 
-                participants={participants}
-                totalPrizePool={totalPrizePool}
-                payoutStructure={payoutStructure}
-                activeStructure={activeStructure} 
-                onClose={() => setIsTimerModalOpen(false)}
-                allPlayers={allPlayers}
-                availablePlayers={availablePlayers}
-                onAddParticipant={addParticipant}
-                onRemoveParticipant={removeParticipant}
-                onRebuyChange={handleRebuyChange}
-                onEliminatePlayer={handleEliminatePlayer}
-                onUndoLastElimination={handleUndoLastElimination}
-            />
-        )}
+        <PokerTimerModal 
+            isOpen={isTimerModalOpen}
+            onOpenChange={setIsTimerModalOpen}
+            event={event} 
+            participants={participants}
+            totalPrizePool={totalPrizePool}
+            payoutStructure={payoutStructure}
+            activeStructure={activeStructure} 
+            allPlayers={allPlayers}
+            availablePlayers={availablePlayers}
+            onAddParticipant={addParticipant}
+            onRemoveParticipant={removeParticipant}
+            onRebuyChange={handleRebuyChange}
+            onEliminatePlayer={handleEliminatePlayer}
+            onUndoLastElimination={handleUndoLastElimination}
+        />
         {isStructureManagerOpen && (
             <BlindStructureManager
                 isOpen={isStructureManagerOpen}

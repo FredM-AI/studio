@@ -5,6 +5,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import type { Event, BlindLevel, Player } from '@/lib/definitions';
 import type { ParticipantState } from './LivePlayerTracking';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { X, Play, Pause, FastForward, Rewind, Settings, Expand, Shrink, Volume2, VolumeX, Sun, Moon, Users } from 'lucide-react';
 import { Slider } from '@/components/ui/slider';
 import { cn } from '@/lib/utils';
@@ -15,13 +16,13 @@ import LivePlayerTracking from './LivePlayerTracking'; // Import the component
 import '@/app/poker-timer.css';
 
 interface PokerTimerModalProps {
+  isOpen: boolean;
+  onOpenChange: (isOpen: boolean) => void;
   event: Event;
   participants: ParticipantState[];
   totalPrizePool: number;
   payoutStructure: { position: number, prize: number }[];
   activeStructure: BlindLevel[];
-  onClose: () => void;
-  // Props for Player Tracking
   allPlayers: Player[];
   availablePlayers: Player[];
   onAddParticipant: (player: Player) => void;
@@ -45,13 +46,13 @@ type TimerSettings = {
 };
 
 export default function PokerTimerModal({ 
+    isOpen,
+    onOpenChange,
     event, 
     participants, 
     totalPrizePool,
     payoutStructure,
     activeStructure, 
-    onClose,
-    // Destructure new props
     allPlayers,
     availablePlayers,
     onAddParticipant,
@@ -172,9 +173,11 @@ export default function PokerTimerModal({
   };
   
   const toggleFullScreen = () => {
-    if (!modalRef.current) return;
+    const elem = document.querySelector(`[data-modal-id="poker-timer-dialog"]`);
+    if (!elem) return;
+    
     if (!isFullScreen) {
-      modalRef.current.requestFullscreen().catch(err => {
+      elem.requestFullscreen().catch(err => {
         alert(`Error attempting to enable full-screen mode: ${err.message} (${err.name})`);
       });
     } else {
@@ -215,162 +218,166 @@ export default function PokerTimerModal({
   const timerProgress = currentLevel.duration > 0 ? ((currentLevel.duration * 60 - timeLeft) / (currentLevel.duration * 60)) * 100 : 0;
 
   return (
-     <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center pointer-events-auto">
-        <div className="poker-timer-modal-container">
-            <div
-            ref={modalRef}
-            className={cn("poker-timer-modal", `theme-${settings.theme}`)}
-            data-fullscreen={isFullScreen}
-            >
-            <div className={cn("settings-panel", { 'is-open': isSettingsOpen })}>
-                <div className="flex justify-between items-center mb-4">
-                    <h3 className="settings-title">Settings</h3>
-                    <Button variant="ghost" size="icon" onClick={() => setIsSettingsOpen(false)} className="no-drag h-7 w-7">
-                        <X className="h-5 w-5"/>
-                    </Button>
-                </div>
-                <div className="setting-item">
-                    <Label htmlFor="sound-switch">Sound Alerts</Label>
-                    <Switch id="sound-switch" checked={settings.soundEnabled} onCheckedChange={(val) => handleSettingsChange('soundEnabled', val)} />
-                </div>
-                 <div className="setting-item">
-                    <Label htmlFor="volume-slider">Volume</Label>
-                    <Slider id="volume-slider" min={0} max={1} step={0.1} value={[settings.volume]} onValueChange={(val) => handleSettingsChange('volume', val[0])} />
-                </div>
-                <div className="setting-item">
-                   <Label>Theme</Label>
-                   <RadioGroup value={settings.theme} onValueChange={(val) => handleSettingsChange('theme', val as any)} className="flex gap-2">
-                      <Label htmlFor="theme-dark" className="theme-option theme-dark-option"><RadioGroupItem value="dark" id="theme-dark"/><Sun className="h-4 w-4"/></Label>
-                      <Label htmlFor="theme-light" className="theme-option theme-light-option"><RadioGroupItem value="light" id="theme-light" /><Moon className="h-4 w-4"/></Label>
-                      <Label htmlFor="theme-green" className="theme-option theme-green-option"><RadioGroupItem value="green" id="theme-green" /></Label>
-                   </RadioGroup>
-                </div>
-            </div>
-
-            <header className="drag-handle timer-header">
-              <div className="flex gap-6 items-center">
-                  <div className="text-center">
-                      <p className="timer-header-label">Level</p>
-                      <p className="timer-header-value">{currentLevel.isBreak ? 'BREAK' : currentLevel.level}</p>
-                  </div>
-                   <div className="timer-header-divider">
-                      <p className="timer-header-label">Total time</p>
-                      <p className="timer-header-value">{formatTime(totalTime)}</p>
-                  </div>
-                   <div className="text-center">
-                      <p className="timer-header-label">Time to break</p>
-                      <p className="timer-header-value">{formatTime(timeToNextBreak())}</p>
-                  </div>
-              </div>
-              <div className="flex items-center no-drag">
-                <Button onClick={toggleFullScreen} variant="ghost" size="icon" className="timer-header-button">
-                    {isFullScreen ? <Shrink className="h-5 w-5"/> : <Expand className="h-5 w-5"/>}
+    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+      <DialogContent 
+        data-modal-id="poker-timer-dialog"
+        className={cn(
+          "poker-timer-modal",
+          `theme-${settings.theme}`,
+          "max-w-5xl h-[90vh] flex flex-col p-0 gap-0"
+        )}
+      >
+        <div 
+          ref={modalRef}
+          className={cn("poker-timer-content-wrapper")}
+          data-fullscreen={isFullScreen}
+        >
+          <div className={cn("settings-panel", { 'is-open': isSettingsOpen })}>
+            <div className="flex justify-between items-center mb-4">
+                <h3 className="settings-title">Settings</h3>
+                <Button variant="ghost" size="icon" onClick={() => setIsSettingsOpen(false)} className="no-drag h-7 w-7">
+                    <X className="h-5 w-5"/>
                 </Button>
-                <Button onClick={onClose} variant="ghost" size="icon" className="timer-header-button">
-                    <X className="h-6 w-6" />
-                </Button>
-              </div>
-            </header>
-            
-            <div className="timer-sticky-content">
-                <div className="w-[70%] mx-auto flex flex-col h-full justify-center">
-                    <div className="timer-display-area">
-                        <div className="timer-countdown">
-                        {formatTime(timeLeft)}
-                        </div>
-                        <div className="timer-blinds-area">
-                        <p className="timer-blinds-label">Blinds</p>
-                        <p className="timer-blinds-value">
-                            {currentLevel.isBreak ? 'BREAK' : `${currentLevel.smallBlind} / ${currentLevel.bigBlind}`}
-                        </p>
-                        <p className="timer-ante-label">Ante</p>
-                        <p className="timer-ante-value">{currentLevel.ante || '-'}</p>
-                        </div>
-                    </div>
-                    <div className="timer-next-level-bar">
-                        <div className="timer-next-level-time">
-                        {nextLevel.duration ? formatTime(nextLevel.duration * 60) : '00:00'}
-                        </div>
-                        <div className="timer-next-level-label">
-                        Next: {nextLevel.isBreak ? 'Break' : `Level ${nextLevel.level}`}
-                        </div>
-                        <div className="timer-next-level-blinds">
-                        <p className="font-bold">{nextLevel.isBreak ? 'BREAK' : `${nextLevel.smallBlind} / ${nextLevel.bigBlind}`}</p>
-                        <p className="text-xs">Ante: {nextLevel.ante || '-'}</p>
-                        </div>
-                    </div>
-                </div>
             </div>
-            
-
-            <div className="timer-main-content">
-              <div className="timer-stats-grid">
-                  <div className="timer-stats-box">
-                      <h4 className="timer-stats-title">Status</h4>
-                      <div className="timer-stats-row"><span>Players:</span> <span>{activeParticipants.length} / {participants.length}</span></div>
-                      <div className="timer-stats-row"><span>Rebuys:</span> <span>{totalRebuys}</span></div>
-                      <div className="timer-stats-row"><span>Addons:</span> <span>0</span></div>
-                  </div>
-                   <div className="timer-stats-box">
-                      <h4 className="timer-stats-title">Statistics</h4>
-                      <div className="timer-stats-row"><span>Avg. stack:</span> <span>{avgStack.toLocaleString()}</span></div>
-                      <div className="timer-stats-row"><span>Total chips:</span> <span>{totalChips.toLocaleString()}</span></div>
-                      <div className="timer-stats-row"><span>Total prize:</span> <span className="font-bold">€{totalPrizePool}</span></div>
-                  </div>
-                   <div className="timer-stats-box">
-                      <h4 className="timer-stats-title">Prizes</h4>
-                      {payoutStructure.map(p => (
-                         <div className="timer-stats-row" key={p.position}><span>{p.position}.</span> <span className="font-bold">€{p.prize}</span></div>
-                      ))}
-                      {payoutStructure.length === 0 && <p className="text-xs text-gray-400">Not enough data</p>}
-                  </div>
-              </div>
-              
-              <div className="mt-4 border-t pt-4" style={{ borderColor: 'var(--stats-border)'}}>
-                 <h3 className="font-bold text-lg mb-2 flex items-center gap-2"><Users/> Player Tracking</h3>
-                 <LivePlayerTracking
-                    allPlayers={allPlayers}
-                    participants={participants}
-                    availablePlayers={availablePlayers}
-                    onAddParticipant={onAddParticipant}
-                    onRemoveParticipant={onRemoveParticipant}
-                    onRebuyChange={onRebuyChange}
-                    onEliminatePlayer={onEliminatePlayer}
-                    onUndoLastElimination={onUndoLastElimination}
-                    isModalLayout={true}
-                 />
-              </div>
-
+            <div className="setting-item">
+                <Label htmlFor="sound-switch">Sound Alerts</Label>
+                <Switch id="sound-switch" checked={settings.soundEnabled} onCheckedChange={(val) => handleSettingsChange('soundEnabled', val)} />
             </div>
-
-            <footer className="timer-footer no-drag">
-               <div className="flex items-center gap-4">
-                  <p className="text-xs mr-2 text-gray-400">Level</p>
-                   <Button variant="ghost" size="icon" onClick={() => goToPrevLevel()} className="timer-control-button"><Rewind className="h-5 w-5"/></Button>
-                   <Button variant="ghost" size="icon" onClick={() => setIsPaused(!isPaused)} className="timer-control-button">
-                      {isPaused ? <Play className="h-5 w-5"/> : <Pause className="h-5 w-5"/>}
-                  </Button>
-                  <Button variant="ghost" size="icon" onClick={() => goToNextLevel(false)} className="timer-control-button"><FastForward className="h-5 w-5"/></Button>
-               </div>
-               <div className="timer-progress-slider">
-                  <Slider 
-                      value={[timerProgress]} 
-                      max={100} 
-                      step={1} 
-                      onValueChange={(value) => {
-                          const newTime = Math.round((currentLevel.duration * 60) * (1 - value[0] / 100));
-                          setTimeLeft(newTime);
-                      }}
-                   />
-               </div>
-               <div className="flex items-center gap-2">
-                  <Button variant="ghost" size="icon" onClick={() => setIsSettingsOpen(!isSettingsOpen)} className="timer-control-button">
-                    <Settings className="h-5 w-5"/>
-                  </Button>
-               </div>
-            </footer>
+              <div className="setting-item">
+                <Label htmlFor="volume-slider">Volume</Label>
+                <Slider id="volume-slider" min={0} max={1} step={0.1} value={[settings.volume]} onValueChange={(val) => handleSettingsChange('volume', val[0])} />
+            </div>
+            <div className="setting-item">
+                <Label>Theme</Label>
+                <RadioGroup value={settings.theme} onValueChange={(val) => handleSettingsChange('theme', val as any)} className="flex gap-2">
+                    <Label htmlFor="theme-dark" className="theme-option theme-dark-option"><RadioGroupItem value="dark" id="theme-dark"/><Sun className="h-4 w-4"/></Label>
+                    <Label htmlFor="theme-light" className="theme-option theme-light-option"><RadioGroupItem value="light" id="theme-light" /><Moon className="h-4 w-4"/></Label>
+                    <Label htmlFor="theme-green" className="theme-option theme-green-option"><RadioGroupItem value="green" id="theme-green" /></Label>
+                </RadioGroup>
+            </div>
           </div>
+
+          <header className="drag-handle timer-header">
+            <div className="flex gap-6 items-center">
+                <div className="text-center">
+                    <p className="timer-header-label">Level</p>
+                    <p className="timer-header-value">{currentLevel.isBreak ? 'BREAK' : currentLevel.level}</p>
+                </div>
+                  <div className="timer-header-divider">
+                    <p className="timer-header-label">Total time</p>
+                    <p className="timer-header-value">{formatTime(totalTime)}</p>
+                </div>
+                  <div className="text-center">
+                    <p className="timer-header-label">Time to break</p>
+                    <p className="timer-header-value">{formatTime(timeToNextBreak())}</p>
+                </div>
+            </div>
+            <div className="flex items-center no-drag">
+              <Button onClick={toggleFullScreen} variant="ghost" size="icon" className="timer-header-button">
+                  {isFullScreen ? <Shrink className="h-5 w-5"/> : <Expand className="h-5 w-5"/>}
+              </Button>
+            </div>
+          </header>
+          
+          <div className="timer-sticky-content">
+              <div className="w-[70%] mx-auto flex flex-col h-full justify-center">
+                  <div className="timer-display-area">
+                      <div className="timer-countdown">
+                      {formatTime(timeLeft)}
+                      </div>
+                      <div className="timer-blinds-area">
+                      <p className="timer-blinds-label">Blinds</p>
+                      <p className="timer-blinds-value">
+                          {currentLevel.isBreak ? 'BREAK' : `${currentLevel.smallBlind} / ${currentLevel.bigBlind}`}
+                      </p>
+                      <p className="timer-ante-label">Ante</p>
+                      <p className="timer-ante-value">{currentLevel.ante || '-'}</p>
+                      </div>
+                  </div>
+                  <div className="timer-next-level-bar">
+                      <div className="timer-next-level-time">
+                      {nextLevel.duration ? formatTime(nextLevel.duration * 60) : '00:00'}
+                      </div>
+                      <div className="timer-next-level-label">
+                      Next: {nextLevel.isBreak ? 'Break' : `Level ${nextLevel.level}`}
+                      </div>
+                      <div className="timer-next-level-blinds">
+                      <p className="font-bold">{nextLevel.isBreak ? 'BREAK' : `${nextLevel.smallBlind} / ${nextLevel.bigBlind}`}</p>
+                      <p className="text-xs">Ante: {nextLevel.ante || '-'}</p>
+                      </div>
+                  </div>
+              </div>
+          </div>
+          
+
+          <div className="timer-main-content">
+            <div className="timer-stats-grid">
+                <div className="timer-stats-box">
+                    <h4 className="timer-stats-title">Status</h4>
+                    <div className="timer-stats-row"><span>Players:</span> <span>{activeParticipants.length} / {participants.length}</span></div>
+                    <div className="timer-stats-row"><span>Rebuys:</span> <span>{totalRebuys}</span></div>
+                    <div className="timer-stats-row"><span>Addons:</span> <span>0</span></div>
+                </div>
+                  <div className="timer-stats-box">
+                    <h4 className="timer-stats-title">Statistics</h4>
+                    <div className="timer-stats-row"><span>Avg. stack:</span> <span>{avgStack.toLocaleString()}</span></div>
+                    <div className="timer-stats-row"><span>Total chips:</span> <span>{totalChips.toLocaleString()}</span></div>
+                    <div className="timer-stats-row"><span>Total prize:</span> <span className="font-bold">€{totalPrizePool}</span></div>
+                </div>
+                  <div className="timer-stats-box">
+                    <h4 className="timer-stats-title">Prizes</h4>
+                    {payoutStructure.map(p => (
+                        <div className="timer-stats-row" key={p.position}><span>{p.position}.</span> <span className="font-bold">€{p.prize}</span></div>
+                    ))}
+                    {payoutStructure.length === 0 && <p className="text-xs text-gray-400">Not enough data</p>}
+                </div>
+            </div>
+            
+            <div className="mt-4 border-t pt-4" style={{ borderColor: 'var(--stats-border)'}}>
+                <h3 className="font-bold text-lg mb-2 flex items-center gap-2"><Users/> Player Tracking</h3>
+                <LivePlayerTracking
+                  allPlayers={allPlayers}
+                  participants={participants}
+                  availablePlayers={availablePlayers}
+                  onAddParticipant={onAddParticipant}
+                  onRemoveParticipant={onRemoveParticipant}
+                  onRebuyChange={onRebuyChange}
+                  onEliminatePlayer={onEliminatePlayer}
+                  onUndoLastElimination={onUndoLastElimination}
+                  isModalLayout={true}
+                />
+            </div>
+
+          </div>
+
+          <footer className="timer-footer no-drag">
+              <div className="flex items-center gap-4">
+                <p className="text-xs mr-2 text-gray-400">Level</p>
+                  <Button variant="ghost" size="icon" onClick={() => goToPrevLevel()} className="timer-control-button"><Rewind className="h-5 w-5"/></Button>
+                  <Button variant="ghost" size="icon" onClick={() => setIsPaused(!isPaused)} className="timer-control-button">
+                    {isPaused ? <Play className="h-5 w-5"/> : <Pause className="h-5 w-5"/>}
+                </Button>
+                <Button variant="ghost" size="icon" onClick={() => goToNextLevel(false)} className="timer-control-button"><FastForward className="h-5 w-5"/></Button>
+              </div>
+              <div className="timer-progress-slider">
+                <Slider 
+                    value={[timerProgress]} 
+                    max={100} 
+                    step={1} 
+                    onValueChange={(value) => {
+                        const newTime = Math.round((currentLevel.duration * 60) * (1 - value[0] / 100));
+                        setTimeLeft(newTime);
+                    }}
+                  />
+              </div>
+              <div className="flex items-center gap-2">
+                <Button variant="ghost" size="icon" onClick={() => setIsSettingsOpen(!isSettingsOpen)} className="timer-control-button">
+                  <Settings className="h-5 w-5"/>
+                </Button>
+              </div>
+          </footer>
         </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }
