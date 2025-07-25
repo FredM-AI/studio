@@ -91,7 +91,7 @@
 .timer-header-button:hover { color: var(--header-button-hover-text); background-color: var(--header-button-hover-bg); }
 
 .timer-main-content {
-    @apply p-6 flex-grow;
+    @apply p-6 flex-grow overflow-y-auto;
     background-color: var(--main-bg);
     backdrop-filter: blur(4px);
 }
