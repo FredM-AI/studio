@@ -73,8 +73,7 @@ export default function LivePlayerTracking({
 
     return (
         <div className={cn(
-            "grid grid-cols-1 gap-4",
-            isModalLayout ? "md:grid-cols-1" : "md:grid-cols-3"
+            "grid grid-cols-1 md:grid-cols-3 gap-4"
         )}>
             {/* Column 1: Available Players */}
             <div className="space-y-2">
