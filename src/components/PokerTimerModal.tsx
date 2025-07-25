@@ -2,16 +2,17 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import type { Event, BlindLevel } from '@/lib/definitions';
+import type { Event, BlindLevel, Player } from '@/lib/definitions';
 import type { ParticipantState } from './LivePlayerTracking';
 import { Button } from '@/components/ui/button';
-import { X, Play, Pause, FastForward, Rewind, Settings, Expand, Shrink, Volume2, VolumeX, Sun, Moon } from 'lucide-react';
+import { X, Play, Pause, FastForward, Rewind, Settings, Expand, Shrink, Volume2, VolumeX, Sun, Moon, Users } from 'lucide-react';
 import { Slider } from '@/components/ui/slider';
 import { cn } from '@/lib/utils';
 import { Switch } from './ui/switch';
 import { Label } from './ui/label';
 import { RadioGroup, RadioGroupItem } from './ui/radio-group';
-import '@/app/poker-timer.css'; // Import custom CSS for timer
+import LivePlayerTracking from './LivePlayerTracking'; // Import the component
+import '@/app/poker-timer.css';
 
 interface PokerTimerModalProps {
   event: Event;
@@ -20,6 +21,14 @@ interface PokerTimerModalProps {
   payoutStructure: { position: number, prize: number }[];
   activeStructure: BlindLevel[];
   onClose: () => void;
+  // Props for Player Tracking
+  allPlayers: Player[];
+  availablePlayers: Player[];
+  onAddParticipant: (player: Player) => void;
+  onRemoveParticipant: (playerId: string) => void;
+  onRebuyChange: (playerId: string, delta: number) => void;
+  onEliminatePlayer: (playerId: string) => void;
+  onUndoLastElimination: () => void;
 }
 
 const formatTime = (seconds: number) => {
@@ -41,7 +50,15 @@ export default function PokerTimerModal({
     totalPrizePool,
     payoutStructure,
     activeStructure, 
-    onClose 
+    onClose,
+    // Destructure new props
+    allPlayers,
+    availablePlayers,
+    onAddParticipant,
+    onRemoveParticipant,
+    onRebuyChange,
+    onEliminatePlayer,
+    onUndoLastElimination
 }: PokerTimerModalProps) {
   const modalRef = useRef<HTMLDivElement>(null);
   const timerStorageKey = `poker-timer-state-${event.id}`;
@@ -306,6 +323,20 @@ export default function PokerTimerModal({
                       ))}
                       {payoutStructure.length === 0 && <p className="text-xs text-gray-400">Not enough data</p>}
                   </div>
+              </div>
+              
+              <div className="mt-4 border-t pt-4" style={{ borderColor: 'var(--stats-border)'}}>
+                 <h3 className="font-bold text-lg mb-2 flex items-center gap-2"><Users/> Player Tracking</h3>
+                 <LivePlayerTracking
+                    allPlayers={allPlayers}
+                    participants={participants}
+                    availablePlayers={availablePlayers}
+                    onAddParticipant={onAddParticipant}
+                    onRemoveParticipant={onRemoveParticipant}
+                    onRebuyChange={onRebuyChange}
+                    onEliminatePlayer={onEliminatePlayer}
+                    onUndoLastElimination={onUndoLastElimination}
+                 />
               </div>
 
             </div>

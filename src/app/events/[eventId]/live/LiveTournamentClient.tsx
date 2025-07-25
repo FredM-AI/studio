@@ -310,7 +310,14 @@ export default function LiveTournamentClient({ event: initialEvent, players: all
                 totalPrizePool={totalPrizePool}
                 payoutStructure={payoutStructure}
                 activeStructure={activeStructure} 
-                onClose={() => setIsTimerModalOpen(false)} 
+                onClose={() => setIsTimerModalOpen(false)}
+                allPlayers={allPlayers}
+                availablePlayers={availablePlayers}
+                onAddParticipant={addParticipant}
+                onRemoveParticipant={removeParticipant}
+                onRebuyChange={handleRebuyChange}
+                onEliminatePlayer={handleEliminatePlayer}
+                onUndoLastElimination={handleUndoLastElimination}
             />
         )}
         {isStructureManagerOpen && (

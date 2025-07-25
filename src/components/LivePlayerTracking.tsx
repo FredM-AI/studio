@@ -9,6 +9,7 @@ import { PlusCircle, MinusCircle, UserPlus, Search, UserX, UserCheck, Trash2, Un
 import { ScrollArea } from './ui/scroll-area';
 import { Badge } from './ui/badge';
 import { Input } from './ui/input';
+import { cn } from '@/lib/utils';
 
 export interface ParticipantState {
     id: string;
@@ -27,6 +28,8 @@ interface LivePlayerTrackingProps {
     onRebuyChange: (playerId: string, delta: number) => void;
     onEliminatePlayer: (playerId: string) => void;
     onUndoLastElimination: () => void;
+    // Optional prop to adjust layout for modal use
+    isModalLayout?: boolean;
 }
 
 const getPlayerDisplayName = (player: Player | undefined): string => {
@@ -46,6 +49,7 @@ export default function LivePlayerTracking({
     onRebuyChange,
     onEliminatePlayer,
     onUndoLastElimination,
+    isModalLayout = false,
 }: LivePlayerTrackingProps) {
     const [searchTerm, setSearchTerm] = React.useState('');
     
@@ -68,7 +72,10 @@ export default function LivePlayerTracking({
 
 
     return (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className={cn(
+            "grid grid-cols-1 gap-4",
+            isModalLayout ? "md:grid-cols-1" : "md:grid-cols-3"
+        )}>
             {/* Column 1: Available Players */}
             <div className="space-y-2">
                 <h4 className="font-medium flex items-center gap-2 text-sm"><UserPlus className="h-4 w-4 text-primary"/>Available Players ({filteredAvailablePlayers.length})</h4>
@@ -81,7 +88,7 @@ export default function LivePlayerTracking({
                         className="pl-8 h-9"
                     />
                 </div>
-                <ScrollArea className="h-[30rem] border rounded-md">
+                <ScrollArea className={cn(isModalLayout ? "h-40" : "h-[30rem]", "border rounded-md")}>
                     <Table>
                         <TableBody>
                             {filteredAvailablePlayers.length > 0 ? filteredAvailablePlayers.map(p => (
@@ -111,7 +118,7 @@ export default function LivePlayerTracking({
             {/* Column 2: Active Players */}
             <div className="space-y-2">
                  <h4 className="font-medium flex items-center gap-2 text-sm"><UserCheck className="h-4 w-4 text-green-500" />Active Players ({activeParticipants.length})</h4>
-                <ScrollArea className="h-[32.5rem] border rounded-md">
+                <ScrollArea className={cn(isModalLayout ? "h-64" : "h-[32.5rem]", "border rounded-md")}>
                     <Table>
                          <TableHeader>
                             <TableRow>
@@ -162,7 +169,7 @@ export default function LivePlayerTracking({
             {/* Column 3: Ranking */}
             <div className="space-y-2">
                 <h4 className="font-medium flex items-center gap-2 text-sm">Ranking ({eliminatedParticipants.length})</h4>
-                <ScrollArea className="h-[32.5rem] border rounded-md">
+                <ScrollArea className={cn(isModalLayout ? "h-64" : "h-[32.5rem]", "border rounded-md")}>
                     <Table>
                         <TableHeader>
                             <TableRow>
