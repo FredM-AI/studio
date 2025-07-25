@@ -6,7 +6,7 @@ import type { Event, Player, BlindLevel, BlindStructureTemplate, EventResult } f
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { ArrowLeft, Clock, Settings, List, Banknote, Cpu, Save, Loader2 } from "lucide-react";
+import { ArrowLeft, Clock, Settings, List, Banknote, Cpu, Save, Loader2, RefreshCw } from "lucide-react";
 import PokerTimerModal from '@/components/PokerTimerModal';
 import BlindStructureManager from '@/components/BlindStructureManager';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -19,6 +19,7 @@ import LivePrizePool from '@/components/LivePrizePool';
 import { saveLiveResults } from '@/app/events/actions';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
+import { getBlindStructures } from '@/lib/data-service';
 
 
 interface LiveTournamentClientProps {
@@ -279,6 +280,13 @@ export default function LiveTournamentClient({ event: initialEvent, players: all
       }
   };
 
+  const refreshBlindStructures = async () => {
+    toast({ title: 'Refreshing...', description: 'Fetching latest blind structures.' });
+    const updatedStructures = await getBlindStructures();
+    setBlindStructures(updatedStructures);
+    toast({ title: 'Success', description: 'Blind structures have been updated.' });
+  };
+
 
   return (
     <div className="container mx-auto p-4 space-y-6">
@@ -296,6 +304,7 @@ export default function LiveTournamentClient({ event: initialEvent, players: all
             onRebuyChange={handleRebuyChange}
             onEliminatePlayer={handleEliminatePlayer}
             onUndoLastElimination={handleUndoLastElimination}
+            refreshBlindStructures={refreshBlindStructures}
         />
         {isStructureManagerOpen && (
             <BlindStructureManager
@@ -332,11 +341,16 @@ export default function LiveTournamentClient({ event: initialEvent, players: all
             <Card>
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
                     <div>
-                    <CardTitle className="flex items-center text-lg"><List className="mr-2"/>Blind Structure</CardTitle>
+                        <CardTitle className="flex items-center text-lg"><List className="mr-2"/>Blind Structure</CardTitle>
                     </div>
-                    <Button variant="outline" size="sm" onClick={() => setIsStructureManagerOpen(true)}>
-                        <Settings className="mr-2 h-4 w-4" /> Manage
-                    </Button>
+                    <div className="flex items-center gap-2">
+                        <Button variant="ghost" size="icon" onClick={refreshBlindStructures} className="h-8 w-8">
+                            <RefreshCw className="h-4 w-4" />
+                        </Button>
+                        <Button variant="outline" size="sm" onClick={() => setIsStructureManagerOpen(true)}>
+                            <Settings className="mr-2 h-4 w-4" /> Manage
+                        </Button>
+                    </div>
                 </CardHeader>
                 <CardContent className="pt-2">
                     <div className="space-y-3">
@@ -435,7 +449,7 @@ export default function LiveTournamentClient({ event: initialEvent, players: all
                     onRemoveParticipant={removeParticipant}
                     onRebuyChange={handleRebuyChange}
                     onEliminatePlayer={handleEliminatePlayer}
-                    onUndoLastElimination={handleUndoLastElimination}
+                    onUndoLastElimination={onUndoLastElimination}
                 />
             </CardContent>
         </Card>

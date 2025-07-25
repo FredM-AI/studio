@@ -6,7 +6,7 @@ import type { Event, BlindLevel, Player } from '@/lib/definitions';
 import type { ParticipantState } from './LivePlayerTracking';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogClose, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { X, Play, Pause, FastForward, Rewind, Settings, Expand, Shrink, Volume2, VolumeX, Sun, Moon, Users } from 'lucide-react';
+import { X, Play, Pause, FastForward, Rewind, Settings, Expand, Shrink, Volume2, VolumeX, Sun, Moon, Users, RefreshCw } from 'lucide-react';
 import { Slider } from '@/components/ui/slider';
 import { cn } from '@/lib/utils';
 import { Switch } from './ui/switch';
@@ -30,6 +30,7 @@ interface PokerTimerModalProps {
   onEliminatePlayer: (playerId: string) => void;
   onUndoLastElimination: () => void;
   onStructureUpdate: (newStructure: BlindLevel[]) => void;
+  refreshBlindStructures: () => Promise<void>;
 }
 
 const formatTime = (seconds: number) => {
@@ -59,6 +60,7 @@ export default function PokerTimerModal({
     onEliminatePlayer,
     onUndoLastElimination,
     onStructureUpdate,
+    refreshBlindStructures,
 }: PokerTimerModalProps) {
   const modalRef = useRef<HTMLDivElement>(null);
   const timerStorageKey = `poker-timer-state-${event.id}`;
@@ -106,11 +108,24 @@ export default function PokerTimerModal({
 
   useEffect(() => {
     // This effect handles "hot-reloading" the structure from the parent
+    const savedLevelIndex = getInitialState(`${timerStorageKey}-level`, 0);
+    const savedTimeLeft = getInitialState(`${timerStorageKey}-time`, undefined);
+
     setActiveStructure(initialActiveStructure);
-    const newDuration = initialActiveStructure[currentLevelIndex]?.duration * 60;
-    if (timeLeft > newDuration) {
+    setCurrentLevelIndex(savedLevelIndex);
+    
+    const newDuration = initialActiveStructure[savedLevelIndex]?.duration * 60;
+
+    if(savedTimeLeft !== undefined) {
+        if (savedTimeLeft > newDuration) {
+            setTimeLeft(newDuration);
+        } else {
+            setTimeLeft(savedTimeLeft);
+        }
+    } else {
         setTimeLeft(newDuration);
     }
+
   }, [initialActiveStructure]);
 
 
@@ -214,9 +229,10 @@ export default function PokerTimerModal({
 
   const safeCurrentLevelIndex = Math.min(currentLevelIndex, activeStructure.length - 1);
   const currentLevel = activeStructure[safeCurrentLevelIndex] || { level: 0, smallBlind: 0, bigBlind: 0, duration: 0, isBreak: true };
-  const nextLevelIndex = safeCurrentLevelIndex + 1;
-  const nextLevel = nextLevelIndex < activeStructure.length ? activeStructure[nextLevelIndex] : currentLevel;
   
+  const isLastLevel = safeCurrentLevelIndex >= activeStructure.length - 1;
+  const nextLevel = isLastLevel ? currentLevel : activeStructure[safeCurrentLevelIndex + 1];
+
   const activeParticipants = participants.filter(p => p.eliminatedPosition === null);
   const totalRebuys = participants.reduce((sum, p) => sum + p.rebuys, 0);
 
@@ -307,6 +323,9 @@ export default function PokerTimerModal({
 
           <header className="drag-handle timer-header">
             <div className="flex-1 flex gap-6 items-center">
+                <Button variant="ghost" size="icon" onClick={refreshBlindStructures} className="timer-header-button h-7 w-7 text-gray-400 hover:text-white">
+                    <RefreshCw className="h-5 w-5"/>
+                </Button>
                 <div className="text-center">
                     <p className="timer-header-label">Level</p>
                     <p className="timer-header-value">{currentLevel.isBreak ? 'BREAK' : currentLevel.level}</p>
@@ -424,3 +443,4 @@ export default function PokerTimerModal({
     </Dialog>
   );
 }
+
