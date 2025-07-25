@@ -4,7 +4,7 @@
 @tailwind utilities;
 
 .poker-timer-modal-container {
-    @apply w-[980px] h-[720px] shadow-2xl rounded-xl border-4 border-gray-700 relative resize overflow-auto;
+    @apply w-[980px] h-[720px] shadow-2xl rounded-xl border-4 border-gray-700 relative resize overflow-hidden;
     -webkit-app-region: no-drag;
 }
 
@@ -100,9 +100,8 @@
 }
 
 .timer-main-content {
-    @apply p-6 overflow-y-auto;
+    @apply p-6 overflow-y-auto flex-grow;
     background-color: var(--main-bg);
-    height: 65%;
 }
 
 .timer-display-area {
@@ -159,10 +158,6 @@
 .settings-panel.is-open {
     @apply translate-x-0;
 }
-.settings-title {
-    @apply text-lg font-bold mb-4 pb-2;
-    border-bottom: 1px solid var(--settings-border);
-}
 .setting-item {
     @apply mb-4;
 }
@@ -188,6 +183,7 @@
     ring-color: var(--slider-range);
     ring-offset-color: var(--settings-bg);
 }
+
 
 
 

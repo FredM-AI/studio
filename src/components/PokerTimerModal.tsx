@@ -247,7 +247,7 @@ export default function PokerTimerModal({
                 </div>
             </div>
 
-            <div className="drag-handle timer-header">
+            <header className="drag-handle timer-header">
               <div className="flex gap-6 items-center">
                   <div className="text-center">
                       <p className="timer-header-label">Level</p>
@@ -270,7 +270,7 @@ export default function PokerTimerModal({
                     <X className="h-6 w-6" />
                 </Button>
               </div>
-            </div>
+            </header>
             
             <div className="timer-sticky-content">
                 <div className="w-[70%] mx-auto flex flex-col h-full justify-center">
@@ -343,7 +343,7 @@ export default function PokerTimerModal({
 
             </div>
 
-            <div className="timer-footer no-drag">
+            <footer className="timer-footer no-drag">
                <div className="flex items-center gap-4">
                   <p className="text-xs mr-2 text-gray-400">Level</p>
                    <Button variant="ghost" size="icon" onClick={() => goToPrevLevel()} className="timer-control-button"><Rewind className="h-5 w-5"/></Button>
@@ -368,7 +368,7 @@ export default function PokerTimerModal({
                     <Settings className="h-5 w-5"/>
                   </Button>
                </div>
-            </div>
+            </footer>
           </div>
         </div>
     </div>
