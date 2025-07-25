@@ -29,7 +29,12 @@ export default async function EditPlayerPage({ params }: { params: { playerId: s
   }
   
   return (
-    <div>
+    <div className="space-y-6">
+       <Button variant="outline" asChild>
+        <Link href={`/players/${player.id}`}>
+          <ArrowLeft className="mr-2 h-4 w-4" /> Back to Player Details
+        </Link>
+      </Button>
       <PlayerForm 
         player={player}
         action={updatePlayer}

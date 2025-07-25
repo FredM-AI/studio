@@ -268,5 +268,3 @@ export default async function EventDetailsPage({ params }: { params: { eventId: 
     </div>
   );
 }
-
-    

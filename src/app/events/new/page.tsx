@@ -14,7 +14,7 @@ interface NewEventPageProps {
 }
 
 export default async function NewEventPage({ searchParams }: NewEventPageProps) {
-  const allPlayers: Player[] = await getPlayers();
+  const allPlayers: Player[] = (await getPlayers()).filter(p => p.isActive);
   const allSeasons: Season[] = await getSeasons(); 
   const blindStructures: BlindStructureTemplate[] = await getBlindStructures();
   const defaultSeasonId = searchParams?.seasonId;
