@@ -76,7 +76,7 @@ export default function LivePlayerTracking({
             "grid grid-cols-1 md:grid-cols-3 gap-4"
         )}>
             {/* Column 1: Available Players */}
-            <div className="space-y-2">
+            <div className="space-y-2 flex flex-col">
                 <h4 className="font-medium flex items-center gap-2 text-sm"><UserPlus className="h-4 w-4 text-primary"/>Available Players ({filteredAvailablePlayers.length})</h4>
                  <div className="relative">
                     <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -87,7 +87,7 @@ export default function LivePlayerTracking({
                         className="pl-8 h-9"
                     />
                 </div>
-                <ScrollArea className={cn(isModalLayout ? "h-40" : "h-[30rem]", "border rounded-md")}>
+                <ScrollArea className={cn(isModalLayout ? "h-[26rem]" : "h-[30rem]", "border rounded-md flex-grow")}>
                     <Table>
                         <TableBody>
                             {filteredAvailablePlayers.length > 0 ? filteredAvailablePlayers.map(p => (
@@ -115,9 +115,9 @@ export default function LivePlayerTracking({
             </div>
             
             {/* Column 2: Active Players */}
-            <div className="space-y-2">
+            <div className="space-y-2 flex flex-col">
                  <h4 className="font-medium flex items-center gap-2 text-sm"><UserCheck className="h-4 w-4 text-green-500" />Active Players ({activeParticipants.length})</h4>
-                <ScrollArea className={cn(isModalLayout ? "h-64" : "h-[32.5rem]", "border rounded-md")}>
+                <ScrollArea className={cn(isModalLayout ? "h-[28.5rem]" : "h-[32.5rem]", "border rounded-md flex-grow")}>
                     <Table>
                          <TableHeader>
                             <TableRow>
@@ -166,9 +166,9 @@ export default function LivePlayerTracking({
                 </ScrollArea>
             </div>
             {/* Column 3: Ranking */}
-            <div className="space-y-2">
+            <div className="space-y-2 flex flex-col">
                 <h4 className="font-medium flex items-center gap-2 text-sm">Ranking ({eliminatedParticipants.length})</h4>
-                <ScrollArea className={cn(isModalLayout ? "h-64" : "h-[32.5rem]", "border rounded-md")}>
+                <ScrollArea className={cn(isModalLayout ? "h-[28.5rem]" : "h-[32.5rem]", "border rounded-md flex-grow")}>
                     <Table>
                         <TableHeader>
                             <TableRow>
@@ -205,3 +205,4 @@ export default function LivePlayerTracking({
         </div>
     );
 }
+
