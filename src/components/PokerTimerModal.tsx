@@ -4,7 +4,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import type { Event, BlindLevel } from '@/lib/definitions';
 import type { ParticipantState } from './LivePlayerTracking';
-import Draggable from 'react-draggable';
 import { Button } from '@/components/ui/button';
 import { X, Play, Pause, FastForward, Rewind, Settings, Expand, Shrink, Volume2, VolumeX, Sun, Moon } from 'lucide-react';
 import { Slider } from '@/components/ui/slider';
@@ -44,7 +43,6 @@ export default function PokerTimerModal({
     activeStructure, 
     onClose 
 }: PokerTimerModalProps) {
-  const nodeRef = useRef(null);
   const modalRef = useRef<HTMLDivElement>(null);
   const timerStorageKey = `poker-timer-state-${event.id}`;
   const settingsStorageKey = `poker-timer-settings`;
@@ -200,12 +198,8 @@ export default function PokerTimerModal({
   const timerProgress = currentLevel.duration > 0 ? ((currentLevel.duration * 60 - timeLeft) / (currentLevel.duration * 60)) * 100 : 0;
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center">
-        <Draggable nodeRef={nodeRef} handle=".drag-handle" cancel=".no-drag">
-        <div
-            ref={nodeRef}
-            className="poker-timer-modal-container pointer-events-auto"
-        >
+    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center">
+        <div className="poker-timer-modal-container pointer-events-auto">
             <div
             ref={modalRef}
             className={cn("poker-timer-modal", `theme-${settings.theme}`)}
@@ -228,7 +222,7 @@ export default function PokerTimerModal({
                 </div>
                 <div className="setting-item">
                    <Label>Theme</Label>
-                   <RadioGroup value={settings.theme} onValueChange={(val) => handleSettingsChange('theme', val)} className="flex gap-2">
+                   <RadioGroup value={settings.theme} onValueChange={(val) => handleSettingsChange('theme', val as any)} className="flex gap-2">
                       <Label htmlFor="theme-dark" className="theme-option theme-dark-option"><RadioGroupItem value="dark" id="theme-dark"/><Sun className="h-4 w-4"/></Label>
                       <Label htmlFor="theme-light" className="theme-option theme-light-option"><RadioGroupItem value="light" id="theme-light" /><Moon className="h-4 w-4"/></Label>
                       <Label htmlFor="theme-green" className="theme-option theme-green-option"><RadioGroupItem value="green" id="theme-green" /></Label>
@@ -344,7 +338,6 @@ export default function PokerTimerModal({
             </div>
           </div>
         </div>
-      </Draggable>
     </div>
   );
 }

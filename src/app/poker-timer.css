@@ -4,7 +4,7 @@
 @tailwind utilities;
 
 .poker-timer-modal-container {
-    @apply min-w-[980px] shadow-2xl rounded-xl border-4 border-gray-700 relative resize overflow-auto;
+    @apply w-[980px] h-[720px] shadow-2xl rounded-xl border-4 border-gray-700 relative resize overflow-hidden;
     -webkit-app-region: no-drag;
 }
 
@@ -81,7 +81,7 @@
 
 /* --- LAYOUT & COMPONENTS --- */
 .timer-header {
-    @apply p-4 flex justify-between items-center cursor-grab active:cursor-grabbing;
+    @apply p-4 flex justify-between items-center cursor-default;
     background-color: var(--header-bg);
 }
 .timer-header-label { @apply text-xs opacity-70; }
