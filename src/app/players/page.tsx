@@ -4,11 +4,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { getPlayers } from "@/lib/data-service";
 import type { Player } from "@/lib/definitions";
-import { PlusCircle, Edit, Trash2, Eye, UploadCloud } from "lucide-react";
+import { PlusCircle, Edit, Eye, UploadCloud } from "lucide-react";
 import Link from "next/link";
 import { cookies } from 'next/headers';
-import PlayerImportForm from "@/components/PlayerImportForm"; // Import the new component
+import PlayerImportForm from "@/components/PlayerImportForm";
 import { Separator } from "@/components/ui/separator";
+import DeletePlayerButton from "@/components/DeletePlayerButton"; // Import the new component
 
 
 const AUTH_COOKIE_NAME = 'app_session_active';
@@ -124,10 +125,10 @@ export default async function PlayersPage() {
                                <Edit className="h-4 w-4" />
                              </Link>
                            </Button>
-                           {/* Delete functionality will be added with a form/server action */}
-                           <Button variant="destructive" size="icon" title="Delete Player" disabled>
-                             <Trash2 className="h-4 w-4" />
-                           </Button>
+                           <DeletePlayerButton 
+                              playerId={player.id} 
+                              playerName={getPlayerDisplayName(player)}
+                           />
                          </>
                        )}
                     </TableCell>
