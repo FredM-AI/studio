@@ -278,9 +278,6 @@ export default function PokerTimerModal({
                         <div className="timer-countdown">
                         {formatTime(timeLeft)}
                         </div>
-                        <div className="timer-chip-icon">
-                        CHIP
-                        </div>
                         <div className="timer-blinds-area">
                         <p className="timer-blinds-label">Blinds</p>
                         <p className="timer-blinds-value">
