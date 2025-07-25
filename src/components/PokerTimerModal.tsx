@@ -243,6 +243,16 @@ export default function PokerTimerModal({
           <DialogTitle>Poker Timer: {event.name}</DialogTitle>
           <DialogDescription>Live management interface for the poker tournament, including blinds, timer, and player tracking.</DialogDescription>
         </DialogHeader>
+        
+        <div className="absolute top-2 right-2 z-20 flex items-center gap-2">
+            <Button onClick={toggleFullScreen} variant="ghost" size="icon" className="timer-header-button h-7 w-7 text-gray-400 hover:text-white">
+                {isFullScreen ? <Shrink className="h-5 w-5"/> : <Expand className="h-5 w-5"/>}
+            </Button>
+             <Button variant="ghost" size="icon" onClick={() => onOpenChange(false)} className="h-7 w-7 text-gray-400 hover:text-white">
+                <X className="h-5 w-5"/>
+            </Button>
+        </div>
+
 
         <div className={cn("poker-timer-content-wrapper")}>
           <div className={cn("settings-panel", { 'is-open': isSettingsOpen })}>
@@ -271,7 +281,7 @@ export default function PokerTimerModal({
           </div>
 
           <header className="drag-handle timer-header">
-            <div className="flex gap-6 items-center">
+            <div className="flex-1 flex gap-6 items-center">
                 <div className="text-center">
                     <p className="timer-header-label">Level</p>
                     <p className="timer-header-value">{currentLevel.isBreak ? 'BREAK' : currentLevel.level}</p>
@@ -284,11 +294,6 @@ export default function PokerTimerModal({
                     <p className="timer-header-label">Time to break</p>
                     <p className="timer-header-value">{formatTime(timeToNextBreak())}</p>
                 </div>
-            </div>
-            <div className="flex items-center no-drag">
-              <Button onClick={toggleFullScreen} variant="ghost" size="icon" className="timer-header-button">
-                  {isFullScreen ? <Shrink className="h-5 w-5"/> : <Expand className="h-5 w-5"/>}
-              </Button>
             </div>
           </header>
           
