@@ -24,9 +24,9 @@
 .theme-dark {
     @apply bg-gray-800 text-white;
     --header-bg: #1f2937; /* gray-800 */
-    --main-bg: #11182d; /* gray-900 */
+    --main-bg: #1f2937; /* gray-800 - Changed to match sticky part */
     --sticky-bg: #1f2937;
-    --footer-bg: #11182d; /* gray-900 */
+    --footer-bg: #1f2937; /* gray-800 - Changed to match sticky part */
     --display-bg: rgba(229, 231, 235, 0.9); /* gray-200 with opacity */
     --display-text: #1f2937; /* gray-800 */
     --stats-bg: rgba(0, 0, 0, 0.2);
