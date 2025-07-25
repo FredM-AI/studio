@@ -94,13 +94,15 @@
 .timer-header-button:hover { color: var(--header-button-hover-text); background-color: var(--header-button-hover-bg); }
 
 .timer-sticky-content {
-    @apply p-6 flex-shrink-0;
+    @apply p-6 flex-shrink-0 flex flex-col justify-center;
     background-color: var(--sticky-bg);
+    height: 50%; /* Each part takes 50% of the height */
 }
 
 .timer-main-content {
-    @apply p-6 flex-grow overflow-y-auto;
+    @apply p-6 overflow-y-auto;
     background-color: var(--main-bg);
+    height: 50%; /* Each part takes 50% of the height */
 }
 
 .timer-display-area {
