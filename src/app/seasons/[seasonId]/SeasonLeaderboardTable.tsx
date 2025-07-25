@@ -6,7 +6,6 @@ import type { Event as EventType } from '@/lib/definitions';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import Link from 'next/link';
 import { Crown, TrendingUp, TrendingDown, Minus, ShieldCheck, BarChart2, CalendarDays } from 'lucide-react';
-import { format } from 'date-fns';
 import { Badge } from "@/components/ui/badge";
 
 interface SeasonLeaderboardTableProps {
@@ -25,6 +24,14 @@ export default function SeasonLeaderboardTable({ leaderboardData, seasonEvents }
 
   let regularPlayerRank = 0;
 
+  const formatDateInUTC = (dateString: string) => {
+    const date = new Date(dateString);
+    // Use toLocaleDateString with UTC timezone to avoid hydration mismatches
+    const day = date.toLocaleDateString('en-GB', { day: '2-digit', timeZone: 'UTC' });
+    const month = date.toLocaleDateString('en-GB', { month: '2-digit', timeZone: 'UTC' });
+    return `${day}/${month}`;
+  };
+
   return (
     <div className="rounded-md border"> 
       <Table>
@@ -40,7 +47,7 @@ export default function SeasonLeaderboardTable({ leaderboardData, seasonEvents }
               >
                 <div className="flex flex-col items-center">
                   <CalendarDays className="h-4 w-4 mb-0.5 text-muted-foreground/80"/>
-                  <span className="text-xs">{format(new Date(event.date), 'dd/MM')}</span>
+                  <span className="text-xs">{formatDateInUTC(event.date)}</span>
                 </div>
               </TableHead>
             ))}
