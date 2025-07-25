@@ -172,18 +172,20 @@ export default function PokerTimerModal({
     setTimeLeft(activeStructure[prevLevelIndex].duration * 60);
   };
   
-  const toggleFullScreen = () => {
-    const elem = modalRef.current;
-    if (!elem) return;
-    
-    if (!isFullScreen) {
-      elem.requestFullscreen().catch(err => {
-        alert(`Error attempting to enable full-screen mode: ${err.message} (${err.name})`);
-      });
+ const toggleFullScreen = () => {
+    const contentElement = modalRef.current?.closest('[role="dialog"]');
+    if (!contentElement) return;
+
+    if (!document.fullscreenElement) {
+        contentElement.requestFullscreen().catch(err => {
+            alert(`Error attempting to enable full-screen mode: ${err.message} (${err.name})`);
+        });
     } else {
-      document.exitFullscreen();
+        if (document.exitFullscreen) {
+            document.exitFullscreen();
+        }
     }
-  };
+};
 
   const handleSettingsChange = (key: keyof TimerSettings, value: any) => {
     setSettings(prev => ({...prev, [key]: value}));
@@ -221,13 +223,18 @@ export default function PokerTimerModal({
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent 
         ref={modalRef}
-        data-modal-id="poker-timer-dialog"
         className={cn(
-          "poker-timer-modal",
+          "poker-timer-modal resizable-dialog",
           `theme-${settings.theme}`,
-          "max-w-5xl h-[90vh] flex flex-col p-0 gap-0"
+          "max-w-7xl h-[90vh] flex flex-col p-0 gap-0"
         )}
         data-fullscreen={isFullScreen}
+        onEscapeKeyDown={(e) => {
+            if (isFullScreen) {
+                e.preventDefault();
+                toggleFullScreen();
+            }
+        }}
       >
         <DialogHeader className="sr-only">
           <DialogTitle>Poker Timer: {event.name}</DialogTitle>

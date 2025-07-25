@@ -7,6 +7,11 @@
     @apply flex flex-col h-full w-full overflow-hidden transition-colors duration-300 relative;
 }
 
+.poker-timer-modal.resizable-dialog {
+    resize: both;
+    overflow: auto;
+}
+
 .poker-timer-modal[data-fullscreen='true'] {
     @apply w-screen h-screen max-w-full min-w-full rounded-none border-none;
 }
@@ -95,8 +100,9 @@
 }
 
 .timer-main-content {
-    @apply p-6 overflow-y-auto flex-grow;
+    @apply p-6 flex-grow overflow-y-auto;
     background-color: var(--main-bg);
+    height: 65%;
 }
 
 .timer-display-area {
@@ -178,6 +184,7 @@
     ring-color: var(--slider-range);
     ring-offset-color: var(--settings-bg);
 }
+
 
 
 
