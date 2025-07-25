@@ -96,13 +96,13 @@
 .timer-sticky-content {
     @apply p-6 flex-shrink-0 flex flex-col justify-center;
     background-color: var(--sticky-bg);
-    height: 50%; /* Each part takes 50% of the height */
+    height: 35%; 
 }
 
 .timer-main-content {
     @apply p-6 overflow-y-auto;
     background-color: var(--main-bg);
-    height: 50%; /* Each part takes 50% of the height */
+    height: 65%;
 }
 
 .timer-display-area {
@@ -110,20 +110,22 @@
     background-color: var(--display-bg);
     color: var(--display-text);
 }
-.timer-countdown { @apply font-mono text-7xl font-bold tracking-tighter w-1/3; }
-.timer-chip-icon { @apply w-16 h-16 bg-gray-800 rounded-full flex items-center justify-center text-white text-xs font-bold shadow-inner; }
+.timer-countdown { @apply font-mono text-9xl font-bold tracking-tighter w-1/3; }
+.timer-chip-icon { @apply w-24 h-24 bg-gray-800 rounded-full flex items-center justify-center text-white text-lg font-bold shadow-inner; }
 .timer-blinds-area { @apply text-right w-1/3; }
-.timer-blinds-label { @apply text-sm opacity-70; }
-.timer-blinds-value { @apply text-4xl font-bold; }
-.timer-ante-label { @apply text-sm opacity-70 mt-1; }
-.timer-ante-value { @apply text-2xl font-bold; }
+.timer-blinds-label { @apply text-xl opacity-70; }
+.timer-blinds-value { @apply text-6xl font-bold; }
+.timer-ante-label { @apply text-xl opacity-70 mt-1; }
+.timer-ante-value { @apply text-4xl font-bold; }
 
 .timer-next-level-bar {
-    @apply bg-black/30 rounded-lg p-2 flex items-center justify-between text-sm mt-4;
+    @apply bg-black/30 rounded-lg p-3 flex items-center justify-between text-lg mt-4;
 }
-.timer-next-level-time { @apply font-mono text-xl font-bold w-1/3; }
+.timer-next-level-time { @apply font-mono text-3xl font-bold w-1/3; }
 .timer-next-level-label { @apply w-1/3 text-center opacity-80; }
 .timer-next-level-blinds { @apply text-right w-1/3; }
+.timer-next-level-blinds p { @apply text-xl; }
+
 
 .timer-stats-grid { @apply grid grid-cols-1 md:grid-cols-3 gap-6 text-sm; }
 .timer-stats-box {

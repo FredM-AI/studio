@@ -215,7 +215,7 @@ export default function PokerTimerModal({
   const timerProgress = currentLevel.duration > 0 ? ((currentLevel.duration * 60 - timeLeft) / (currentLevel.duration * 60)) * 100 : 0;
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center pointer-events-auto">
+     <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center pointer-events-auto">
         <div className="poker-timer-modal-container">
             <div
             ref={modalRef}
@@ -273,34 +273,36 @@ export default function PokerTimerModal({
             </div>
             
             <div className="timer-sticky-content">
-              <div className="timer-display-area">
-                <div className="timer-countdown">
-                  {formatTime(timeLeft)}
+                <div className="w-[70%] mx-auto flex flex-col h-full justify-center">
+                    <div className="timer-display-area">
+                        <div className="timer-countdown">
+                        {formatTime(timeLeft)}
+                        </div>
+                        <div className="timer-chip-icon">
+                        CHIP
+                        </div>
+                        <div className="timer-blinds-area">
+                        <p className="timer-blinds-label">Blinds</p>
+                        <p className="timer-blinds-value">
+                            {currentLevel.isBreak ? 'BREAK' : `${currentLevel.smallBlind} / ${currentLevel.bigBlind}`}
+                        </p>
+                        <p className="timer-ante-label">Ante</p>
+                        <p className="timer-ante-value">{currentLevel.ante || '-'}</p>
+                        </div>
+                    </div>
+                    <div className="timer-next-level-bar">
+                        <div className="timer-next-level-time">
+                        {nextLevel.duration ? formatTime(nextLevel.duration * 60) : '00:00'}
+                        </div>
+                        <div className="timer-next-level-label">
+                        Next: {nextLevel.isBreak ? 'Break' : `Level ${nextLevel.level}`}
+                        </div>
+                        <div className="timer-next-level-blinds">
+                        <p className="font-bold">{nextLevel.isBreak ? 'BREAK' : `${nextLevel.smallBlind} / ${nextLevel.bigBlind}`}</p>
+                        <p className="text-xs">Ante: {nextLevel.ante || '-'}</p>
+                        </div>
+                    </div>
                 </div>
-                <div className="timer-chip-icon">
-                   CHIP
-                </div>
-                <div className="timer-blinds-area">
-                  <p className="timer-blinds-label">Blinds</p>
-                  <p className="timer-blinds-value">
-                      {currentLevel.isBreak ? 'BREAK' : `${currentLevel.smallBlind} / ${currentLevel.bigBlind}`}
-                  </p>
-                  <p className="timer-ante-label">Ante</p>
-                  <p className="timer-ante-value">{currentLevel.ante || '-'}</p>
-                </div>
-              </div>
-              <div className="timer-next-level-bar">
-                 <div className="timer-next-level-time">
-                  {nextLevel.duration ? formatTime(nextLevel.duration * 60) : '00:00'}
-                </div>
-                <div className="timer-next-level-label">
-                  Next: {nextLevel.isBreak ? 'Break' : `Level ${nextLevel.level}`}
-                </div>
-                <div className="timer-next-level-blinds">
-                  <p className="font-bold">{nextLevel.isBreak ? 'BREAK' : `${nextLevel.smallBlind} / ${nextLevel.bigBlind}`}</p>
-                  <p className="text-xs">Ante: {nextLevel.ante || '-'}</p>
-                </div>
-              </div>
             </div>
             
 
