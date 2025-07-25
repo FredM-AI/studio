@@ -82,14 +82,8 @@ export default function LiveTournamentClient({ event: initialEvent, players: all
   // State to track if hydration is complete
   const [hydrated, setHydrated] = React.useState(false);
 
-  const [activeStructureId, setActiveStructureId] = React.useState<string>(() => {
-    if (hydrated) {
-        const savedState = JSON.parse(window.localStorage.getItem(storageKey) || '{}');
-        return savedState.activeStructureId || initialEvent.blindStructureId || (initialBlindStructures.length > 0 ? initialBlindStructures[0].id : 'custom');
-    }
-    return initialEvent.blindStructureId || (initialBlindStructures.length > 0 ? initialBlindStructures[0].id : 'custom');
-  });
-
+  const [activeStructureId, setActiveStructureId] = React.useState<string>(initialEvent.blindStructureId || (initialBlindStructures.length > 0 ? initialBlindStructures[0].id : 'custom'));
+  
   const [activeStructure, setActiveStructure] = React.useState<BlindLevel[]>(() => {
       const selected = initialBlindStructures.find(bs => bs.id === activeStructureId);
       return selected?.levels || initialEvent.blindStructure || defaultBlindStructure;
@@ -449,11 +443,10 @@ export default function LiveTournamentClient({ event: initialEvent, players: all
                     onRemoveParticipant={removeParticipant}
                     onRebuyChange={handleRebuyChange}
                     onEliminatePlayer={handleEliminatePlayer}
-                    onUndoLastElimination={onUndoLastElimination}
+                    onUndoLastElimination={handleUndoLastElimination}
                 />
             </CardContent>
         </Card>
     </div>
   );
 }
-
