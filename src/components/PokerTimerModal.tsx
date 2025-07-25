@@ -421,16 +421,18 @@ export default function PokerTimerModal({
                 </Button>
                 <Button variant="ghost" size="icon" onClick={() => goToNextLevel(false)} className="timer-control-button"><FastForward className="h-5 w-5"/></Button>
               </div>
-              <div className="timer-progress-slider">
-                <Slider 
-                    value={[timerProgress]} 
-                    max={100} 
-                    step={1} 
-                    onValueChange={(value) => {
-                        const newTime = Math.round((currentLevel.duration * 60) * (1 - value[0] / 100));
-                        setTimeLeft(newTime);
-                    }}
-                  />
+              <div className="flex-1 flex justify-start">
+                  <div className="w-1/2 timer-progress-slider">
+                    <Slider 
+                        value={[timerProgress]} 
+                        max={100} 
+                        step={1} 
+                        onValueChange={(value) => {
+                            const newTime = Math.round((currentLevel.duration * 60) * (1 - value[0] / 100));
+                            setTimeLeft(newTime);
+                        }}
+                    />
+                  </div>
               </div>
               <div className="flex items-center gap-2">
                 <Button variant="ghost" size="icon" onClick={() => setIsSettingsOpen(!isSettingsOpen)} className="timer-control-button">
@@ -443,4 +445,3 @@ export default function PokerTimerModal({
     </Dialog>
   );
 }
-
