@@ -422,7 +422,7 @@ export default function PokerTimerModal({
                 <Button variant="ghost" size="icon" onClick={() => goToNextLevel(false)} className="timer-control-button"><FastForward className="h-5 w-5"/></Button>
               </div>
               <div className="flex-1 flex justify-start">
-                  <div className="w-1/2 timer-progress-slider">
+                  <div className="w-1/2 px-4">
                     <Slider 
                         value={[timerProgress]} 
                         max={100} 
