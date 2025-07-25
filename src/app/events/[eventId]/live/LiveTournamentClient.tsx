@@ -77,21 +77,24 @@ export default function LiveTournamentClient({ event: initialEvent, players: all
   const [event, setEvent] = React.useState<Event>(initialEvent);
   const [participants, setParticipants] = React.useState<ParticipantState[]>(() => getInitialParticipants(initialEvent, allPlayers));
   const [availablePlayers, setAvailablePlayers] = React.useState<Player[]>([]);
-  const [activeStructureId, setActiveStructureId] = React.useState<string>(initialEvent.blindStructureId || (initialBlindStructures.length > 0 ? initialBlindStructures[0].id : 'custom'));
-  const [activeStructure, setActiveStructure] = React.useState<BlindLevel[]>(() => {
-    if (activeStructureId !== 'custom') {
-        const found = initialBlindStructures.find(bs => bs.id === activeStructureId);
-        if (found) return found.levels;
-    }
-    return initialEvent.blindStructure || defaultBlindStructure;
-  });
-
+  
   // State to track if hydration is complete
   const [hydrated, setHydrated] = React.useState(false);
 
+  const [activeStructureId, setActiveStructureId] = React.useState<string>(() => {
+    if (hydrated) {
+        const savedState = JSON.parse(window.localStorage.getItem(storageKey) || '{}');
+        return savedState.activeStructureId || initialEvent.blindStructureId || (initialBlindStructures.length > 0 ? initialBlindStructures[0].id : 'custom');
+    }
+    return initialEvent.blindStructureId || (initialBlindStructures.length > 0 ? initialBlindStructures[0].id : 'custom');
+  });
+
+  const [activeStructure, setActiveStructure] = React.useState<BlindLevel[]>(() => {
+      const selected = initialBlindStructures.find(bs => bs.id === activeStructureId);
+      return selected?.levels || initialEvent.blindStructure || defaultBlindStructure;
+  });
 
   React.useEffect(() => {
-    // This effect runs only on the client, after the initial render.
     try {
       const item = window.localStorage.getItem(storageKey);
       if (item) {
@@ -104,13 +107,12 @@ export default function LiveTournamentClient({ event: initialEvent, players: all
     } catch (error) {
       console.warn(`Error reading localStorage key “${storageKey}”:`, error);
     }
-    setHydrated(true); // Mark hydration as complete
+    setHydrated(true);
   }, [storageKey]);
 
 
   React.useEffect(() => {
-    // This effect saves to localStorage, but only after hydration is complete.
-    if (!hydrated) return; // Don't save on the initial server render
+    if (!hydrated) return;
     
     try {
       const stateToSave = {
@@ -285,9 +287,8 @@ export default function LiveTournamentClient({ event: initialEvent, players: all
             onOpenChange={setIsTimerModalOpen}
             event={event} 
             participants={participants}
-            totalPrizePool={totalPrizePool}
-            payoutStructure={payoutStructure}
             activeStructure={activeStructure} 
+            onStructureUpdate={setActiveStructure}
             allPlayers={allPlayers}
             availablePlayers={availablePlayers}
             onAddParticipant={addParticipant}
@@ -442,4 +443,3 @@ export default function LiveTournamentClient({ event: initialEvent, players: all
   );
 }
 
-    

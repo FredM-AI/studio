@@ -21,8 +21,6 @@ interface PokerTimerModalProps {
   onOpenChange: (isOpen: boolean) => void;
   event: Event;
   participants: ParticipantState[];
-  totalPrizePool: number;
-  payoutStructure: { position: number, prize: number }[];
   activeStructure: BlindLevel[];
   allPlayers: Player[];
   availablePlayers: Player[];
@@ -31,6 +29,7 @@ interface PokerTimerModalProps {
   onRebuyChange: (playerId: string, delta: number) => void;
   onEliminatePlayer: (playerId: string) => void;
   onUndoLastElimination: () => void;
+  onStructureUpdate: (newStructure: BlindLevel[]) => void;
 }
 
 const formatTime = (seconds: number) => {
@@ -51,16 +50,15 @@ export default function PokerTimerModal({
     onOpenChange,
     event, 
     participants, 
-    totalPrizePool,
-    payoutStructure,
-    activeStructure, 
+    activeStructure: initialActiveStructure, 
     allPlayers,
     availablePlayers,
     onAddParticipant,
     onRemoveParticipant,
     onRebuyChange,
     onEliminatePlayer,
-    onUndoLastElimination
+    onUndoLastElimination,
+    onStructureUpdate,
 }: PokerTimerModalProps) {
   const modalRef = useRef<HTMLDivElement>(null);
   const timerStorageKey = `poker-timer-state-${event.id}`;
@@ -80,6 +78,7 @@ export default function PokerTimerModal({
     return defaultValue;
   };
   
+  const [activeStructure, setActiveStructure] = useState<BlindLevel[]>(initialActiveStructure);
   const [currentLevelIndex, setCurrentLevelIndex] = useState(() => getInitialState(`${timerStorageKey}-level`, 0));
   const [timeLeft, setTimeLeft] = useState(() => {
     const savedTime = getInitialState(`${timerStorageKey}-time`, undefined);
@@ -99,6 +98,21 @@ export default function PokerTimerModal({
   }));
 
   const levelEndAudioRef = useRef<HTMLAudioElement | null>(null);
+
+  useEffect(() => {
+    // Propagate structure changes up to the parent `LiveTournamentClient`
+    onStructureUpdate(activeStructure);
+  }, [activeStructure, onStructureUpdate]);
+
+  useEffect(() => {
+    // This effect handles "hot-reloading" the structure from the parent
+    setActiveStructure(initialActiveStructure);
+    const newDuration = initialActiveStructure[currentLevelIndex]?.duration * 60;
+    if (timeLeft > newDuration) {
+        setTimeLeft(newDuration);
+    }
+  }, [initialActiveStructure]);
+
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -159,22 +173,28 @@ export default function PokerTimerModal({
   }
 
   const goToNextLevel = (playSound = false) => {
-    if (activeStructure.length === 0) return;
+    if (activeStructure.length === 0 || currentLevelIndex >= activeStructure.length - 1) {
+        // We are at the last level, so we stop the timer.
+        setIsPaused(true);
+        setTimeLeft(0);
+        if (playSound) playLevelEndSound();
+        return;
+    }
     if (playSound) playLevelEndSound();
-    const nextLevelIndex = (currentLevelIndex + 1) % activeStructure.length;
+    const nextLevelIndex = currentLevelIndex + 1;
     setCurrentLevelIndex(nextLevelIndex);
     setTimeLeft(activeStructure[nextLevelIndex].duration * 60);
   };
 
   const goToPrevLevel = () => {
     if (activeStructure.length === 0) return;
-    const prevLevelIndex = (currentLevelIndex - 1 + activeStructure.length) % activeStructure.length;
+    const prevLevelIndex = Math.max(0, currentLevelIndex - 1);
     setCurrentLevelIndex(prevLevelIndex);
     setTimeLeft(activeStructure[prevLevelIndex].duration * 60);
   };
   
  const toggleFullScreen = () => {
-    const contentElement = modalRef.current;
+    const contentElement = modalRef.current?.closest('.poker-timer-modal');
     if (!contentElement) return;
 
     if (!document.fullscreenElement) {
@@ -194,7 +214,8 @@ export default function PokerTimerModal({
 
   const safeCurrentLevelIndex = Math.min(currentLevelIndex, activeStructure.length - 1);
   const currentLevel = activeStructure[safeCurrentLevelIndex] || { level: 0, smallBlind: 0, bigBlind: 0, duration: 0, isBreak: true };
-  const nextLevel = activeStructure.length > 1 ? activeStructure[(safeCurrentLevelIndex + 1) % activeStructure.length] : currentLevel;
+  const nextLevelIndex = safeCurrentLevelIndex + 1;
+  const nextLevel = nextLevelIndex < activeStructure.length ? activeStructure[nextLevelIndex] : currentLevel;
   
   const activeParticipants = participants.filter(p => p.eliminatedPosition === null);
   const totalRebuys = participants.reduce((sum, p) => sum + p.rebuys, 0);
@@ -248,9 +269,6 @@ export default function PokerTimerModal({
         <div className="absolute top-2 right-2 z-20 flex items-center gap-2">
             <Button onClick={toggleFullScreen} variant="ghost" size="icon" className="timer-header-button h-7 w-7 text-gray-400 hover:text-white">
                 {isFullScreen ? <Shrink className="h-5 w-5"/> : <Expand className="h-5 w-5"/>}
-            </Button>
-             <Button variant="ghost" size="icon" onClick={() => onOpenChange(false)} className="h-7 w-7 text-gray-400 hover:text-white">
-                <X className="h-5 w-5"/>
             </Button>
         </div>
 
@@ -400,3 +418,4 @@ export default function PokerTimerModal({
     </Dialog>
   );
 }
+
