@@ -12,7 +12,7 @@ import { cn } from '@/lib/utils';
 import { Switch } from './ui/switch';
 import { Label } from './ui/label';
 import { RadioGroup, RadioGroupItem } from './ui/radio-group';
-import LivePlayerTracking from './LivePlayerTracking'; // Import the component
+import LivePlayerTracking from './LivePlayerTracking';
 import '@/app/poker-timer.css';
 
 interface PokerTimerModalProps {
@@ -173,7 +173,7 @@ export default function PokerTimerModal({
   };
   
   const toggleFullScreen = () => {
-    const elem = document.querySelector(`[data-modal-id="poker-timer-dialog"]`);
+    const elem = modalRef.current;
     if (!elem) return;
     
     if (!isFullScreen) {
@@ -220,18 +220,21 @@ export default function PokerTimerModal({
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent 
+        ref={modalRef}
         data-modal-id="poker-timer-dialog"
         className={cn(
           "poker-timer-modal",
           `theme-${settings.theme}`,
           "max-w-5xl h-[90vh] flex flex-col p-0 gap-0"
         )}
+        data-fullscreen={isFullScreen}
       >
-        <div 
-          ref={modalRef}
-          className={cn("poker-timer-content-wrapper")}
-          data-fullscreen={isFullScreen}
-        >
+        <DialogHeader className="sr-only">
+          <DialogTitle>Poker Timer: {event.name}</DialogTitle>
+          <DialogDescription>Live management interface for the poker tournament, including blinds, timer, and player tracking.</DialogDescription>
+        </DialogHeader>
+
+        <div className={cn("poker-timer-content-wrapper")}>
           <div className={cn("settings-panel", { 'is-open': isSettingsOpen })}>
             <div className="flex justify-between items-center mb-4">
                 <h3 className="settings-title">Settings</h3>
