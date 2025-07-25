@@ -49,6 +49,20 @@ const sortPlayersWithGuestsLast = (a: Player, b: Player): number => {
     return getPlayerDisplayName(a).localeCompare(getPlayerDisplayName(b));
 };
 
+const getInitialParticipants = (initialEvent: Event, allPlayers: Player[]): ParticipantState[] => {
+    return initialEvent.participants.map(playerId => {
+        const player = allPlayers.find(p => p.id === playerId);
+        const result = initialEvent.results.find(r => r.playerId === playerId);
+        return {
+            id: playerId,
+            name: getPlayerDisplayName(player),
+            isGuest: player?.isGuest || false,
+            rebuys: result?.rebuys || 0,
+            eliminatedPosition: null, // Initially not eliminated
+        };
+    }).sort((a,b) => a.name.localeCompare(b.name));
+};
+
 
 export default function LiveTournamentClient({ event: initialEvent, players: allPlayers, initialBlindStructures }: LiveTournamentClientProps) {
   const [isTimerModalOpen, setIsTimerModalOpen] = React.useState(false);
@@ -60,71 +74,11 @@ export default function LiveTournamentClient({ event: initialEvent, players: all
 
   const storageKey = `live-event-state-${initialEvent.id}`;
 
-  const getInitialState = <T,>(key: string, initialValue: T): T => {
-    if (typeof window === 'undefined') {
-      return initialValue;
-    }
-    try {
-      const item = window.localStorage.getItem(storageKey);
-      if (item) {
-        const parsedItem = JSON.parse(item);
-        return parsedItem[key] !== undefined ? parsedItem[key] : initialValue;
-      }
-    } catch (error) {
-      console.warn(`Error reading localStorage key “${key}”:`, error);
-    }
-    return initialValue;
-  };
-  
-  const [event, setEvent] = React.useState<Event>(() => {
-    const savedStartingStack = getInitialState('startingStack', initialEvent.startingStack);
-    return { ...initialEvent, startingStack: savedStartingStack };
-  });
-
-  const [participants, setParticipants] = React.useState<ParticipantState[]>(() => {
-    const savedParticipants = getInitialState<ParticipantState[] | null>('participants', null);
-    if (savedParticipants) {
-        return savedParticipants;
-    }
-
-    const initialParticipants = initialEvent.participants.map(playerId => {
-        const player = allPlayers.find(p => p.id === playerId);
-        const result = initialEvent.results.find(r => r.playerId === playerId);
-        return {
-            id: playerId,
-            name: getPlayerDisplayName(player),
-            isGuest: player?.isGuest || false,
-            rebuys: result?.rebuys || 0,
-            eliminatedPosition: null, // Initially not eliminated
-        };
-    }).sort((a,b) => a.name.localeCompare(b.name));
-
-    if (typeof window !== 'undefined') {
-      try {
-        const item = window.localStorage.getItem(storageKey);
-        const currentState = item ? JSON.parse(item) : {};
-        if(!currentState.participants) {
-          currentState.participants = initialParticipants;
-          currentState.startingStack = event.startingStack;
-          window.localStorage.setItem(storageKey, JSON.stringify(currentState));
-        }
-      } catch (error) {
-        console.error('Error saving initial participants to localStorage:', error);
-      }
-    }
-    return initialParticipants;
-  });
-  
+  const [event, setEvent] = React.useState<Event>(initialEvent);
+  const [participants, setParticipants] = React.useState<ParticipantState[]>(() => getInitialParticipants(initialEvent, allPlayers));
   const [availablePlayers, setAvailablePlayers] = React.useState<Player[]>([]);
-
-  const [activeStructureId, setActiveStructureId] = React.useState<string>(() => {
-    return getInitialState('activeStructureId', event.blindStructureId || (initialBlindStructures.length > 0 ? initialBlindStructures[0].id : 'custom'));
-  });
-  
+  const [activeStructureId, setActiveStructureId] = React.useState<string>(initialEvent.blindStructureId || (initialBlindStructures.length > 0 ? initialBlindStructures[0].id : 'custom'));
   const [activeStructure, setActiveStructure] = React.useState<BlindLevel[]>(() => {
-    const savedStructure = getInitialState('activeStructure', null);
-    if(savedStructure) return savedStructure;
-    
     if (activeStructureId !== 'custom') {
         const found = initialBlindStructures.find(bs => bs.id === activeStructureId);
         if (found) return found.levels;
@@ -132,21 +86,44 @@ export default function LiveTournamentClient({ event: initialEvent, players: all
     return initialEvent.blindStructure || defaultBlindStructure;
   });
 
+  // State to track if hydration is complete
+  const [hydrated, setHydrated] = React.useState(false);
+
+
   React.useEffect(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        const stateToSave = {
-          participants,
-          activeStructureId,
-          activeStructure,
-          startingStack: event.startingStack,
-        };
-        window.localStorage.setItem(storageKey, JSON.stringify(stateToSave));
-      } catch (error) {
-        console.error('Error saving state to localStorage:', error);
+    // This effect runs only on the client, after the initial render.
+    try {
+      const item = window.localStorage.getItem(storageKey);
+      if (item) {
+        const savedState = JSON.parse(item);
+        if (savedState.participants) setParticipants(savedState.participants);
+        if (savedState.activeStructureId) setActiveStructureId(savedState.activeStructureId);
+        if (savedState.activeStructure) setActiveStructure(savedState.activeStructure);
+        if (savedState.startingStack) setEvent(prev => ({ ...prev, startingStack: savedState.startingStack }));
       }
+    } catch (error) {
+      console.warn(`Error reading localStorage key “${storageKey}”:`, error);
     }
-  }, [participants, activeStructureId, activeStructure, event.startingStack, storageKey]);
+    setHydrated(true); // Mark hydration as complete
+  }, [storageKey]);
+
+
+  React.useEffect(() => {
+    // This effect saves to localStorage, but only after hydration is complete.
+    if (!hydrated) return; // Don't save on the initial server render
+    
+    try {
+      const stateToSave = {
+        participants,
+        activeStructureId,
+        activeStructure,
+        startingStack: event.startingStack,
+      };
+      window.localStorage.setItem(storageKey, JSON.stringify(stateToSave));
+    } catch (error) {
+      console.error('Error saving state to localStorage:', error);
+    }
+  }, [participants, activeStructureId, activeStructure, event.startingStack, storageKey, hydrated]);
 
 
   React.useEffect(() => {
@@ -465,3 +442,5 @@ export default function LiveTournamentClient({ event: initialEvent, players: all
     </div>
   );
 }
+
+    
