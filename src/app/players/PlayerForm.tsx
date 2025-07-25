@@ -11,6 +11,8 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import Link from 'next/link';
 import { Switch } from '@/components/ui/switch';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { useToast } from '@/hooks/use-toast';
+import { AlertCircle } from 'lucide-react';
 
 interface PlayerFormProps {
   player?: Player;
@@ -23,10 +25,29 @@ interface PlayerFormProps {
 export default function PlayerForm({ player, action, formTitle, formDescription, submitButtonText }: PlayerFormProps) {
   const initialState: PlayerFormState = { message: null, errors: {} };
   const [state, dispatch] = useActionState(action, initialState);
+  const { toast } = useToast();
   
   const [firstName, setFirstName] = React.useState(player?.firstName || '');
   const [lastName, setLastName] = React.useState(player?.lastName || '');
   const [avatarUrl, setAvatarUrl] = React.useState(player?.avatar || '');
+  
+  React.useEffect(() => {
+    if (state.message) {
+      if (Object.keys(state.errors || {}).length > 0) {
+        toast({
+          title: "Update Failed",
+          description: state.message,
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Success!",
+          description: state.message,
+          variant: "default",
+        });
+      }
+    }
+  }, [state, toast]);
 
   const getInitials = () => {
       const first = firstName || player?.firstName || '';
@@ -170,12 +191,12 @@ export default function PlayerForm({ player, action, formTitle, formDescription,
             />
             <Label htmlFor="isActive">Active Player</Label>
           </div>
-
-          {state.message && (
-            <p className="text-sm text-destructive mt-2">{state.message}</p>
-          )}
-          {state.errors?._form && (
-             <p className="text-sm text-destructive mt-2">{state.errors._form.join(', ')}</p>
+          
+           {state.errors?._form && (
+             <div className="text-sm text-destructive mt-2 p-2 bg-destructive/10 rounded-md flex items-center gap-2">
+                <AlertCircle className="h-4 w-4" />
+                <p>{state.errors._form.join(', ')}</p>
+             </div>
           )}
 
         </CardContent>

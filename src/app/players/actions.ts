@@ -170,13 +170,20 @@ export async function updatePlayer(prevState: PlayerFormState, formData: FormDat
     if (error && error.code) {
       errorMessage += ` (Code: ${error.code})`;
     }
-    return { message: errorMessage };
+    return { 
+      message: errorMessage,
+      errors: { _form: [errorMessage] }
+    };
   }
 
   revalidatePath('/players');
   revalidatePath(`/players/${playerId}`);
   revalidatePath(`/players/${playerId}/edit`);
-  redirect('/players');
+  // Unlike create, we don't redirect here so the user can see the success toast
+  // and continue editing if they wish. A redirect would interrupt this.
+  return {
+    message: "Player details updated successfully!",
+  };
 }
 
 export async function deletePlayer(playerId: string): Promise<{ message?: string | null, success?: boolean }> {
