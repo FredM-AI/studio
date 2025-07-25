@@ -4,7 +4,7 @@
 @tailwind utilities;
 
 .poker-timer-modal-container {
-    @apply max-w-4xl min-w-[700px] shadow-2xl rounded-xl border-4 border-gray-700 relative resize overflow-auto;
+    @apply min-w-[980px] shadow-2xl rounded-xl border-4 border-gray-700 relative resize overflow-auto;
     -webkit-app-region: no-drag;
 }
 
