@@ -126,7 +126,7 @@ export default function LiveTournamentClient({ event: initialEvent, players: all
   React.useEffect(() => {
     const participantIds = new Set(participants.map(p => p.id));
     const currentAvailablePlayers = allPlayers
-        .filter(p => !participantIds.has(p.id))
+        .filter(p => p.isActive && !participantIds.has(p.id))
         .sort(sortPlayersWithGuestsLast);
     setAvailablePlayers(currentAvailablePlayers);
   }, [participants, allPlayers]);
