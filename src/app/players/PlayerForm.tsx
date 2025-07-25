@@ -24,13 +24,14 @@ export default function PlayerForm({ player, action, formTitle, formDescription,
   const initialState: PlayerFormState = { message: null, errors: {} };
   const [state, dispatch] = useActionState(action, initialState);
   
+  const [firstName, setFirstName] = React.useState(player?.firstName || '');
+  const [lastName, setLastName] = React.useState(player?.lastName || '');
   const [avatarUrl, setAvatarUrl] = React.useState(player?.avatar || '');
 
   const getInitials = () => {
-      // Attempt to get names from the form if possible, otherwise from player prop
-      const firstName = (document.getElementById('firstName') as HTMLInputElement)?.value || player?.firstName || '';
-      const lastName = (document.getElementById('lastName') as HTMLInputElement)?.value || player?.lastName || '';
-      return `${firstName?.[0] || ''}${lastName?.[0] || ''}`.toUpperCase();
+      const first = firstName || player?.firstName || '';
+      const last = lastName || player?.lastName || '';
+      return `${first?.[0] || ''}${last?.[0] || ''}`.toUpperCase();
   };
 
 
@@ -50,7 +51,8 @@ export default function PlayerForm({ player, action, formTitle, formDescription,
               <Input 
                 id="firstName" 
                 name="firstName" 
-                defaultValue={player?.firstName} 
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
                 aria-describedby="firstName-error"
                 required 
               />
@@ -65,7 +67,8 @@ export default function PlayerForm({ player, action, formTitle, formDescription,
               <Input 
                 id="lastName" 
                 name="lastName" 
-                defaultValue={player?.lastName} 
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
                 aria-describedby="lastName-error"
                 required
               />
@@ -139,16 +142,14 @@ export default function PlayerForm({ player, action, formTitle, formDescription,
             )}
           </div>
 
-          {avatarUrl && (
-            <div className="flex items-center justify-center p-4 bg-muted/50 rounded-lg">
-                <Avatar className="h-28 w-28 border-4 border-background shadow-md">
-                    {avatarUrl && <AvatarImage src={avatarUrl} alt="Avatar preview" />}
-                    <AvatarFallback className="text-3xl bg-primary text-primary-foreground">
-                        {getInitials()}
-                    </AvatarFallback>
-                </Avatar>
-            </div>
-          )}
+          <div className="flex items-center justify-center p-4 bg-muted/50 rounded-lg">
+              <Avatar className="h-28 w-28 border-4 border-background shadow-md">
+                  {avatarUrl && <AvatarImage src={avatarUrl} alt="Avatar preview" />}
+                  <AvatarFallback className="text-3xl bg-primary text-primary-foreground">
+                      {getInitials()}
+                  </AvatarFallback>
+              </Avatar>
+          </div>
 
 
           <div className="flex items-center space-x-2">
