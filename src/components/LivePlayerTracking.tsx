@@ -135,11 +135,11 @@ export default function LivePlayerTracking({
                                     </TableCell>
                                     <TableCell className="p-2">
                                         <div className="flex items-center justify-center gap-1">
-                                            <Button variant="outline" size="icon" className="h-6 w-6" onClick={() => onRebuyChange(p.id, -1)}>
+                                            <Button size="icon" className="h-6 w-6 timer-rebuy-button" onClick={() => onRebuyChange(p.id, -1)}>
                                                 <MinusCircle className="h-3 w-3" />
                                             </Button>
                                             <span className="font-bold text-sm w-5 text-center">{p.rebuys}</span>
-                                            <Button variant="outline" size="icon" className="h-6 w-6" onClick={() => onRebuyChange(p.id, 1)}>
+                                            <Button size="icon" className="h-6 w-6 timer-rebuy-button" onClick={() => onRebuyChange(p.id, 1)}>
                                                 <PlusCircle className="h-3 w-3" />
                                             </Button>
                                         </div>
@@ -205,4 +205,3 @@ export default function LivePlayerTracking({
         </div>
     );
 }
-

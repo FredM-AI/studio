@@ -4,6 +4,7 @@
 import * as React from 'react';
 import type { ParticipantState } from './LivePlayerTracking';
 import { Crown } from 'lucide-react';
+import { CardTitle } from './ui/card';
 
 interface LivePrizePoolProps {
     participants: ParticipantState[];
@@ -65,32 +66,33 @@ export default function LivePrizePool({ participants, buyIn, rebuyPrice }: LiveP
 
     return (
         <div className="space-y-4">
-            <div className="text-center bg-muted/50 p-4 rounded-lg">
-                <p className="text-sm text-muted-foreground uppercase tracking-wider">Total Prize Pool</p>
-                <p className="text-3xl font-bold font-headline text-primary">
+             <CardTitle className="timer-stats-title">Prizes</CardTitle>
+            <div className="text-center bg-muted/50 p-2 rounded-lg">
+                <p className="text-xs text-muted-foreground uppercase tracking-wider">Total Prize Pool</p>
+                <p className="text-xl font-bold font-headline text-primary">
                     €{totalPrizePool.toLocaleString()}
                 </p>
             </div>
             <div>
-                <h4 className="font-medium text-center mb-2">Estimated Payouts</h4>
+                <h4 className="font-medium text-center text-xs mb-1">Estimated Payouts</h4>
                  {payoutStructure.length > 0 ? (
-                    <ul className="space-y-2">
+                    <ul className="space-y-1">
                         {payoutStructure.map(({ position, prize }) => {
                             const playerName = findPlacingPlayerName(position);
                             return (
-                                <li key={position} className="flex justify-between items-center text-md bg-card p-2 rounded-md shadow-sm">
+                                <li key={position} className="flex justify-between items-center text-sm p-1 rounded-md">
                                     <span className="font-semibold text-muted-foreground flex items-center">
-                                      {position === 1 && <Crown className="h-4 w-4 mr-1.5 text-yellow-400" />}
+                                      {position === 1 && <Crown className="h-4 w-4 mr-1 text-yellow-400" />}
                                       {position}.
                                     </span>
-                                    <span className="text-sm font-medium truncate text-right flex-1 mx-2">{playerName || '...'}</span>
-                                    <span className="font-bold">€{prize.toLocaleString()}</span>
+                                    <span className="text-xs font-medium truncate text-right flex-1 mx-2">{playerName || '...'}</span>
+                                    <span className="font-bold text-xs">€{prize.toLocaleString()}</span>
                                 </li>
                             );
                         })}
                     </ul>
                 ) : (
-                    <p className="text-muted-foreground text-center py-4 text-sm">
+                    <p className="text-muted-foreground text-center py-2 text-xs">
                         Not enough participants to determine payout structure.
                     </p>
                 )}

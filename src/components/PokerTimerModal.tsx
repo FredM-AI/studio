@@ -13,6 +13,7 @@ import { Switch } from './ui/switch';
 import { Label } from './ui/label';
 import { RadioGroup, RadioGroupItem } from './ui/radio-group';
 import LivePlayerTracking from './LivePlayerTracking';
+import LivePrizePool from './LivePrizePool';
 import '@/app/poker-timer.css';
 
 interface PokerTimerModalProps {
@@ -173,7 +174,7 @@ export default function PokerTimerModal({
   };
   
  const toggleFullScreen = () => {
-    const contentElement = modalRef.current?.closest('[role="dialog"]');
+    const contentElement = modalRef.current;
     if (!contentElement) return;
 
     if (!document.fullscreenElement) {
@@ -341,14 +342,13 @@ export default function PokerTimerModal({
                     <h4 className="timer-stats-title">Statistics</h4>
                     <div className="timer-stats-row"><span>Avg. stack:</span> <span>{avgStack.toLocaleString()}</span></div>
                     <div className="timer-stats-row"><span>Total chips:</span> <span>{totalChips.toLocaleString()}</span></div>
-                    <div className="timer-stats-row"><span>Total prize:</span> <span className="font-bold">€{totalPrizePool}</span></div>
                 </div>
                   <div className="timer-stats-box">
-                    <h4 className="timer-stats-title">Prizes</h4>
-                    {payoutStructure.map(p => (
-                        <div className="timer-stats-row" key={p.position}><span>{p.position}.</span> <span className="font-bold">€{p.prize}</span></div>
-                    ))}
-                    {payoutStructure.length === 0 && <p className="text-xs text-gray-400">Not enough data</p>}
+                     <LivePrizePool 
+                        participants={participants}
+                        buyIn={event.buyIn || 0}
+                        rebuyPrice={event.rebuyPrice}
+                    />
                 </div>
             </div>
             

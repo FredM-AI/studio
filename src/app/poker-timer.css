@@ -3,6 +3,10 @@
 @tailwind components;
 @tailwind utilities;
 
+.poker-timer-modal {
+    overflow: hidden; /* Prevent parent scrollbars */
+}
+
 .poker-timer-modal .poker-timer-content-wrapper {
     @apply flex flex-col h-full w-full overflow-hidden transition-colors duration-300 relative;
 }
@@ -36,6 +40,9 @@
     --settings-bg: #11182d;
     --settings-text: #d1d5db;
     --settings-border: #374151;
+    --rebuy-button-bg: #4b5563; /* gray-600 */
+    --rebuy-button-text: #ffffff;
+    --rebuy-button-hover-bg: #6b7280; /* gray-500 */
 }
 
 .theme-light {
@@ -57,6 +64,9 @@
     --settings-bg: #ffffff;
     --settings-text: #1f2937;
     --settings-border: #e5e7eb;
+    --rebuy-button-bg: #e5e7eb; /* gray-200 */
+    --rebuy-button-text: #1f2937;
+    --rebuy-button-hover-bg: #d1d5db; /* gray-300 */
 }
 
 .theme-green {
@@ -79,6 +89,9 @@
     --settings-bg: #042f1a;
     --settings-text: #fefce8;
     --settings-border: #15803d;
+    --rebuy-button-bg: #15803d; /* green-600 */
+    --rebuy-button-text: #fefce8;
+    --rebuy-button-hover-bg: #16a34a; /* green-500 */
 }
 
 
@@ -143,6 +156,15 @@
 .timer-progress-slider {
     @apply flex-1 px-4;
 }
+
+.timer-rebuy-button {
+    background-color: var(--rebuy-button-bg);
+    color: var(--rebuy-button-text);
+}
+.timer-rebuy-button:hover {
+    background-color: var(--rebuy-button-hover-bg);
+}
+
 .timer-progress-slider .slider-track { background-color: var(--slider-track); }
 .timer-progress-slider .slider-range { background-color: var(--slider-range); }
 .timer-progress-slider .slider-thumb { border-color: var(--slider-thumb); }
@@ -182,10 +204,3 @@
     ring-color: var(--slider-range);
     ring-offset-color: var(--settings-bg);
 }
-
-
-
-
-
-
-
