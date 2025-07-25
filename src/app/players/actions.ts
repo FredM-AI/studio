@@ -9,11 +9,12 @@ import { redirect } from 'next/navigation';
 
 const PLAYERS_COLLECTION = 'players';
 
-// Helper function to remove undefined properties from an object
-function cleanUndefinedProperties(obj: any): any {
+// Helper function to remove only 'undefined' properties from an object for Firestore.
+// This is safer than a generic "falsy" check which would remove boolean `false`.
+function cleanDataForFirestore(obj: any): any {
   const newObj: any = {};
   for (const key in obj) {
-    if (obj[key] !== undefined) {
+    if (obj.hasOwnProperty(key) && obj[key] !== undefined) {
       newObj[key] = obj[key];
     }
   }
@@ -57,13 +58,16 @@ export async function createPlayer(prevState: PlayerFormState, formData: FormDat
 
     const playerId = crypto.randomUUID();
     
-    const newPlayerData: Partial<Player> = { // Using Partial<Player> for type safety during construction
+    const newPlayerData: Player = {
       id: playerId,
       firstName: data.firstName,
       lastName: data.lastName,
       email: data.email,
       isActive: data.isActive,
       isGuest: data.isGuest,
+      nickname: (data.nickname && data.nickname.trim() !== '') ? data.nickname.trim() : undefined,
+      phone: (data.phone && data.phone.trim() !== '') ? data.phone.trim() : undefined,
+      avatar: (data.avatar && data.avatar.trim() !== '') ? data.avatar.trim() : undefined,
       stats: {
         gamesPlayed: 0,
         wins: 0,
@@ -76,18 +80,8 @@ export async function createPlayer(prevState: PlayerFormState, formData: FormDat
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
-
-    if (data.nickname && data.nickname.trim() !== '') {
-      newPlayerData.nickname = data.nickname.trim();
-    }
-    if (data.phone && data.phone.trim() !== '') {
-      newPlayerData.phone = data.phone.trim();
-    }
-    if (data.avatar && data.avatar.trim() !== '') {
-      newPlayerData.avatar = data.avatar.trim();
-    }
-
-    await db.collection(PLAYERS_COLLECTION).doc(playerId).set(newPlayerData);
+    
+    await db.collection(PLAYERS_COLLECTION).doc(playerId).set(cleanDataForFirestore(newPlayerData));
 
   } catch (error: any) {
     console.error("Firestore Error creating player:", error);
@@ -149,8 +143,8 @@ export async function updatePlayer(prevState: PlayerFormState, formData: FormDat
     }
     const existingPlayer = playerSnap.data() as Player;
 
-    const playerToSave: Player = {
-      ...existingPlayer, 
+    // Construct the object with all potential updates
+    const playerToUpdate: Partial<Player> = {
       firstName: data.firstName,
       lastName: data.lastName,
       nickname: (data.nickname && data.nickname.trim() !== '') ? data.nickname.trim() : undefined,
@@ -162,7 +156,8 @@ export async function updatePlayer(prevState: PlayerFormState, formData: FormDat
       updatedAt: new Date().toISOString(),
     };
 
-    await playerRef.set(cleanUndefinedProperties(playerToSave)); 
+    // Use cleanDataForFirestore to remove undefined fields before updating
+    await playerRef.update(cleanDataForFirestore(playerToUpdate)); 
 
   } catch (error: any) {
     console.error("Firestore Error updating player:", error);
@@ -344,7 +339,7 @@ export async function importPlayersFromJson(prevState: PlayerImportFormState, fo
         updatedAt: new Date(playerJson.updatedAt).toISOString(), // Ensure it's a valid ISO string
       };
       
-      batch.set(playerDocRefById, cleanUndefinedProperties(playerDataForFirestore));
+      batch.set(playerDocRefById, cleanDataForFirestore(playerDataForFirestore));
       successCount++;
     }
 
@@ -368,3 +363,5 @@ export async function importPlayersFromJson(prevState: PlayerImportFormState, fo
     };
   }
 }
+
+    
