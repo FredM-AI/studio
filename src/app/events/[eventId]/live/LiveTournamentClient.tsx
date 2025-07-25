@@ -278,6 +278,15 @@ export default function LiveTournamentClient({ event: initialEvent, players: all
     toast({ title: 'Refreshing...', description: 'Fetching latest blind structures.' });
     const updatedStructures = await getBlindStructures();
     setBlindStructures(updatedStructures);
+
+    // After fetching, check if the currently active structure has changed
+    const currentActive = updatedStructures.find(s => s.id === activeStructureId);
+    if(currentActive) {
+      // If it exists in the new list, update the activeStructure state
+      // This will propagate down to the timer modal
+      setActiveStructure(currentActive.levels);
+    }
+    
     toast({ title: 'Success', description: 'Blind structures have been updated.' });
   };
 
