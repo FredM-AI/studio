@@ -29,12 +29,17 @@ const PlayerSchema = z.object({
   email: z.string().email({ message: 'Invalid email address.' }),
   phone: z.string().optional(),
   avatar: z.string().url({ message: 'Invalid URL for avatar.' }).or(z.literal('')).optional(),
-  isActive: z.preprocess((val) => val === 'on' || val === true, z.boolean()).default(true),
-  isGuest: z.preprocess((val) => val === 'on' || val === true, z.boolean()).default(false),
+  isActive: z.preprocess((val) => val === 'on' || val === true, z.boolean()),
+  isGuest: z.preprocess((val) => val === 'on' || val === true, z.boolean()),
 });
 
 export async function createPlayer(prevState: PlayerFormState, formData: FormData): Promise<PlayerFormState> {
-  const validatedFields = PlayerSchema.safeParse(Object.fromEntries(formData.entries()));
+  const rawData = Object.fromEntries(formData.entries());
+  // Manually add boolean fields if they are missing (for unchecked switches)
+  if (!rawData.hasOwnProperty('isActive')) rawData.isActive = false;
+  if (!rawData.hasOwnProperty('isGuest')) rawData.isGuest = false;
+
+  const validatedFields = PlayerSchema.safeParse(rawData);
 
   if (!validatedFields.success) {
     return {
@@ -100,7 +105,12 @@ export async function createPlayer(prevState: PlayerFormState, formData: FormDat
 }
 
 export async function updatePlayer(prevState: PlayerFormState, formData: FormData): Promise<PlayerFormState> {
-  const validatedFields = PlayerSchema.safeParse(Object.fromEntries(formData.entries()));
+  const rawData = Object.fromEntries(formData.entries());
+  // Manually add boolean fields if they are missing (for unchecked switches)
+  if (!rawData.hasOwnProperty('isActive')) rawData.isActive = false;
+  if (!rawData.hasOwnProperty('isGuest')) rawData.isGuest = false;
+
+  const validatedFields = PlayerSchema.safeParse(rawData);
 
   if (!validatedFields.success) {
     return {
@@ -136,15 +146,8 @@ export async function updatePlayer(prevState: PlayerFormState, formData: FormDat
     }
   
     const playerRef = db.collection(PLAYERS_COLLECTION).doc(playerId);
-    const playerSnap = await playerRef.get();
-
-    if (!playerSnap.exists) {
-      return { message: 'Player not found in database.' };
-    }
-    const existingPlayer = playerSnap.data() as Player;
-
-    // Construct the object with all potential updates
-    const playerToUpdate: Partial<Player> = {
+    
+    const playerToUpdate = {
       firstName: data.firstName,
       lastName: data.lastName,
       nickname: (data.nickname && data.nickname.trim() !== '') ? data.nickname.trim() : undefined,
@@ -156,7 +159,6 @@ export async function updatePlayer(prevState: PlayerFormState, formData: FormDat
       updatedAt: new Date().toISOString(),
     };
 
-    // Use cleanDataForFirestore to remove undefined fields before updating
     await playerRef.update(cleanDataForFirestore(playerToUpdate)); 
 
   } catch (error: any) {
@@ -363,5 +365,3 @@ export async function importPlayersFromJson(prevState: PlayerImportFormState, fo
     };
   }
 }
-
-    
