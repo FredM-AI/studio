@@ -234,6 +234,9 @@ export default function PokerTimerModal({
                 e.preventDefault();
                 toggleFullScreen();
             }
+            else {
+              onOpenChange(false);
+            }
         }}
       >
         <DialogHeader className="sr-only">
@@ -300,16 +303,17 @@ export default function PokerTimerModal({
                       <p className="timer-blinds-value">
                           {currentLevel.isBreak ? 'BREAK' : `${currentLevel.smallBlind} / ${currentLevel.bigBlind}`}
                       </p>
-                      <p className="timer-ante-label">Ante</p>
-                      <p className="timer-ante-value">{currentLevel.ante || '-'}</p>
+                      {currentLevel.ante && currentLevel.ante > 0 && !currentLevel.isBreak && (
+                        <>
+                          <p className="timer-ante-label">Ante</p>
+                          <p className="timer-ante-value">{currentLevel.ante}</p>
+                        </>
+                      )}
                       </div>
                   </div>
                   <div className="timer-next-level-bar">
-                      <div className="timer-next-level-time">
-                      {nextLevel.duration ? formatTime(nextLevel.duration * 60) : '00:00'}
-                      </div>
                       <div className="timer-next-level-label">
-                      Next: {nextLevel.isBreak ? 'Break' : `Level ${nextLevel.level}`}
+                        Next: {nextLevel.isBreak ? 'Break' : `Level ${nextLevel.level}`}
                       </div>
                       <div className="timer-next-level-blinds">
                       <p className="font-bold">{nextLevel.isBreak ? 'BREAK' : `${nextLevel.smallBlind} / ${nextLevel.bigBlind}`}</p>

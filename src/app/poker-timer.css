@@ -110,8 +110,8 @@
     background-color: var(--display-bg);
     color: var(--display-text);
 }
-.timer-countdown { @apply font-mono text-9xl font-bold tracking-tighter w-1/3; }
-.timer-blinds-area { @apply text-right w-1/3; }
+.timer-countdown { @apply font-mono text-9xl font-bold tracking-tighter w-1/2 text-center; }
+.timer-blinds-area { @apply text-center w-1/2; }
 .timer-blinds-label { @apply text-xl opacity-70; }
 .timer-blinds-value { @apply text-6xl font-bold; }
 .timer-ante-label { @apply text-xl opacity-70 mt-1; }
@@ -120,10 +120,8 @@
 .timer-next-level-bar {
     @apply bg-black/30 rounded-lg p-3 flex items-center justify-between text-lg mt-4;
 }
-.timer-next-level-time { @apply font-mono text-3xl font-bold w-1/3; }
-.timer-next-level-label { @apply w-1/3 text-center opacity-80; }
-.timer-next-level-blinds { @apply text-right w-1/3; }
-.timer-next-level-blinds p { @apply text-xl; }
+.timer-next-level-label { @apply w-1/3 text-left; }
+.timer-next-level-blinds { @apply text-right w-2/3; }
 
 
 .timer-stats-grid { @apply grid grid-cols-1 md:grid-cols-3 gap-6 text-sm; }
@@ -184,6 +182,7 @@
     ring-color: var(--slider-range);
     ring-offset-color: var(--settings-bg);
 }
+
 
 
 
