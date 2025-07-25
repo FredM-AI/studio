@@ -66,7 +66,7 @@ export default function LivePrizePool({ participants, buyIn, rebuyPrice }: LiveP
 
     return (
         <div className="space-y-4">
-             <CardTitle className="timer-stats-title">Prizes</CardTitle>
+             <h4 className="timer-stats-title">Prizes</h4>
             <div className="text-center bg-muted/50 p-2 rounded-lg">
                 <p className="text-xs text-muted-foreground uppercase tracking-wider">Total Prize Pool</p>
                 <p className="text-xl font-bold font-headline text-primary">
