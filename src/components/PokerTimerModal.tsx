@@ -200,19 +200,24 @@ export default function PokerTimerModal({
   const timerProgress = currentLevel.duration > 0 ? ((currentLevel.duration * 60 - timeLeft) / (currentLevel.duration * 60)) * 100 : 0;
 
   return (
-    <Draggable nodeRef={nodeRef} handle=".drag-handle" bounds="parent">
-      <div className="fixed inset-0 flex items-center justify-center pointer-events-none">
+    <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center">
+        <Draggable nodeRef={nodeRef} handle=".drag-handle" cancel=".no-drag">
         <div
-          ref={nodeRef}
-          className="poker-timer-modal-container pointer-events-auto"
+            ref={nodeRef}
+            className="poker-timer-modal-container pointer-events-auto"
         >
-          <div
+            <div
             ref={modalRef}
             className={cn("poker-timer-modal", `theme-${settings.theme}`)}
             data-fullscreen={isFullScreen}
-          >
+            >
             <div className={cn("settings-panel", { 'is-open': isSettingsOpen })}>
-                <h3 className="settings-title">Settings</h3>
+                <div className="flex justify-between items-center mb-4">
+                    <h3 className="settings-title">Settings</h3>
+                    <Button variant="ghost" size="icon" onClick={() => setIsSettingsOpen(false)} className="no-drag h-7 w-7">
+                        <X className="h-5 w-5"/>
+                    </Button>
+                </div>
                 <div className="setting-item">
                     <Label htmlFor="sound-switch">Sound Alerts</Label>
                     <Switch id="sound-switch" checked={settings.soundEnabled} onCheckedChange={(val) => handleSettingsChange('soundEnabled', val)} />
@@ -246,7 +251,7 @@ export default function PokerTimerModal({
                       <p className="timer-header-value">{formatTime(timeToNextBreak())}</p>
                   </div>
               </div>
-              <div className="flex items-center">
+              <div className="flex items-center no-drag">
                 <Button onClick={toggleFullScreen} variant="ghost" size="icon" className="timer-header-button">
                     {isFullScreen ? <Shrink className="h-5 w-5"/> : <Expand className="h-5 w-5"/>}
                 </Button>
@@ -311,7 +316,7 @@ export default function PokerTimerModal({
 
             </div>
 
-            <div className="timer-footer">
+            <div className="timer-footer no-drag">
                <div className="flex items-center gap-4">
                   <p className="text-xs mr-2 text-gray-400">Level</p>
                    <Button variant="ghost" size="icon" onClick={() => goToPrevLevel()} className="timer-control-button"><Rewind className="h-5 w-5"/></Button>
@@ -339,7 +344,7 @@ export default function PokerTimerModal({
             </div>
           </div>
         </div>
-      </div>
-    </Draggable>
+      </Draggable>
+    </div>
   );
 }
