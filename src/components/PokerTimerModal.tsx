@@ -215,8 +215,8 @@ export default function PokerTimerModal({
   const timerProgress = currentLevel.duration > 0 ? ((currentLevel.duration * 60 - timeLeft) / (currentLevel.duration * 60)) * 100 : 0;
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center">
-        <div className="poker-timer-modal-container pointer-events-auto">
+    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center pointer-events-auto">
+        <div className="poker-timer-modal-container">
             <div
             ref={modalRef}
             className={cn("poker-timer-modal", `theme-${settings.theme}`)}
@@ -271,8 +271,8 @@ export default function PokerTimerModal({
                 </Button>
               </div>
             </div>
-
-            <div className="timer-main-content">
+            
+            <div className="timer-sticky-content">
               <div className="timer-display-area">
                 <div className="timer-countdown">
                   {formatTime(timeLeft)}
@@ -289,7 +289,6 @@ export default function PokerTimerModal({
                   <p className="timer-ante-value">{currentLevel.ante || '-'}</p>
                 </div>
               </div>
-
               <div className="timer-next-level-bar">
                  <div className="timer-next-level-time">
                   {nextLevel.duration ? formatTime(nextLevel.duration * 60) : '00:00'}
@@ -302,7 +301,10 @@ export default function PokerTimerModal({
                   <p className="text-xs">Ante: {nextLevel.ante || '-'}</p>
                 </div>
               </div>
-              
+            </div>
+            
+
+            <div className="timer-main-content">
               <div className="timer-stats-grid">
                   <div className="timer-stats-box">
                       <h4 className="timer-stats-title">Status</h4>
@@ -336,6 +338,7 @@ export default function PokerTimerModal({
                     onRebuyChange={onRebuyChange}
                     onEliminatePlayer={onEliminatePlayer}
                     onUndoLastElimination={onUndoLastElimination}
+                    isModalLayout={true}
                  />
               </div>
 
