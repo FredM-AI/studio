@@ -127,7 +127,25 @@ export async function getBlindStructures(): Promise<BlindStructureTemplate[]> {
     const blindSnapshot = await blindCol.get();
     if (blindSnapshot.empty) {
         console.log("Firestore 'blindStructures' collection is empty.");
-        return [];
+        // We'll read from the JSON file as a fallback
+        try {
+            const blindsData = await import('@/data/blinds.json');
+            const blinds: BlindStructureTemplate[] = blindsData.default || blindsData;
+            
+            // Let's write this to Firestore so it exists for next time
+            const batch = db.batch();
+            blinds.forEach(structure => {
+                const docRef = blindCol.doc(structure.id);
+                batch.set(docRef, structure);
+            });
+            await batch.commit();
+            console.log("Written default blind structures to Firestore.");
+
+            return blinds;
+        } catch (e) {
+            console.error("Could not read fallback blinds.json file.", e);
+            return [];
+        }
     }
     const blindList = blindSnapshot.docs.map(doc => {
         const data = doc.data();
