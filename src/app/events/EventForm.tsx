@@ -151,8 +151,10 @@ export default function EventForm({ event, allPlayers, allSeasons, blindStructur
       })
       .sort((a, b) => getPlayerDisplayName(a.player).localeCompare(getPlayerDisplayName(b.player)));
 
+    // An inactive player who participated should still be in the participant list,
+    // but a new inactive player should not be in the "available" list.
     const initialAvailable = allPlayers
-      .filter(p => !initialParticipantIds.has(p.id))
+      .filter(p => p.isActive && !initialParticipantIds.has(p.id))
       .sort(sortPlayersWithGuestsLast);
 
     setEnrichedParticipants(initialEnriched);
@@ -316,7 +318,9 @@ export default function EventForm({ event, allPlayers, allSeasons, blindStructur
   };
 
   const handleRemovePlayer = (participantToRemove: EnrichedParticipant) => {
-    setAvailablePlayers(prev => [...prev, participantToRemove.player].sort(sortPlayersWithGuestsLast));
+    if (participantToRemove.player.isActive) {
+      setAvailablePlayers(prev => [...prev, participantToRemove.player].sort(sortPlayersWithGuestsLast));
+    }
     setEnrichedParticipants(prev => prev.filter(p => p.player.id !== participantToRemove.player.id));
     setPositionalResults(prev => prev.map(pr => pr.playerId === participantToRemove.player.id ? {...pr, playerId: null, prize: '0', bountiesWon: '0', mysteryKoWon: '0'} : pr ));
   };
