@@ -6,8 +6,13 @@ import type { Event, BlindLevel } from '@/lib/definitions';
 import type { ParticipantState } from './LivePlayerTracking';
 import Draggable from 'react-draggable';
 import { Button } from '@/components/ui/button';
-import { X, Play, Pause, FastForward, Rewind, Settings } from 'lucide-react';
+import { X, Play, Pause, FastForward, Rewind, Settings, Expand, Shrink, Volume2, VolumeX, Sun, Moon } from 'lucide-react';
 import { Slider } from '@/components/ui/slider';
+import { cn } from '@/lib/utils';
+import { Switch } from './ui/switch';
+import { Label } from './ui/label';
+import { RadioGroup, RadioGroupItem } from './ui/radio-group';
+import '@/app/poker-timer.css'; // Import custom CSS for timer
 
 interface PokerTimerModalProps {
   event: Event;
@@ -25,6 +30,12 @@ const formatTime = (seconds: number) => {
   return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
 };
 
+type TimerSettings = {
+  soundEnabled: boolean;
+  volume: number;
+  theme: 'dark' | 'light' | 'green';
+};
+
 export default function PokerTimerModal({ 
     event, 
     participants, 
@@ -34,42 +45,74 @@ export default function PokerTimerModal({
     onClose 
 }: PokerTimerModalProps) {
   const nodeRef = useRef(null);
+  const modalRef = useRef<HTMLDivElement>(null);
   const timerStorageKey = `poker-timer-state-${event.id}`;
+  const settingsStorageKey = `poker-timer-settings`;
   
-  const getInitialTimerState = <T,>(key: string, defaultValue: T): T => {
+  const getInitialState = <T,>(key: string, defaultValue: T): T => {
     if (typeof window === 'undefined') return defaultValue;
     try {
-      const item = window.localStorage.getItem(timerStorageKey);
+      const item = window.localStorage.getItem(key);
       if (item) {
         const parsed = JSON.parse(item);
-        return parsed[key] !== undefined ? parsed[key] : defaultValue;
+        return parsed !== null ? parsed : defaultValue;
       }
     } catch (e) {
-      console.warn(`Error reading timer state for key ${key} from localStorage`, e);
+      console.warn(`Error reading state for key ${key} from localStorage`, e);
     }
     return defaultValue;
   };
   
-  const [currentLevelIndex, setCurrentLevelIndex] = useState(() => getInitialTimerState('currentLevelIndex', 0));
+  const [currentLevelIndex, setCurrentLevelIndex] = useState(() => getInitialState(`${timerStorageKey}-level`, 0));
   const [timeLeft, setTimeLeft] = useState(() => {
-    const savedTime = getInitialTimerState('timeLeft', undefined);
+    const savedTime = getInitialState(`${timerStorageKey}-time`, undefined);
     const safeIndex = Math.min(currentLevelIndex, activeStructure.length - 1);
     const structureDuration = activeStructure.length > 0 ? activeStructure[safeIndex]?.duration * 60 : 0;
     return savedTime !== undefined ? savedTime : (structureDuration || 0);
   });
-  const [totalTime, setTotalTime] = useState(() => getInitialTimerState('totalTime', 0));
-  const [isPaused, setIsPaused] = useState(() => getInitialTimerState('isPaused', true));
-  
+  const [totalTime, setTotalTime] = useState(() => getInitialState(`${timerStorageKey}-totalTime`, 0));
+  const [isPaused, setIsPaused] = useState(() => getInitialState(`${timerStorageKey}-paused`, true));
+  const [isFullScreen, setIsFullScreen] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+
+  const [settings, setSettings] = useState<TimerSettings>(() => getInitialState(settingsStorageKey, {
+    soundEnabled: true,
+    volume: 0.5,
+    theme: 'dark',
+  }));
+
+  const levelEndAudioRef = useRef<HTMLAudioElement | null>(null);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+       levelEndAudioRef.current = new Audio('/sounds/level-end.mp3');
+    }
+  }, []);
+
+  useEffect(() => {
+    if(levelEndAudioRef.current) {
+        levelEndAudioRef.current.volume = settings.volume;
+    }
+  }, [settings.volume]);
+
   useEffect(() => {
     if (typeof window !== 'undefined') {
       try {
-        const timerState = { currentLevelIndex, timeLeft, totalTime, isPaused };
-        window.localStorage.setItem(timerStorageKey, JSON.stringify(timerState));
+        window.localStorage.setItem(`${timerStorageKey}-level`, JSON.stringify(currentLevelIndex));
+        window.localStorage.setItem(`${timerStorageKey}-time`, JSON.stringify(timeLeft));
+        window.localStorage.setItem(`${timerStorageKey}-totalTime`, JSON.stringify(totalTime));
+        window.localStorage.setItem(`${timerStorageKey}-paused`, JSON.stringify(isPaused));
       } catch (e) {
         console.error("Failed to save timer state to localStorage", e);
       }
     }
   }, [currentLevelIndex, timeLeft, totalTime, isPaused, timerStorageKey]);
+  
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+        window.localStorage.setItem(settingsStorageKey, JSON.stringify(settings));
+    }
+  }, [settings, settingsStorageKey]);
 
   useEffect(() => {
     let timerInterval: NodeJS.Timeout;
@@ -78,15 +121,29 @@ export default function PokerTimerModal({
         setTimeLeft(prev => prev - 1);
         setTotalTime(prev => prev + 1);
       }, 1000);
-
     } else if (timeLeft <= 0 && !isPaused) {
-        goToNextLevel();
+        goToNextLevel(true); // Play sound on auto-advance
     }
     return () => clearInterval(timerInterval);
   }, [isPaused, timeLeft]);
+  
+  useEffect(() => {
+    const handleFullScreenChange = () => {
+      setIsFullScreen(!!document.fullscreenElement);
+    };
+    document.addEventListener('fullscreenchange', handleFullScreenChange);
+    return () => document.removeEventListener('fullscreenchange', handleFullScreenChange);
+  }, []);
 
-  const goToNextLevel = () => {
+  const playLevelEndSound = () => {
+    if(settings.soundEnabled && levelEndAudioRef.current) {
+        levelEndAudioRef.current.play().catch(e => console.error("Error playing sound:", e));
+    }
+  }
+
+  const goToNextLevel = (playSound = false) => {
     if (activeStructure.length === 0) return;
+    if (playSound) playLevelEndSound();
     const nextLevelIndex = (currentLevelIndex + 1) % activeStructure.length;
     setCurrentLevelIndex(nextLevelIndex);
     setTimeLeft(activeStructure[nextLevelIndex].duration * 60);
@@ -99,6 +156,21 @@ export default function PokerTimerModal({
     setTimeLeft(activeStructure[prevLevelIndex].duration * 60);
   };
   
+  const toggleFullScreen = () => {
+    if (!modalRef.current) return;
+    if (!isFullScreen) {
+      modalRef.current.requestFullscreen().catch(err => {
+        alert(`Error attempting to enable full-screen mode: ${err.message} (${err.name})`);
+      });
+    } else {
+      document.exitFullscreen();
+    }
+  };
+
+  const handleSettingsChange = (key: keyof TimerSettings, value: any) => {
+    setSettings(prev => ({...prev, [key]: value}));
+  }
+
   const safeCurrentLevelIndex = Math.min(currentLevelIndex, activeStructure.length - 1);
   const currentLevel = activeStructure[safeCurrentLevelIndex] || { level: 0, smallBlind: 0, bigBlind: 0, duration: 0, isBreak: true };
   const nextLevel = activeStructure.length > 1 ? activeStructure[(safeCurrentLevelIndex + 1) % activeStructure.length] : currentLevel;
@@ -111,15 +183,11 @@ export default function PokerTimerModal({
 
   const timeToNextBreak = () => {
     if (activeStructure.length === 0 || currentLevel.isBreak) return 0;
-    
     for(let i=0; i < activeStructure.length; i++) {
         const checkingIndex = (currentLevelIndex + i) % activeStructure.length;
         const levelToCheck = activeStructure[checkingIndex];
-        
         if (levelToCheck.isBreak) {
-            let timeToIt = 0;
-            if(i > 0) timeToIt += timeLeft;
-            
+            let timeToIt = (i > 0) ? timeLeft : 0;
             for(let j=1; j < i; j++) {
                 timeToIt += activeStructure[(currentLevelIndex + j) % activeStructure.length].duration * 60;
             }
@@ -131,124 +199,147 @@ export default function PokerTimerModal({
   
   const timerProgress = currentLevel.duration > 0 ? ((currentLevel.duration * 60 - timeLeft) / (currentLevel.duration * 60)) * 100 : 0;
 
-
   return (
-    <>
-    <Draggable nodeRef={nodeRef} handle=".drag-handle">
-      <div
-        ref={nodeRef}
-        className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-full max-w-4xl"
-        style={{ cursor: 'move' }}
-      >
-        <div className="bg-gray-800 text-white rounded-xl shadow-2xl overflow-hidden border-4 border-gray-700">
-          <div className="drag-handle p-4 bg-gray-900 flex justify-between items-center">
-            <div className="flex gap-6 items-center">
-                <div className="text-center">
-                    <p className="text-xs text-gray-400">Level</p>
-                    <p className="text-2xl font-bold">{currentLevel.isBreak ? 'BREAK' : currentLevel.level}</p>
+    <Draggable nodeRef={nodeRef} handle=".drag-handle" bounds="parent">
+      <div className="fixed inset-0 flex items-center justify-center pointer-events-none">
+        <div
+          ref={nodeRef}
+          className="poker-timer-modal-container pointer-events-auto"
+        >
+          <div
+            ref={modalRef}
+            className={cn("poker-timer-modal", `theme-${settings.theme}`)}
+            data-fullscreen={isFullScreen}
+          >
+            <div className={cn("settings-panel", { 'is-open': isSettingsOpen })}>
+                <h3 className="settings-title">Settings</h3>
+                <div className="setting-item">
+                    <Label htmlFor="sound-switch">Sound Alerts</Label>
+                    <Switch id="sound-switch" checked={settings.soundEnabled} onCheckedChange={(val) => handleSettingsChange('soundEnabled', val)} />
                 </div>
-                 <div className="text-center border-l border-r border-gray-600 px-6">
-                    <p className="text-xs text-gray-400">Total time</p>
-                    <p className="text-2xl font-bold">{formatTime(totalTime)}</p>
+                 <div className="setting-item">
+                    <Label htmlFor="volume-slider">Volume</Label>
+                    <Slider id="volume-slider" min={0} max={1} step={0.1} value={[settings.volume]} onValueChange={(val) => handleSettingsChange('volume', val[0])} />
                 </div>
-                 <div className="text-center">
-                    <p className="text-xs text-gray-400">Time to break</p>
-                    <p className="text-2xl font-bold">{formatTime(timeToNextBreak())}</p>
-                </div>
-            </div>
-            <Button onClick={onClose} variant="ghost" size="icon" className="text-gray-400 hover:text-white hover:bg-gray-700">
-              <X className="h-6 w-6" />
-            </Button>
-          </div>
-
-          <div className="p-6 bg-gray-800/50 backdrop-blur-sm" style={{ backgroundImage: "url('/poker-table-background.webp')", backgroundSize: 'cover', backgroundBlendMode: 'overlay'}}>
-            <div className="bg-gray-200/90 text-gray-900 rounded-lg p-4 flex items-center justify-between shadow-lg mb-2">
-              <div className="font-mono text-7xl font-bold tracking-tighter w-1/3">
-                {formatTime(timeLeft)}
-              </div>
-              <div className="flex items-center gap-4 w-1/3 justify-center">
-                 <div className="w-16 h-16 bg-gray-800 rounded-full flex items-center justify-center text-white text-xs font-bold shadow-inner">
-                    CHIP
-                 </div>
-              </div>
-              <div className="text-right w-1/3">
-                <p className="text-sm text-gray-600">Blinds</p>
-                <p className="text-4xl font-bold">
-                    {currentLevel.isBreak ? 'BREAK' : `${currentLevel.smallBlind} / ${currentLevel.bigBlind}`}
-                </p>
-                <p className="text-sm text-gray-600 mt-1">Ante</p>
-                <p className="text-2xl font-bold">{currentLevel.ante || '-'}</p>
-              </div>
-            </div>
-
-            <div className="bg-gray-600/70 text-white rounded-lg p-2 flex items-center justify-between text-sm mt-4">
-               <div className="font-mono text-xl font-bold w-1/3">
-                {nextLevel.duration ? formatTime(nextLevel.duration * 60) : '00:00'}
-              </div>
-              <div className="w-1/3 text-center text-gray-300">
-                Next: {nextLevel.isBreak ? 'Break' : `Level ${nextLevel.level}`}
-              </div>
-              <div className="text-right w-1/3">
-                <p className="font-bold">{nextLevel.isBreak ? 'BREAK' : `${nextLevel.smallBlind} / ${nextLevel.bigBlind}`}</p>
-                <p className="text-xs">Ante: {nextLevel.ante || '-'}</p>
-              </div>
-            </div>
-            
-            <div className="mt-6 grid grid-cols-3 gap-6 text-sm">
-                <div className="bg-black/20 p-3 rounded">
-                    <h4 className="font-bold border-b border-gray-500 pb-1 mb-2">Status</h4>
-                    <div className="flex justify-between"><span>Players:</span> <span>{activeParticipants.length} / {participants.length}</span></div>
-                    <div className="flex justify-between"><span>Rebuys:</span> <span>{totalRebuys}</span></div>
-                    <div className="flex justify-between"><span>Addons:</span> <span>0</span></div>
-                </div>
-                 <div className="bg-black/20 p-3 rounded">
-                    <h4 className="font-bold border-b border-gray-500 pb-1 mb-2">Statistics</h4>
-                    <div className="flex justify-between"><span>Avg. stack:</span> <span>{avgStack.toLocaleString()}</span></div>
-                    <div className="flex justify-between"><span>Total chips:</span> <span>{totalChips.toLocaleString()}</span></div>
-                    <div className="flex justify-between"><span>Total prize:</span> <span className="font-bold">€{totalPrizePool}</span></div>
-                </div>
-                 <div className="bg-black/20 p-3 rounded">
-                    <h4 className="font-bold border-b border-gray-500 pb-1 mb-2">Prizes</h4>
-                    {payoutStructure.map(p => (
-                       <div className="flex justify-between" key={p.position}><span>{p.position}.</span> <span className="font-bold">€{p.prize}</span></div>
-                    ))}
-                    {payoutStructure.length === 0 && <p className="text-xs text-gray-400">Not enough data</p>}
+                <div className="setting-item">
+                   <Label>Theme</Label>
+                   <RadioGroup value={settings.theme} onValueChange={(val) => handleSettingsChange('theme', val)} className="flex gap-2">
+                      <Label htmlFor="theme-dark" className="theme-option theme-dark-option"><RadioGroupItem value="dark" id="theme-dark"/><Sun className="h-4 w-4"/></Label>
+                      <Label htmlFor="theme-light" className="theme-option theme-light-option"><RadioGroupItem value="light" id="theme-light" /><Moon className="h-4 w-4"/></Label>
+                      <Label htmlFor="theme-green" className="theme-option theme-green-option"><RadioGroupItem value="green" id="theme-green" /></Label>
+                   </RadioGroup>
                 </div>
             </div>
 
-          </div>
-
-          <div className="p-3 bg-gray-900 flex justify-between items-center">
-             <div className="flex items-center gap-4">
-                <p className="text-xs mr-2 text-gray-400">Level</p>
-                 <Button variant="ghost" size="icon" onClick={goToPrevLevel} className="h-8 w-8"><Rewind className="h-5 w-5"/></Button>
-                 <Button variant="ghost" size="icon" onClick={() => setIsPaused(!isPaused)} className="h-8 w-8">
-                    {isPaused ? <Play className="h-5 w-5"/> : <Pause className="h-5 w-5"/>}
+            <div className="drag-handle timer-header">
+              <div className="flex gap-6 items-center">
+                  <div className="text-center">
+                      <p className="timer-header-label">Level</p>
+                      <p className="timer-header-value">{currentLevel.isBreak ? 'BREAK' : currentLevel.level}</p>
+                  </div>
+                   <div className="timer-header-divider">
+                      <p className="timer-header-label">Total time</p>
+                      <p className="timer-header-value">{formatTime(totalTime)}</p>
+                  </div>
+                   <div className="text-center">
+                      <p className="timer-header-label">Time to break</p>
+                      <p className="timer-header-value">{formatTime(timeToNextBreak())}</p>
+                  </div>
+              </div>
+              <div className="flex items-center">
+                <Button onClick={toggleFullScreen} variant="ghost" size="icon" className="timer-header-button">
+                    {isFullScreen ? <Shrink className="h-5 w-5"/> : <Expand className="h-5 w-5"/>}
                 </Button>
-                <Button variant="ghost" size="icon" onClick={goToNextLevel} className="h-8 w-8"><FastForward className="h-5 w-5"/></Button>
-             </div>
-             <div className="flex-1 px-4">
-                <Slider 
-                    value={[timerProgress]} 
-                    max={100} 
-                    step={1} 
-                    className="w-full"
-                    onValueChange={(value) => {
-                        const newTime = Math.round((currentLevel.duration * 60) * (1 - value[0] / 100));
-                        setTimeLeft(newTime);
-                    }}
-                 />
-             </div>
-             <div className="flex items-center gap-2">
-                <Button variant="ghost" size="icon" onClick={() => { /* Settings action to be defined */ }} className="h-8 w-8 opacity-50 cursor-not-allowed">
-                  <Settings className="h-5 w-5"/>
+                <Button onClick={onClose} variant="ghost" size="icon" className="timer-header-button">
+                    <X className="h-6 w-6" />
                 </Button>
-                <Button variant="ghost" size="icon" onClick={onClose} className="h-8 w-8"><X className="h-5 w-5"/></Button>
-             </div>
+              </div>
+            </div>
+
+            <div className="timer-main-content">
+              <div className="timer-display-area">
+                <div className="timer-countdown">
+                  {formatTime(timeLeft)}
+                </div>
+                <div className="timer-chip-icon">
+                   CHIP
+                </div>
+                <div className="timer-blinds-area">
+                  <p className="timer-blinds-label">Blinds</p>
+                  <p className="timer-blinds-value">
+                      {currentLevel.isBreak ? 'BREAK' : `${currentLevel.smallBlind} / ${currentLevel.bigBlind}`}
+                  </p>
+                  <p className="timer-ante-label">Ante</p>
+                  <p className="timer-ante-value">{currentLevel.ante || '-'}</p>
+                </div>
+              </div>
+
+              <div className="timer-next-level-bar">
+                 <div className="timer-next-level-time">
+                  {nextLevel.duration ? formatTime(nextLevel.duration * 60) : '00:00'}
+                </div>
+                <div className="timer-next-level-label">
+                  Next: {nextLevel.isBreak ? 'Break' : `Level ${nextLevel.level}`}
+                </div>
+                <div className="timer-next-level-blinds">
+                  <p className="font-bold">{nextLevel.isBreak ? 'BREAK' : `${nextLevel.smallBlind} / ${nextLevel.bigBlind}`}</p>
+                  <p className="text-xs">Ante: {nextLevel.ante || '-'}</p>
+                </div>
+              </div>
+              
+              <div className="timer-stats-grid">
+                  <div className="timer-stats-box">
+                      <h4 className="timer-stats-title">Status</h4>
+                      <div className="timer-stats-row"><span>Players:</span> <span>{activeParticipants.length} / {participants.length}</span></div>
+                      <div className="timer-stats-row"><span>Rebuys:</span> <span>{totalRebuys}</span></div>
+                      <div className="timer-stats-row"><span>Addons:</span> <span>0</span></div>
+                  </div>
+                   <div className="timer-stats-box">
+                      <h4 className="timer-stats-title">Statistics</h4>
+                      <div className="timer-stats-row"><span>Avg. stack:</span> <span>{avgStack.toLocaleString()}</span></div>
+                      <div className="timer-stats-row"><span>Total chips:</span> <span>{totalChips.toLocaleString()}</span></div>
+                      <div className="timer-stats-row"><span>Total prize:</span> <span className="font-bold">€{totalPrizePool}</span></div>
+                  </div>
+                   <div className="timer-stats-box">
+                      <h4 className="timer-stats-title">Prizes</h4>
+                      {payoutStructure.map(p => (
+                         <div className="timer-stats-row" key={p.position}><span>{p.position}.</span> <span className="font-bold">€{p.prize}</span></div>
+                      ))}
+                      {payoutStructure.length === 0 && <p className="text-xs text-gray-400">Not enough data</p>}
+                  </div>
+              </div>
+
+            </div>
+
+            <div className="timer-footer">
+               <div className="flex items-center gap-4">
+                  <p className="text-xs mr-2 text-gray-400">Level</p>
+                   <Button variant="ghost" size="icon" onClick={() => goToPrevLevel()} className="timer-control-button"><Rewind className="h-5 w-5"/></Button>
+                   <Button variant="ghost" size="icon" onClick={() => setIsPaused(!isPaused)} className="timer-control-button">
+                      {isPaused ? <Play className="h-5 w-5"/> : <Pause className="h-5 w-5"/>}
+                  </Button>
+                  <Button variant="ghost" size="icon" onClick={() => goToNextLevel(false)} className="timer-control-button"><FastForward className="h-5 w-5"/></Button>
+               </div>
+               <div className="timer-progress-slider">
+                  <Slider 
+                      value={[timerProgress]} 
+                      max={100} 
+                      step={1} 
+                      onValueChange={(value) => {
+                          const newTime = Math.round((currentLevel.duration * 60) * (1 - value[0] / 100));
+                          setTimeLeft(newTime);
+                      }}
+                   />
+               </div>
+               <div className="flex items-center gap-2">
+                  <Button variant="ghost" size="icon" onClick={() => setIsSettingsOpen(!isSettingsOpen)} className="timer-control-button">
+                    <Settings className="h-5 w-5"/>
+                  </Button>
+               </div>
+            </div>
           </div>
         </div>
       </div>
     </Draggable>
-    </>
   );
 }
