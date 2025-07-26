@@ -32,7 +32,7 @@ body {
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 45 50% 80%; /* Gold border for light theme */
+    --border: 45 35% 70%; /* Gold border for light theme */
     --input: 240 5.9% 90%;
     --ring: 355 71% 38%;
 
