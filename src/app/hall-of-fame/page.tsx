@@ -46,7 +46,7 @@ const StatCard = ({ icon, title, description, stat, formatValue, unit, className
     return (
         <Card className={cn(
             "group perspective-1000 w-full h-full rounded-xl border-border/50 shadow-lg",
-            "transition-all duration-300 ease-in-out transform-style-3d bg-gray-50", // Changed background
+            "transition-all duration-300 ease-in-out transform-style-3d bg-card", 
             "hover:shadow-2xl hover:shadow-primary/20 hover:-translate-y-2 hover:rotate-x-[-2deg] hover:rotate-y-[2deg]",
             className
          )}>
@@ -101,7 +101,7 @@ export default async function HallOfFamePage() {
     const stats = await calculateHallOfFameStats(allPlayers, allEvents);
 
     return (
-        <div className="relative overflow-hidden bg-gray-100 dark:bg-gray-900 rounded-lg p-4 sm:p-8">
+        <div className="relative overflow-hidden rounded-lg p-4 sm:p-8">
             <div className="relative z-10 space-y-8">
                 <div className="text-center">
                     <Trophy className="mx-auto h-16 w-16 text-primary mb-4 drop-shadow-[0_0_15px_hsl(var(--primary))] animate-pulse" />
@@ -111,7 +111,7 @@ export default async function HallOfFamePage() {
                     </p>
                 </div>
 
-                <Card className="hover:shadow-lg transition-shadow bg-gray-50 dark:bg-gray-800/50 border-border/50">
+                <Card className="hover:shadow-lg transition-shadow bg-card/80 dark:bg-card/50 border-border/50 backdrop-blur-sm">
                     <CardHeader>
                         <div className="flex items-center gap-4">
                             <Banknote className="h-10 w-10 text-green-600 drop-shadow-[0_0_8px_rgba(74,222,128,0.5)]" />
