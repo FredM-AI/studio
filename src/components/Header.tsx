@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import Logo from './Logo';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { Menu, LogOut, Home, MessageSquare, CalendarDays, Users, BarChart3, LogIn, Trophy } from 'lucide-react';
+import { Menu, LogOut, Home, MessageSquare, CalendarDays, Users, BarChart3, LogIn, Trophy, Palette } from 'lucide-react';
 import { logoutUser } from '@/app/login/actions';
 import { usePathname } from 'next/navigation'; 
 import ThemeToggle from './ThemeToggle';

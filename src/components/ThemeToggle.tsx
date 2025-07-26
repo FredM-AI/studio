@@ -5,62 +5,64 @@ import * as React from 'react';
 import { Moon, Sun, Palette } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 type Theme = "light" | "dark" | "classic";
 const themes: Theme[] = ["light", "dark", "classic"];
 
 export default function ThemeToggle() {
-  const [theme, setTheme] = React.useState<Theme>('light');
+  const [mounted, setMounted] = React.useState(false);
 
   React.useEffect(() => {
-    // On mount, read the theme from localStorage and apply it
+    setMounted(true);
+    // On mount, ensure the correct theme class is on the html tag
     const storedTheme = localStorage.getItem('poker-theme') as Theme | null;
-    const initialTheme = storedTheme && themes.includes(storedTheme) ? storedTheme : 'light';
-    setTheme(initialTheme);
-    
-    // Clean up any other theme classes and apply the correct one
-    document.documentElement.classList.remove(...themes);
-    document.documentElement.classList.add(initialTheme);
+    if (storedTheme && themes.includes(storedTheme)) {
+        document.documentElement.classList.remove(...themes);
+        document.documentElement.classList.add(storedTheme);
+    } else {
+        document.documentElement.classList.add('light');
+    }
   }, []);
 
-  const cycleTheme = () => {
-    const currentIndex = themes.indexOf(theme);
-    const nextIndex = (currentIndex + 1) % themes.length;
-    const nextTheme = themes[nextIndex];
-    
-    // Update React state
-    setTheme(nextTheme);
-
-    // Update localStorage and apply the new class to the document
-    localStorage.setItem('poker-theme', nextTheme);
+  const setTheme = (theme: Theme) => {
+    localStorage.setItem('poker-theme', theme);
     document.documentElement.classList.remove(...themes);
-    document.documentElement.classList.add(nextTheme);
-  };
-
-  const renderIcon = () => {
-    // Show the icon representing the current theme
-    switch (theme) {
-      case 'light':
-        return <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />;
-      case 'dark':
-        return <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />;
-      case 'classic':
-         return <Palette className="h-[1.2rem] w-[1.2rem]" />;
-      default:
-        return <Sun className="h-[1.2rem] w-[1.2rem]" />;
-    }
+    document.documentElement.classList.add(theme);
   };
   
-   const getNextThemeName = () => {
-    const currentIndex = themes.indexOf(theme);
-    const nextIndex = (currentIndex + 1) % themes.length;
-    return themes[nextIndex];
+  if (!mounted) {
+    // Avoid rendering the toggle on the server to prevent hydration mismatch
+    return <div style={{width: '40px', height: '40px'}} />;
   }
 
   return (
-    <Button variant="ghost" size="icon" onClick={cycleTheme} title={`Switch to ${getNextThemeName()} theme`}>
-      {renderIcon()}
-      <span className="sr-only">Toggle theme</span>
-    </Button>
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" size="icon">
+          <Palette className="h-[1.2rem] w-[1.2rem]" />
+          <span className="sr-only">Toggle theme</span>
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuItem onClick={() => setTheme('light')}>
+          <Sun className="mr-2 h-4 w-4" />
+          <span>Light</span>
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => setTheme('dark')}>
+          <Moon className="mr-2 h-4 w-4" />
+          <span>Dark</span>
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => setTheme('classic')}>
+           <Palette className="mr-2 h-4 w-4" />
+          <span>Classic</span>
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
