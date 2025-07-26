@@ -8,91 +8,71 @@ body {
 
 @layer base {
   :root {
-    --background: 45 45% 92%; /* Light Desaturated Gold */
-    --foreground: 353 9% 10%; /* Dark Brown/Black */
+    --background: 36 33% 97%; /* Off-white / Cream */
+    --foreground: 240 10% 3.9%; /* Dark Charcoal */
 
-    --card: 45 70% 55%; /* Richer Gold */
-    --card-foreground: 353 9% 10%;
+    --card: 0 0% 100%; /* White */
+    --card-foreground: 240 10% 3.9%;
 
-    --popover: 0 0% 100%; /* Defaulting to white, can be adjusted */
-    --popover-foreground: 353 9% 10%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 10% 3.9%;
 
-    --primary: 358 57% 37%; /* Bull Red */
-    --primary-foreground: 46 50% 90%; /* Light Cream */
+    --primary: 355 71% 38%; /* Bulls Poker Red */
+    --primary-foreground: 355 0% 100%;
 
-    --secondary: 358 40% 55%; /* Lighter/Muted Red */
-    --secondary-foreground: 353 9% 10%;
+    --secondary: 45 40% 85%; /* Muted Gold */
+    --secondary-foreground: 240 10% 3.9%;
 
-    --muted: 45 40% 85%; /* Muted Gold */
-    --muted-foreground: 45 30% 40%; /* Darker Muted Gold Text */
+    --muted: 240 4.8% 95.9%; /* Light Gray */
+    --muted-foreground: 240 3.8% 46.1%;
 
-    --accent: 46 59% 77%; /* Light Gold/Cream Highlight */
-    --accent-foreground: 353 9% 10%; /* Dark text on Accent */
+    --accent: 45 59% 77%; /* Light Gold/Cream Highlight */
+    --accent-foreground: 240 10% 3.9%;
 
-    --destructive: 0 84.2% 60.2%; /* Default destructive */
+    --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 45 50% 75%; /* Muted Gold Border */
-    --input: 45 50% 88%; /* Muted Gold Input Background */
-    --ring: 358 57% 37%; /* Bull Red for Ring */
+    --border: 240 5.9% 90%;
+    --input: 240 5.9% 90%;
+    --ring: 355 71% 38%;
 
-    --chart-1: 358 57% 37%; /* Bull Red */
-    --chart-2: 46 59% 77%; /* Light Gold Accent */
+    --chart-1: 355 71% 38%; /* Bull Red */
+    --chart-2: 45 59% 77%; /* Light Gold Accent */
     --chart-3: 30 60% 60%; /* Orange/Brown Tone */
     --chart-4: 0 30% 50%;   /* Softer Red */
     --chart-5: 50 40% 40%; /* Darker Gold/Brown */
-
+    
     --radius: 0.5rem;
-
-    /* Sidebar specific colors */
-    --sidebar-background: 45 50% 40%; /* Darker Gold */
-    --sidebar-foreground: 46 50% 90%; /* Light Cream Text */
-    --sidebar-primary: 358 57% 37%;   /* Bull Red */
-    --sidebar-primary-foreground: 46 50% 90%; /* Light Cream Text */
-    --sidebar-accent: 46 59% 77%;    /* Light Gold Highlight */
-    --sidebar-accent-foreground: 353 9% 10%; /* Dark Text */
-    --sidebar-border: 45 50% 30%;    /* Darker Gold Border */
-    --sidebar-ring: 358 57% 37%;     /* Bull Red */
   }
 
   .dark {
-    --background: 40 30% 10%; /* Dark Brownish Gold */
-    --foreground: 45 40% 85%; /* Light Gold/Cream */
+    --background: 240 10% 3.9%; /* Dark Charcoal */
+    --foreground: 0 0% 98%; /* Almost White */
 
-    --card: 40 30% 15%;
-    --card-foreground: 45 40% 85%;
+    --card: 240 10% 10%;
+    --card-foreground: 0 0% 98%;
 
-    --popover: 40 30% 10%;
-    --popover-foreground: 45 40% 85%;
+    --popover: 240 10% 3.9%;
+    --popover-foreground: 0 0% 98%;
 
-    --primary: 0 60% 50%; /* Bull Red - slightly brighter for dark mode */
-    --primary-foreground: 45 50% 90%; /* Light Cream */
+    --primary: 355 81% 48%; /* Brighter Bull Red for dark mode */
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 0 40% 30%; /* Muted Dark Red */
-    --secondary-foreground: 45 40% 85%;
+    --secondary: 240 3.7% 15.9%;
+    --secondary-foreground: 0 0% 98%;
 
-    --muted: 40 25% 20%;
-    --muted-foreground: 40 30% 60%;
+    --muted: 240 3.7% 15.9%;
+    --muted-foreground: 240 5% 64.9%;
 
-    --accent: 45 70% 65%; /* Gold Accent - can be brighter */
-    --accent-foreground: 30 50% 10%; /* Dark text on Gold */
+    --accent: 240 3.7% 15.9%;
+    --accent-foreground: 0 0% 98%;
 
-    --destructive: 0 70% 45%;
+    --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 40 30% 25%;
-    --input: 40 30% 20%;
-    --ring: 0 60% 50%;
-
-    /* Sidebar dark theme colors */
-    --sidebar-background: 40 25% 12%;
-    --sidebar-foreground: 45 40% 80%;
-    --sidebar-primary: 0 60% 50%;
-    --sidebar-primary-foreground: 45 50% 90%;
-    --sidebar-accent: 40 30% 28%;
-    --sidebar-accent-foreground: 45 40% 88%;
-    --sidebar-border: 40 25% 22%;
-    --sidebar-ring: 0 60% 50%;
+    --border: 240 3.7% 15.9%;
+    --input: 240 3.7% 15.9%;
+    --ring: 355 81% 48%;
   }
 }
 
