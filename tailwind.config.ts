@@ -19,7 +19,7 @@ export default {
     extend: {
       fontFamily: {
         body: ['Inter', 'sans-serif'],
-        headline: ['Poppins', 'sans-serif'],
+        headline: ['Cinzel', 'Poppins', 'sans-serif'],
         code: ['monospace', 'monospace'],
       },
       colors: {
