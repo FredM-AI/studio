@@ -74,6 +74,42 @@ body {
     --input: 240 3.7% 15.9%;
     --ring: 355 81% 48%;
   }
+
+  .theme-classic {
+    --background: 48 28% 45%; /* Desaturated Gold/Olive */
+    --foreground: 48 83% 96%; /* Off-white/Cream */
+
+    --card: 48 18% 12%; /* Very dark, almost black desaturated olive */
+    --card-foreground: 48 83% 96%;
+
+    --popover: 48 18% 10%;
+    --popover-foreground: 48 83% 96%;
+
+    --primary: 0 65% 51%; /* Rich Red */
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 48 22% 35%;
+    --secondary-foreground: 48 83% 96%;
+
+    --muted: 48 18% 25%;
+    --muted-foreground: 48 25% 70%;
+
+    --accent: 48 30% 55%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 65% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 0 65% 45%; /* Red border */
+    --input: 48 18% 20%;
+    --ring: 0 65% 51%;
+
+    --chart-1: 0 65% 51%;
+    --chart-2: 45 59% 77%;
+    --chart-3: 30 60% 60%;
+    --chart-4: 0 40% 50%;
+    --chart-5: 50 40% 40%;
+  }
 }
 
 @layer base {
