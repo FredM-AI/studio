@@ -18,23 +18,27 @@ const themes: Theme[] = ["light", "dark", "classic"];
 export default function ThemeToggle() {
   const [mounted, setMounted] = React.useState(false);
 
-  React.useEffect(() => {
-    setMounted(true);
-    // On mount, ensure the correct theme class is on the html tag
-    const storedTheme = localStorage.getItem('poker-theme') as Theme | null;
-    if (storedTheme && themes.includes(storedTheme)) {
-        document.documentElement.classList.remove(...themes);
-        document.documentElement.classList.add(storedTheme);
-    } else {
-        document.documentElement.classList.add('light');
-    }
-  }, []);
-
   const setTheme = (theme: Theme) => {
     localStorage.setItem('poker-theme', theme);
-    document.documentElement.classList.remove(...themes);
-    document.documentElement.classList.add(theme);
+    // Remove all possible theme classes
+    document.documentElement.classList.remove('light', 'dark', 'theme-classic');
+    // Add the selected theme class
+    if (theme === 'classic') {
+      document.documentElement.classList.add('theme-classic');
+    } else {
+      document.documentElement.classList.add(theme);
+    }
   };
+
+  React.useEffect(() => {
+    setMounted(true);
+    const storedTheme = localStorage.getItem('poker-theme') as Theme | null;
+    if (storedTheme && themes.includes(storedTheme)) {
+        setTheme(storedTheme);
+    } else {
+        setTheme('light');
+    }
+  }, []);
   
   if (!mounted) {
     // Avoid rendering the toggle on the server to prevent hydration mismatch
