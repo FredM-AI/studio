@@ -1,4 +1,5 @@
 
+
 'use server';
 
 import type { Player, Event, Season, AppSettings, BlindStructureTemplate } from './definitions';
@@ -33,7 +34,7 @@ export async function getPlayers(): Promise<Player[]> {
       phone: data.phone,
       avatar: data.avatar,
       isGuest: data.isGuest || false,
-      stats: data.stats || { gamesPlayed: 0, wins: 0, finalTables: 0, totalWinnings: 0, totalBuyIns: 0, bestPosition: null, averagePosition: null },
+      stats: data.stats || { gamesPlayed: 0, wins: 0, winRate: 0, finalTables: 0, itmRate: 0, totalWinnings: 0, totalBuyIns: 0, bestPosition: null, averagePosition: null, seasonStats: {}, profitEvolution: [] },
       isActive: data.isActive !== undefined ? data.isActive : true,
       createdAt: data.createdAt,
       updatedAt: data.updatedAt,
@@ -162,4 +163,17 @@ export async function getBlindStructures(): Promise<BlindStructureTemplate[]> {
 export async function saveBlindStructure(structure: BlindStructureTemplate): Promise<void> {
     const blindDocRef = db.collection(BLIND_STRUCTURES_COLLECTION).doc(structure.id);
     await blindDocRef.set(structure);
+}
+
+export async function deleteBlindStructure(structureId: string): Promise<{ success: boolean, message?: string }> {
+    if (!structureId) {
+        return { success: false, message: 'Structure ID is required for deletion.' };
+    }
+    try {
+        await db.collection(BLIND_STRUCTURES_COLLECTION).doc(structureId).delete();
+        return { success: true };
+    } catch (error) {
+        console.error("Error deleting blind structure from Firestore:", error);
+        return { success: false, message: 'Database error while deleting structure.' };
+    }
 }

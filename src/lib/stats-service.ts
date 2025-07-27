@@ -44,17 +44,22 @@ function getPlayerDisplayName(player: Player | undefined): string {
 export async function calculatePlayerOverallStats(
   playerId: string,
   allEvents: Event[],
-  allPlayers: Player[]
+  allPlayers: Player[],
+  allSeasons: Season[],
 ): Promise<PlayerStats> {
   const player = allPlayers.find(p => p.id === playerId);
   const defaultStats: PlayerStats = {
     gamesPlayed: 0,
     wins: 0,
+    winRate: 0,
     finalTables: 0,
+    itmRate: 0,
     totalWinnings: 0,
     totalBuyIns: 0,
     bestPosition: null,
     averagePosition: null,
+    seasonStats: {},
+    profitEvolution: [],
   };
 
   if (!player) {
@@ -67,8 +72,14 @@ export async function calculatePlayerOverallStats(
   let totalWinnings = 0;
   let totalBuyInsCalculated = 0; 
   const positions: number[] = [];
+  const profitEvolution: { eventName: string, eventDate: string, cumulativeProfit: number }[] = [];
+  const seasonStats: { [seasonId: string]: { seasonName: string, gamesPlayed: number, netProfit: number } } = {};
+  let cumulativeProfit = 0;
 
-  const completedEvents = allEvents.filter(event => event.status === 'completed');
+
+  const completedEvents = allEvents
+    .filter(event => event.status === 'completed')
+    .sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
   for (const event of completedEvents) {
     const participated = event.participants.includes(playerId);
@@ -85,11 +96,15 @@ export async function calculatePlayerOverallStats(
     let playerRebuysInEvent = 0;
     const playerResultEntry = event.results.find(r => r.playerId === playerId);
 
+    const prizeWon = playerResultEntry?.prize || 0;
+    const bountiesWon = playerResultEntry?.bountiesWon || 0;
+    const mkoWon = playerResultEntry?.mysteryKoWon || 0;
+    const totalEarningsThisEvent = prizeWon + bountiesWon + mkoWon;
+
+    totalWinnings += totalEarningsThisEvent;
+
     if (playerResultEntry) {
       playerRebuysInEvent = playerResultEntry.rebuys || 0;
-      totalWinnings += (playerResultEntry.prize || 0);
-      totalWinnings += (playerResultEntry.bountiesWon || 0);
-      totalWinnings += (playerResultEntry.mysteryKoWon || 0);
       positions.push(playerResultEntry.position);
 
       if (playerResultEntry.position === 1) {
@@ -107,27 +122,55 @@ export async function calculatePlayerOverallStats(
       }
     }
     
-    const bountyAndMkoCosts = includeBountiesInNetCalc ? (eventBountyValue + eventMysteryKoValue) : 0;
-    const costOfInitialEntry = mainBuyIn + bountyAndMkoCosts;
-    let costOfAllRebuysInEvent = 0;
-    if (playerRebuysInEvent > 0) {
-        const costOfOneFullRebuy = rebuyPrice + bountyAndMkoCosts;
-        costOfAllRebuysInEvent = playerRebuysInEvent * costOfOneFullRebuy;
+    // Investment calculation
+    const investmentInMainPot = mainBuyIn + (playerRebuysInEvent * rebuyPrice);
+    let netResultForEvent = 0;
+    let totalInvestmentForEvent = investmentInMainPot;
+
+    if (includeBountiesInNetCalc) {
+        const bountyAndMkoCostsPerEntry = eventBountyValue + eventMysteryKoValue;
+        const totalInvestmentInExtras = (1 + playerRebuysInEvent) * bountyAndMkoCostsPerEntry;
+        totalInvestmentForEvent += totalInvestmentInExtras;
     }
-    totalBuyInsCalculated += costOfInitialEntry + costOfAllRebuysInEvent;
+    netResultForEvent = totalEarningsThisEvent - totalInvestmentForEvent;
+    totalBuyInsCalculated += totalInvestmentForEvent;
+    
+    cumulativeProfit += netResultForEvent;
+
+    profitEvolution.push({
+      eventName: event.name,
+      eventDate: event.date,
+      cumulativeProfit: cumulativeProfit,
+    });
+    
+    if (event.seasonId) {
+        if (!seasonStats[event.seasonId]) {
+            const season = allSeasons.find(s => s.id === event.seasonId);
+            seasonStats[event.seasonId] = { seasonName: season?.name || 'Unknown Season', gamesPlayed: 0, netProfit: 0 };
+        }
+        seasonStats[event.seasonId].gamesPlayed += 1;
+        seasonStats[event.seasonId].netProfit += netResultForEvent;
+    }
   }
 
   const bestPosition = positions.length > 0 ? Math.min(...positions) : null;
   const averagePosition = positions.length > 0 ? positions.reduce((sum, p) => sum + p, 0) / positions.length : null;
+  const winRate = gamesPlayed > 0 ? (wins / gamesPlayed) * 100 : 0;
+  const itmRate = gamesPlayed > 0 ? (finalTables / gamesPlayed) * 100 : 0;
+
 
   return {
     gamesPlayed,
     wins,
+    winRate,
     finalTables,
+    itmRate,
     totalWinnings,
     totalBuyIns: totalBuyInsCalculated,
     bestPosition,
     averagePosition,
+    seasonStats,
+    profitEvolution,
   };
 }
 

@@ -3,11 +3,25 @@
 export type PlayerStats = {
   gamesPlayed: number;
   wins: number;
+  winRate: number; // Taux de victoire
   finalTables: number;
+  itmRate: number; // Taux de tables finales
   totalWinnings: number;
   totalBuyIns: number;
   bestPosition: number | null;
   averagePosition: number | null;
+  seasonStats: {
+    [seasonId: string]: {
+      seasonName: string;
+      gamesPlayed: number;
+      netProfit: number;
+    }
+  };
+  profitEvolution: {
+    eventName: string;
+    eventDate: string;
+    cumulativeProfit: number;
+  }[];
 };
 
 export type Player = {
