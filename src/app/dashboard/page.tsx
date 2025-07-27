@@ -10,6 +10,7 @@ import { cookies } from 'next/headers';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import SimpleLeaderboardTable from "@/components/SimpleLeaderboardTable";
 import { cn } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
 
 const AUTH_COOKIE_NAME = 'app_session_active';
 
@@ -156,6 +157,10 @@ export default async function DashboardPage() {
   const totalPrizePool = completedSeasonEvents.reduce((acc, event) => acc + event.prizePool.total, 0);
 
   const topLeaderboard = seasonStats?.leaderboard.filter(e => !e.isGuest).slice(0, 10) || [];
+  
+  const recentEvents = [...seasonEvents]
+    .sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+    .slice(0, 3);
 
   return (
     <div className="space-y-8">
@@ -227,12 +232,41 @@ export default async function DashboardPage() {
                  <Card className="hover:shadow-lg transition-shadow">
                     <CardHeader>
                         <CardTitle className="font-headline flex items-center gap-2"><CalendarDays /> Events Calendar</CardTitle>
-                        <CardDescription>View all scheduled events for this season.</CardDescription>
+                        <CardDescription>View upcoming events for this season.</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <Button asChild className="w-full">
+                        <div className="space-y-3">
+                            {recentEvents.length > 0 ? (
+                                recentEvents.map(event => (
+                                    <div key={event.id} className="flex items-center justify-between text-sm p-2 bg-muted/40 rounded-md">
+                                        <div>
+                                            <p className="font-medium truncate text-foreground">{event.name}</p>
+                                            <p className="text-xs text-muted-foreground">{new Date(event.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}</p>
+                                        </div>
+                                        <Badge
+                                          variant={
+                                            event.status === 'completed' ? 'default' :
+                                            event.status === 'active' ? 'secondary' :
+                                            event.status === 'cancelled' ? 'destructive' :
+                                            'outline'
+                                          }
+                                          className={cn(
+                                            'text-xs',
+                                            event.status === 'active' && 'bg-green-500 text-white',
+                                            event.status === 'draft' && 'bg-yellow-100 text-yellow-800'
+                                          )}
+                                        >
+                                          {event.status.charAt(0).toUpperCase() + event.status.slice(1)}
+                                        </Badge>
+                                    </div>
+                                ))
+                            ) : (
+                                <p className="text-sm text-muted-foreground text-center py-4">No events scheduled.</p>
+                            )}
+                        </div>
+                        <Button asChild className="w-full mt-4">
                            <Link href={`/seasons/${currentSeason.id}`}>
-                                Open Calendar View
+                                Open Full Calendar View
                            </Link>
                         </Button>
                     </CardContent>
