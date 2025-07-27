@@ -15,7 +15,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import SeasonLeaderboardTable from "@/app/seasons/[seasonId]/SeasonLeaderboardTable";
 import SeasonDetailsCalendar from "@/app/seasons/[seasonId]/SeasonDetailsCalendar";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 
 const AUTH_COOKIE_NAME = 'app_session_active';
 
@@ -47,7 +47,7 @@ async function getCurrentSeasonData(): Promise<{ currentSeason?: Season; nextSea
     .sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime());
   
   const now = new Date();
-  const today = new Date(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+  const today = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
 
   const seasonToDisplay = sortedSeasons.find(season => new Date(season.startDate) <= today);
   
@@ -186,7 +186,7 @@ export default async function DashboardPage() {
             <CardDescription className="text-lg font-medium">{nextSeason.name}</CardDescription>
           </CardHeader>
           <CardContent className="text-center">
-             <p className="text-muted-foreground">Starts on {format(new Date(nextSeason.startDate), 'EEEE, MMMM d, yyyy')}</p>
+             <p className="text-muted-foreground">Starts on {format(parseISO(nextSeason.startDate), 'EEEE, MMMM d, yyyy')}</p>
           </CardContent>
         </Card>
       )}
@@ -195,8 +195,8 @@ export default async function DashboardPage() {
         <div>
           <h1 className="font-headline text-3xl font-bold">{currentSeason.isActive ? 'Current Season' : 'Last Season'}: {currentSeason.name}</h1>
           <p className="text-muted-foreground">
-            {format(new Date(currentSeason.startDate), 'MMMM d, yyyy')} - 
-            {currentSeason.endDate ? format(new Date(currentSeason.endDate), 'MMMM d, yyyy') : 'Ongoing'}
+            {format(parseISO(currentSeason.startDate), 'MMMM d, yyyy')} - 
+            {currentSeason.endDate ? format(parseISO(currentSeason.endDate), 'MMMM d, yyyy') : 'Ongoing'}
           </p>
         </div>
         {isAuthenticated && (
@@ -315,4 +315,3 @@ export default async function DashboardPage() {
     </div>
   );
 }
-
