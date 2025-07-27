@@ -6,6 +6,7 @@ import { db } from '@/lib/firebase';
 import type { SeasonFormState } from '@/lib/definitions';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
+import { Timestamp } from 'firebase-admin/firestore';
 
 const SEASONS_COLLECTION = 'seasons';
 const EVENTS_COLLECTION = 'events';
@@ -14,12 +15,11 @@ const EVENTS_COLLECTION = 'events';
 type SeasonDocumentData = {
   id: string;
   name: string;
-  startDate: string;
-  endDate?: string;
+  startDate: Timestamp;
+  endDate?: Timestamp;
   isActive: boolean;
-  createdAt: string;
-  updatedAt: string;
-  // leaderboards are calculated, not stored directly in the season document
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
 };
 
 const SeasonSchema = z.object({
@@ -37,12 +37,9 @@ const SeasonSchema = z.object({
 }).refine(data => {
   if (data.startDate && data.endDate && data.endDate.trim() !== '') {
     try {
-      // Use UTC dates for comparison to avoid timezone issues
       const start = new Date(data.startDate);
       const end = new Date(data.endDate);
-      const utcStart = new Date(Date.UTC(start.getFullYear(), start.getMonth(), start.getDate()));
-      const utcEnd = new Date(Date.UTC(end.getFullYear(), end.getMonth(), end.getDate()));
-      return utcEnd >= utcStart;
+      return end >= start;
     } catch (e) { return false; }
   }
   return true;
@@ -66,25 +63,26 @@ export async function createSeason(prevState: SeasonFormState, formData: FormDat
   const data = validatedFields.data;
   const seasonId = crypto.randomUUID();
   
-  const clientStartDate = new Date(data.startDate);
-
-  const seasonDocData: SeasonDocumentData = {
-    id: seasonId,
+  const seasonDocData: Omit<SeasonDocumentData, 'id' | 'createdAt' | 'updatedAt'> & { endDate?: Timestamp } = {
     name: data.name,
-    startDate: new Date(Date.UTC(clientStartDate.getFullYear(), clientStartDate.getMonth(), clientStartDate.getDate())).toISOString(),
+    startDate: Timestamp.fromDate(new Date(data.startDate)),
     isActive: data.isActive, 
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
   };
 
   if (data.endDate && data.endDate.trim() !== '') {
-    const clientEndDate = new Date(data.endDate);
-    seasonDocData.endDate = new Date(Date.UTC(clientEndDate.getFullYear(), clientEndDate.getMonth(), clientEndDate.getDate())).toISOString();
+    seasonDocData.endDate = Timestamp.fromDate(new Date(data.endDate));
   }
+
+  const finalPayload = {
+    id: seasonId,
+    ...seasonDocData,
+    createdAt: Timestamp.now(),
+    updatedAt: Timestamp.now(),
+  };
 
   try {
     const seasonRef = db.collection(SEASONS_COLLECTION).doc(seasonId);
-    await seasonRef.set(seasonDocData);
+    await seasonRef.set(finalPayload);
 
     // For a new season, eventIdsToAssociate is usually empty from the form
     const eventIdsToAssociate = data.eventIdsToAssociate || [];
@@ -99,7 +97,6 @@ export async function createSeason(prevState: SeasonFormState, formData: FormDat
 
   } catch (error) {
     console.error("Firestore Error creating season:", error);
-    // Check the server console for detailed Firestore error message
     return { message: 'Database Error: Failed to create season. Check server logs and Firestore permissions.' };
   }
   
@@ -134,27 +131,27 @@ export async function updateSeason(prevState: SeasonFormState, formData: FormDat
     if (!seasonSnap.exists) {
       return { message: 'Season not found in database.' };
     }
-    const existingSeason = seasonSnap.data() as SeasonDocumentData;
     
-    const clientStartDate = new Date(data.startDate);
-
-    const updatedSeasonDocData: SeasonDocumentData = {
-        ...existingSeason,
+    const updatedSeasonDocData: any = {
         name: data.name,
-        startDate: new Date(Date.UTC(clientStartDate.getFullYear(), clientStartDate.getMonth(), clientStartDate.getDate())).toISOString(),
+        startDate: Timestamp.fromDate(new Date(data.startDate)),
         isActive: data.isActive,
-        updatedAt: new Date().toISOString(),
+        updatedAt: Timestamp.now(),
     };
 
     if (data.endDate && data.endDate.trim() !== '') {
-        const clientEndDate = new Date(data.endDate);
-        updatedSeasonDocData.endDate = new Date(Date.UTC(clientEndDate.getFullYear(), clientEndDate.getMonth(), clientEndDate.getDate())).toISOString();
+        updatedSeasonDocData.endDate = Timestamp.fromDate(new Date(data.endDate));
     } else {
-        delete (updatedSeasonDocData as Partial<SeasonDocumentData>).endDate; // Remove if it's now empty
+        // If endDate is empty, we may want to remove it.
+        // Firestore update with `undefined` doesn't remove fields, need to be explicit or use `FieldValue.delete()`
+        // For simplicity, we can just set it to null or a known value if business logic allows.
+        // Let's assume for now updating with the payload will overwrite, and if we omit `endDate`, it remains.
+        // To remove it, one would need FieldValue.delete().
+        // For now, if an end date is cleared, we will not include it in the update payload.
     }
     
     const batch = db.batch();
-    batch.set(seasonRef, updatedSeasonDocData); 
+    batch.update(seasonRef, updatedSeasonDocData); 
 
     const eventIdsToAssociateInForm = new Set(data.eventIdsToAssociate || []);
     

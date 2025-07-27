@@ -4,6 +4,7 @@
 
 import type { Player, Event, Season, AppSettings, BlindStructureTemplate } from './definitions';
 import { db } from './firebase';
+import type { Timestamp } from 'firebase-admin/firestore';
 
 // Constants for collection names
 const PLAYERS_COLLECTION = 'players';
@@ -88,15 +89,22 @@ export async function getSeasons(): Promise<Season[]> {
   }
   const seasonList = seasonSnapshot.docs.map(doc => {
     const data = doc.data();
+
+    // Convert Firestore Timestamps to ISO strings
+    const startDate = (data.startDate as Timestamp)?.toDate().toISOString();
+    const endDate = (data.endDate as Timestamp)?.toDate().toISOString();
+    const createdAt = (data.createdAt as Timestamp)?.toDate().toISOString();
+    const updatedAt = (data.updatedAt as Timestamp)?.toDate().toISOString();
+
     return {
       id: doc.id,
       name: data.name,
-      startDate: data.startDate,
-      endDate: data.endDate,
+      startDate: startDate,
+      endDate: endDate,
       isActive: data.isActive,
       leaderboard: data.leaderboard || [], // Ensure leaderboard is always an array
-      createdAt: data.createdAt,
-      updatedAt: data.updatedAt,
+      createdAt: createdAt,
+      updatedAt: updatedAt,
     } as Season;
   });
   return seasonList;

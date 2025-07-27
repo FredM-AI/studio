@@ -1,5 +1,7 @@
 
 
+import type { Timestamp } from 'firebase/firestore';
+
 export type PlayerStats = {
   gamesPlayed: number;
   wins: number;
