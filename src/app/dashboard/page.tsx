@@ -160,7 +160,7 @@ export default async function DashboardPage() {
   
   const totalPrizePool = completedSeasonEvents.reduce((acc, event) => acc + event.prizePool.total, 0);
 
-  const topLeaderboard = seasonStats?.leaderboard.filter(e => !e.isGuest).slice(0, 10) || [];
+  const fullLeaderboard = seasonStats?.leaderboard || [];
   
   const recentEvents = [...seasonEvents]
     .sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime())
@@ -213,7 +213,7 @@ export default async function DashboardPage() {
                 <CardHeader className="flex flex-row items-center justify-between">
                     <div>
                         <CardTitle className="font-headline">Season Leaderboard</CardTitle>
-                        <CardDescription>Top 10 players based on total net profit/loss.</CardDescription>
+                        <CardDescription>Players ranked on total net profit/loss.</CardDescription>
                     </div>
                      <Button variant="outline" size="sm" asChild>
                        <Link href={`/seasons/${currentSeason.id}`}>
@@ -223,9 +223,9 @@ export default async function DashboardPage() {
                 </CardHeader>
                 <CardContent>
                   <ScrollArea className="h-72">
-                    {topLeaderboard.length > 0 ? (
+                    {fullLeaderboard.length > 0 ? (
                         <SimpleLeaderboardTable 
-                          leaderboardData={topLeaderboard}
+                          leaderboardData={fullLeaderboard}
                         />
                     ) : (
                         <p className="text-muted-foreground text-center py-8">No completed events with results in this season yet to generate a leaderboard.</p>
