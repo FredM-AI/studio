@@ -46,15 +46,15 @@ async function getCurrentSeasonData(): Promise<{ currentSeason?: Season; nextSea
     .sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime());
   
   const now = new Date();
-  // Get today's date in UTC by taking the current date and removing the time part.
-  const todayUtc = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+  // Get today's date by taking the current date and removing the time part.
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
   // Find the most recent season that has started (date is in the past or today UTC)
-  const seasonToDisplay = sortedSeasons.find(season => new Date(season.startDate) <= todayUtc);
+  const seasonToDisplay = sortedSeasons.find(season => new Date(season.startDate) <= today);
   
   // Find the next upcoming season (date is in the future UTC)
   const futureSeasons = sortedSeasons
-    .filter(season => new Date(season.startDate) > todayUtc)
+    .filter(season => new Date(season.startDate) > today)
     .sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime());
   const nextSeason = futureSeasons.length > 0 ? futureSeasons[0] : undefined;
 
@@ -188,7 +188,7 @@ export default async function DashboardPage() {
             <CardDescription className="text-lg font-medium">{nextSeason.name}</CardDescription>
           </CardHeader>
           <CardContent className="text-center">
-             <p className="text-muted-foreground">Starts on {new Date(nextSeason.startDate).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' })}</p>
+             <p className="text-muted-foreground">Starts on {new Date(nextSeason.startDate).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
           </CardContent>
         </Card>
       )}
@@ -197,8 +197,8 @@ export default async function DashboardPage() {
         <div>
           <h1 className="font-headline text-3xl font-bold">{currentSeason.isActive ? 'Current Season' : 'Last Season'}: {currentSeason.name}</h1>
           <p className="text-muted-foreground">
-            {new Date(currentSeason.startDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' })} - 
-            {currentSeason.endDate ? new Date(currentSeason.endDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' }) : 'Ongoing'}
+            {new Date(currentSeason.startDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })} - 
+            {currentSeason.endDate ? new Date(currentSeason.endDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : 'Ongoing'}
           </p>
         </div>
         {isAuthenticated && (
@@ -273,7 +273,7 @@ export default async function DashboardPage() {
                                     <div key={event.id} className="flex items-center justify-between text-sm p-2 bg-muted/40 rounded-md">
                                         <div>
                                             <p className="font-medium truncate text-foreground">{event.name}</p>
-                                            <p className="text-xs text-muted-foreground">{new Date(event.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', timeZone: 'UTC' })}</p>
+                                            <p className="text-xs text-muted-foreground">{new Date(event.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}</p>
                                         </div>
                                         <Badge
                                           variant={
