@@ -37,11 +37,10 @@ async function getCurrentSeasonData(): Promise<{ currentSeason?: Season; allEven
   const allEvents = await getEvents();
   const allPlayers = await getPlayers();
 
-  const activeSeasons = allSeasons
-    .filter(s => s.isActive)
+  const sortedSeasons = allSeasons
     .sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime());
 
-  const currentSeason = activeSeasons.length > 0 ? activeSeasons[0] : undefined;
+  const currentSeason = sortedSeasons.length > 0 ? sortedSeasons[0] : undefined;
   
   let seasonStats: SeasonStats | undefined = undefined;
   let seasonEvents: EventType[] = []; // Tous les événements de la saison (draft, active, completed)
@@ -127,11 +126,11 @@ export default async function DashboardPage() {
         <Card className="max-w-lg text-center">
           <CardHeader>
             <Info className="mx-auto h-12 w-12 text-primary mb-3" />
-            <CardTitle className="font-headline text-2xl">No Active Season Found</CardTitle>
+            <CardTitle className="font-headline text-2xl">No Season Found</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-muted-foreground mb-6">
-              There is no active season currently running. Please create a new season or activate an existing one to see the dashboard.
+              There is no season currently configured. Please create a new season to see the dashboard.
             </p>
             {isAuthenticated ? (
               <Button asChild>
