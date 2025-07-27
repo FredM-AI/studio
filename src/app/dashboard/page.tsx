@@ -11,6 +11,9 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import SimpleLeaderboardTable from "@/components/SimpleLeaderboardTable";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import SeasonLeaderboardTable from "@/app/seasons/[seasonId]/SeasonLeaderboardTable";
+import SeasonDetailsCalendar from "@/app/seasons/[seasonId]/SeasonDetailsCalendar";
 
 const AUTH_COOKIE_NAME = 'app_session_active';
 
@@ -211,11 +214,26 @@ export default async function DashboardPage() {
                         <CardTitle className="font-headline">Season Leaderboard</CardTitle>
                         <CardDescription>Top 10 players based on total net profit/loss.</CardDescription>
                     </div>
-                     <Button asChild variant="outline" size="sm">
-                        <Link href={`/seasons/${currentSeason.id}`}>
-                          <ArrowRight className="mr-2 h-4 w-4" /> View Full Details
-                        </Link>
-                    </Button>
+                     <Dialog>
+                        <DialogTrigger asChild>
+                           <Button variant="outline" size="sm">
+                               <ArrowRight className="mr-2 h-4 w-4" /> View Full Details
+                           </Button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-4xl">
+                           <DialogHeader>
+                              <DialogTitle>Full Season Leaderboard: {currentSeason.name}</DialogTitle>
+                           </DialogHeader>
+                           {seasonStats && seasonStats.leaderboard.length > 0 ? (
+                                <SeasonLeaderboardTable 
+                                  leaderboardData={seasonStats.leaderboard}
+                                  seasonEvents={completedSeasonEvents}
+                                />
+                              ) : (
+                                <p className="text-muted-foreground text-center py-8">No leaderboard data to display.</p>
+                              )}
+                        </DialogContent>
+                     </Dialog>
                 </CardHeader>
                 <CardContent>
                 {topLeaderboard.length > 0 ? (
@@ -264,24 +282,19 @@ export default async function DashboardPage() {
                                 <p className="text-sm text-muted-foreground text-center py-4">No events scheduled.</p>
                             )}
                         </div>
-                        <Button asChild className="w-full mt-4">
-                           <Link href={`/seasons/${currentSeason.id}`}>
-                                Open Full Calendar View
-                           </Link>
-                        </Button>
-                    </CardContent>
-                 </Card>
-                  <Card className="hover:shadow-lg transition-shadow">
-                    <CardHeader>
-                        <CardTitle className="font-headline flex items-center gap-2"><TrendingUp/> Player Progress</CardTitle>
-                        <CardDescription>Track cumulative profit/loss over time.</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <Button asChild className="w-full">
-                           <Link href={`/seasons/${currentSeason.id}`}>
-                                View Progress Chart
-                           </Link>
-                        </Button>
+                         <Dialog>
+                            <DialogTrigger asChild>
+                               <Button className="w-full mt-4">
+                                  Open Full Calendar View
+                               </Button>
+                            </DialogTrigger>
+                            <DialogContent className="max-w-fit">
+                               <DialogHeader>
+                                  <DialogTitle>Event Calendar: {currentSeason.name}</DialogTitle>
+                               </DialogHeader>
+                               <SeasonDetailsCalendar events={seasonEvents} />
+                            </DialogContent>
+                         </Dialog>
                     </CardContent>
                  </Card>
             </div>

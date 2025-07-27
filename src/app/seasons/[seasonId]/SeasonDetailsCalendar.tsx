@@ -147,7 +147,7 @@ export default function SeasonDetailsCalendar({ events }: SeasonDetailsCalendarP
         onSelect={() => {}} // Can be used if direct day selection styling is desired
         month={currentBaseMonth} 
         onMonthChange={setCurrentBaseMonth} 
-        numberOfMonths={3}
+        numberOfMonths={2}
         className="rounded-md border shadow"
         modifiers={eventDateModifiers}
         modifiersStyles={eventDateModifierStyles}
