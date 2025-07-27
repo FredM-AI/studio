@@ -14,6 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import SeasonLeaderboardTable from "@/app/seasons/[seasonId]/SeasonLeaderboardTable";
 import SeasonDetailsCalendar from "@/app/seasons/[seasonId]/SeasonDetailsCalendar";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 const AUTH_COOKIE_NAME = 'app_session_active';
 
@@ -214,35 +215,22 @@ export default async function DashboardPage() {
                         <CardTitle className="font-headline">Season Leaderboard</CardTitle>
                         <CardDescription>Top 10 players based on total net profit/loss.</CardDescription>
                     </div>
-                     <Dialog>
-                        <DialogTrigger asChild>
-                           <Button variant="outline" size="sm">
-                               <ArrowRight className="mr-2 h-4 w-4" /> View Full Details
-                           </Button>
-                        </DialogTrigger>
-                        <DialogContent className="max-w-4xl">
-                           <DialogHeader>
-                              <DialogTitle>Full Season Leaderboard: {currentSeason.name}</DialogTitle>
-                           </DialogHeader>
-                           {seasonStats && seasonStats.leaderboard.length > 0 ? (
-                                <SeasonLeaderboardTable 
-                                  leaderboardData={seasonStats.leaderboard}
-                                  seasonEvents={completedSeasonEvents}
-                                />
-                              ) : (
-                                <p className="text-muted-foreground text-center py-8">No leaderboard data to display.</p>
-                              )}
-                        </DialogContent>
-                     </Dialog>
+                     <Button variant="outline" size="sm" asChild>
+                       <Link href={`/seasons/${currentSeason.id}`}>
+                           <ArrowRight className="mr-2 h-4 w-4" /> View Full Details
+                       </Link>
+                     </Button>
                 </CardHeader>
                 <CardContent>
-                {topLeaderboard.length > 0 ? (
-                    <SimpleLeaderboardTable 
-                      leaderboardData={topLeaderboard}
-                    />
-                ) : (
-                    <p className="text-muted-foreground text-center py-8">No completed events with results in this season yet to generate a leaderboard.</p>
-                )}
+                  <ScrollArea className="h-72">
+                    {topLeaderboard.length > 0 ? (
+                        <SimpleLeaderboardTable 
+                          leaderboardData={topLeaderboard}
+                        />
+                    ) : (
+                        <p className="text-muted-foreground text-center py-8">No completed events with results in this season yet to generate a leaderboard.</p>
+                    )}
+                  </ScrollArea>
                 </CardContent>
             </Card>
 
