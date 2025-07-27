@@ -194,6 +194,19 @@ export default async function DashboardPage() {
           </Button>
         )}
       </div>
+      
+      {nextSeason && (
+        <Card className="bg-primary/10 border-primary/20">
+          <CardHeader className="text-center">
+            <Sparkles className="mx-auto h-8 w-8 text-primary mb-2"/>
+            <CardTitle className="font-headline text-2xl">New Season Coming Soon!</CardTitle>
+            <CardDescription className="text-lg font-medium">{nextSeason.name}</CardDescription>
+          </CardHeader>
+          <CardContent className="text-center">
+             <p className="text-muted-foreground">Starts on {new Date(nextSeason.startDate).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+          </CardContent>
+        </Card>
+      )}
 
        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <StatCard 
@@ -217,19 +230,6 @@ export default async function DashboardPage() {
           />
           <PodiumCard event={lastCompletedEvent} players={allPlayers} />
       </div>
-      
-      {nextSeason && (
-        <Card className="bg-primary/10 border-primary/20">
-          <CardHeader className="text-center">
-            <Sparkles className="mx-auto h-8 w-8 text-primary mb-2"/>
-            <CardTitle className="font-headline text-2xl">New Season Coming Soon!</CardTitle>
-            <CardDescription className="text-lg font-medium">{nextSeason.name}</CardDescription>
-          </CardHeader>
-          <CardContent className="text-center">
-             <p className="text-muted-foreground">Starts on {new Date(nextSeason.startDate).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
-          </CardContent>
-        </Card>
-      )}
 
        <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
             <Card className="lg:col-span-3">
@@ -314,4 +314,3 @@ export default async function DashboardPage() {
     </div>
   );
 }
-
