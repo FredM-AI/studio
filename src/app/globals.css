@@ -46,32 +46,32 @@ body {
   }
 
   .dark {
-    --background: 240 10% 3.9%; /* Dark Charcoal */
-    --foreground: 0 0% 98%; /* Almost White */
+    --background: 222 47% 11%; /* Midnight Blue */
+    --foreground: 210 40% 98%;
 
-    --card: 240 10% 10%;
-    --card-foreground: 0 0% 98%;
+    --card: 222 47% 13%; /* Darker Midnight Blue for cards */
+    --card-foreground: 210 40% 98%;
 
-    --popover: 240 10% 3.9%;
-    --popover-foreground: 0 0% 98%;
+    --popover: 222 47% 11%;
+    --popover-foreground: 210 40% 98%;
 
     --primary: 355 81% 48%; /* Brighter Bull Red for dark mode */
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 240 3.7% 15.9%;
-    --secondary-foreground: 0 0% 98%;
+    --secondary: 217 33% 17%;
+    --secondary-foreground: 210 40% 98%;
 
-    --muted: 240 3.7% 15.9%;
-    --muted-foreground: 240 5% 64.9%;
+    --muted: 217 33% 17%;
+    --muted-foreground: 215 20% 65%;
 
-    --accent: 240 3.7% 15.9%;
-    --accent-foreground: 0 0% 98%;
+    --accent: 217 33% 17%;
+    --accent-foreground: 210 40% 98%;
 
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
+    --destructive: 0 63% 31%;
+    --destructive-foreground: 210 40% 98%;
 
-    --border: 45 35% 30%; /* Gold border for dark theme */
-    --input: 240 3.7% 15.9%;
+    --border: 217 33% 25%;
+    --input: 217 33% 17%;
     --ring: 355 81% 48%;
   }
 
