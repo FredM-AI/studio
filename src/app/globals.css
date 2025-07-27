@@ -79,10 +79,10 @@ body {
     --background: 48 28% 45%; /* Desaturated Gold/Olive */
     --foreground: 48 83% 96%; /* Off-white/Cream */
 
-    --card: 48 18% 12%; /* Very dark, almost black desaturated olive */
+    --card: 222 47% 13%; /* Midnight Blue for cards */
     --card-foreground: 48 83% 96%;
 
-    --popover: 48 18% 10%;
+    --popover: 222 47% 11%; /* Midnight Blue for popovers */
     --popover-foreground: 48 83% 96%;
 
     --primary: 0 65% 51%; /* Rich Red */
