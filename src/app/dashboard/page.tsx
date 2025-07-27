@@ -186,7 +186,7 @@ export default async function DashboardPage() {
             <CardDescription className="text-lg font-medium">{nextSeason.name}</CardDescription>
           </CardHeader>
           <CardContent className="text-center">
-             <p className="text-muted-foreground">Starts on {new Date(nextSeason.startDate).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+             <p className="text-muted-foreground">Starts on {new Date(nextSeason.startDate).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' })}</p>
           </CardContent>
         </Card>
       )}
@@ -195,8 +195,8 @@ export default async function DashboardPage() {
         <div>
           <h1 className="font-headline text-3xl font-bold">{currentSeason.isActive ? 'Current Season' : 'Last Season'}: {currentSeason.name}</h1>
           <p className="text-muted-foreground">
-            {new Date(currentSeason.startDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })} - 
-            {currentSeason.endDate ? new Date(currentSeason.endDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : 'Ongoing'}
+            {new Date(currentSeason.startDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' })} - 
+            {currentSeason.endDate ? new Date(currentSeason.endDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' }) : 'Ongoing'}
           </p>
         </div>
         {isAuthenticated && (
@@ -271,7 +271,7 @@ export default async function DashboardPage() {
                                     <div key={event.id} className="flex items-center justify-between text-sm p-2 bg-muted/40 rounded-md">
                                         <div>
                                             <p className="font-medium truncate text-foreground">{event.name}</p>
-                                            <p className="text-xs text-muted-foreground">{new Date(event.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}</p>
+                                            <p className="text-xs text-muted-foreground">{new Date(event.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', timeZone: 'UTC' })}</p>
                                         </div>
                                         <Badge
                                           variant={
