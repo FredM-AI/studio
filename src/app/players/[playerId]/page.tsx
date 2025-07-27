@@ -136,7 +136,7 @@ export default function PlayerDetailPage() {
           <div className="flex-grow">
             <CardTitle className="font-headline text-3xl mb-1">{player.firstName} {player.lastName}</CardTitle>
             {player.nickname && <CardDescription className="text-lg text-primary font-medium">"{player.nickname}"</CardDescription>}
-            <div className="flex items-center gap-2 mt-2">
+             <div className="flex items-center gap-3 mt-2">
                 <div className={`inline-flex items-center gap-2 px-3 py-1 text-sm rounded-full font-medium ${
                     player.isActive 
                     ? 'bg-green-100 text-green-700 dark:bg-green-700 dark:text-green-100' 
@@ -150,6 +150,10 @@ export default function PlayerDetailPage() {
                         <UserCheck className="h-4 w-4" /> Guest
                     </div>
                 )}
+                 <div className="flex items-center text-sm gap-3 text-muted-foreground">
+                    <span className="flex items-center gap-1.5"><Mail className="h-4 w-4" />{player.email}</span>
+                    {player.phone && <span className="flex items-center gap-1.5"><Phone className="h-4 w-4" />{player.phone}</span>}
+                 </div>
             </div>
           </div>
           {isAuthenticated && (
@@ -160,29 +164,16 @@ export default function PlayerDetailPage() {
             </Button>
           )}
         </CardHeader>
-        <CardContent className="p-6 grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="space-y-4 md:col-span-1">
-            <h3 className="font-headline text-xl text-primary border-b pb-2">Contact</h3>
-            <ul className="space-y-3 text-sm">
-              <li className="flex items-center gap-3">
-                <Mail className="h-5 w-5 text-muted-foreground" />
-                <span>{player.email}</span>
-              </li>
-              {player.phone && (
-                <li className="flex items-center gap-3">
-                  <Phone className="h-5 w-5 text-muted-foreground" />
-                  <span>{player.phone}</span>
-                </li>
-              )}
-            </ul>
-             <h3 className="font-headline text-xl text-primary border-b pb-2 pt-4">Performance Metrics</h3>
+        <CardContent className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="space-y-4">
+            <h3 className="font-headline text-xl text-primary border-b pb-2">Performance Metrics</h3>
              <div className="space-y-2">
                  <StatCard icon={<Trophy className="h-5 w-5 text-yellow-500"/>} title="Win Rate" value={calculatedStats.winRate.toFixed(1)} unit="%" />
                  <StatCard icon={<Target className="h-5 w-5 text-green-500"/>} title="ITM / Final Table Rate" value={calculatedStats.itmRate.toFixed(1)} unit="%" />
                  <StatCard icon={<BarChartHorizontal className="h-5 w-5 text-blue-500"/>} title="Average Position" value={calculatedStats.averagePosition ? calculatedStats.averagePosition.toFixed(2) : 'N/A'} />
              </div>
           </div>
-           <div className="space-y-4 md:col-span-2">
+           <div className="space-y-4">
                 <h3 className="font-headline text-xl text-primary border-b pb-2">Overall Statistics</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <StatCard icon={<Percent className="h-5 w-5" />} title="Games Played" value={calculatedStats.gamesPlayed} />
