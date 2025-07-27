@@ -5,7 +5,7 @@ import { calculateSeasonStats, type SeasonStats, type LeaderboardEntry } from '@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import Link from 'next/link';
-import { BarChart3, CalendarDays, TrendingUp, Edit, PlusCircle, Info, LogIn, Trophy, Award, Users, DollarSign, ArrowRight, Medal } from 'lucide-react';
+import { BarChart3, CalendarDays, TrendingUp, Edit, PlusCircle, Info, LogIn, Trophy, Award, Users, DollarSign, ArrowRight, Medal, Sparkles } from 'lucide-react';
 import { cookies } from 'next/headers';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import SimpleLeaderboardTable from "@/components/SimpleLeaderboardTable";
@@ -37,7 +37,7 @@ const getInitials = (firstName?: string, lastName?: string) => {
 };
 
 
-async function getCurrentSeasonData(): Promise<{ currentSeason?: Season; allEvents: EventType[]; allPlayers: Player[]; seasonStats?: SeasonStats, seasonEvents: EventType[] }> {
+async function getCurrentSeasonData(): Promise<{ currentSeason?: Season; nextSeason?: Season; allEvents: EventType[]; allPlayers: Player[]; seasonStats?: SeasonStats, seasonEvents: EventType[] }> {
   const allSeasons = await getSeasons();
   const allEvents = await getEvents();
   const allPlayers = await getPlayers();
@@ -49,6 +49,13 @@ async function getCurrentSeasonData(): Promise<{ currentSeason?: Season; allEven
   
   // Find the most recent season that has started
   const seasonToDisplay = sortedSeasons.find(season => new Date(season.startDate) <= today);
+  
+  // Find the next upcoming season
+  const futureSeasons = sortedSeasons
+    .filter(season => new Date(season.startDate) > today)
+    .sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime());
+  const nextSeason = futureSeasons.length > 0 ? futureSeasons[0] : undefined;
+
 
   let seasonStats: SeasonStats | undefined = undefined;
   let seasonEvents: EventType[] = []; // All events for the selected season (draft, active, completed)
@@ -58,7 +65,7 @@ async function getCurrentSeasonData(): Promise<{ currentSeason?: Season; allEven
     seasonEvents = allEvents.filter(event => event.seasonId === seasonToDisplay.id).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
   }
   
-  return { currentSeason: seasonToDisplay, allEvents, allPlayers, seasonStats, seasonEvents };
+  return { currentSeason: seasonToDisplay, nextSeason, allEvents, allPlayers, seasonStats, seasonEvents };
 }
 
 const StatCard = ({ icon, title, value, footer, valueClassName }: { icon: React.ReactNode, title: string, value: string | number, footer: React.ReactNode, valueClassName?: string}) => (
@@ -126,7 +133,7 @@ export default async function DashboardPage() {
   const cookieStore = cookies();
   const isAuthenticated = cookieStore.get(AUTH_COOKIE_NAME)?.value === 'true';
 
-  const { currentSeason, allPlayers, seasonStats, seasonEvents } = await getCurrentSeasonData();
+  const { currentSeason, nextSeason, allPlayers, seasonStats, seasonEvents } = await getCurrentSeasonData();
 
   if (!currentSeason) {
     return (
@@ -210,6 +217,19 @@ export default async function DashboardPage() {
           />
           <PodiumCard event={lastCompletedEvent} players={allPlayers} />
       </div>
+      
+      {nextSeason && (
+        <Card className="bg-primary/10 border-primary/20">
+          <CardHeader className="text-center">
+            <Sparkles className="mx-auto h-8 w-8 text-primary mb-2"/>
+            <CardTitle className="font-headline text-2xl">New Season Coming Soon!</CardTitle>
+            <CardDescription className="text-lg font-medium">{nextSeason.name}</CardDescription>
+          </CardHeader>
+          <CardContent className="text-center">
+             <p className="text-muted-foreground">Starts on {new Date(nextSeason.startDate).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+          </CardContent>
+        </Card>
+      )}
 
        <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
             <Card className="lg:col-span-3">
@@ -294,3 +314,4 @@ export default async function DashboardPage() {
     </div>
   );
 }
+
