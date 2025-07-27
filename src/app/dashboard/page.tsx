@@ -44,17 +44,16 @@ async function getCurrentSeasonData(): Promise<{ currentSeason?: Season; nextSea
   const allPlayers = await getPlayers();
 
   const sortedSeasons = allSeasons
-    .sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime());
+    .sort((a, b) => parseISO(b.startDate).getTime() - parseISO(a.startDate).getTime());
   
-  // Use UTC date for comparison to avoid timezone issues
   const now = new Date();
   const today = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
 
-  const seasonToDisplay = sortedSeasons.find(season => new Date(season.startDate) <= today);
+  const seasonToDisplay = sortedSeasons.find(season => parseISO(season.startDate) <= today);
   
   const futureSeasons = sortedSeasons
-    .filter(season => new Date(season.startDate) > today)
-    .sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime());
+    .filter(season => parseISO(season.startDate) > today)
+    .sort((a, b) => parseISO(a.startDate).getTime() - parseISO(b.startDate).getTime());
   const nextSeason = futureSeasons.length > 0 ? futureSeasons[0] : undefined;
 
 
@@ -179,12 +178,6 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-8">
-      {nextSeason && (
-        <pre className="bg-muted p-4 rounded-md overflow-x-auto text-xs">
-          <code>{JSON.stringify(nextSeason, null, 2)}</code>
-        </pre>
-      )}
-
       {nextSeason && (
         <Card className="bg-accent/50 border-accent/70">
           <CardHeader className="text-center">
