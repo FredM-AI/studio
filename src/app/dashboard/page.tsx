@@ -5,10 +5,11 @@ import { calculateSeasonStats, type SeasonStats, type LeaderboardEntry } from '@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import Link from 'next/link';
-import { BarChart3, CalendarDays, TrendingUp, Edit, PlusCircle, Info, LogIn, Trophy, Award, Users, DollarSign, ArrowRight } from 'lucide-react';
+import { BarChart3, CalendarDays, TrendingUp, Edit, PlusCircle, Info, LogIn, Trophy, Award, Users, DollarSign, ArrowRight, Medal } from 'lucide-react';
 import { cookies } from 'next/headers';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import SimpleLeaderboardTable from "@/components/SimpleLeaderboardTable";
+import { cn } from "@/lib/utils";
 
 const AUTH_COOKIE_NAME = 'app_session_active';
 
@@ -66,6 +67,54 @@ const StatCard = ({ icon, title, value, footer, valueClassName }: { icon: React.
     </Card>
 )
 
+const PodiumCard = ({ event, players }: { event?: EventType, players: Player[]}) => {
+    if (!event) {
+        return (
+             <Card className="hover:shadow-lg transition-shadow">
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                    <CardTitle className="text-sm font-medium">Last Event Podium</CardTitle>
+                    <Award className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                    <div className="flex items-center justify-center h-full text-sm text-muted-foreground">
+                        No completed events yet.
+                    </div>
+                </CardContent>
+            </Card>
+        )
+    }
+
+    const podiumResults = event.results.filter(r => r.position <= 3).sort((a, b) => a.position - b.position);
+    
+    return (
+        <Card className="hover:shadow-lg transition-shadow">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-sm font-medium">Last Event Podium</CardTitle>
+                 <Trophy className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+                <div className="space-y-2">
+                    {podiumResults.map(result => {
+                        const player = players.find(p => p.id === result.playerId);
+                        return (
+                            <div key={result.position} className="flex items-center gap-2 text-sm">
+                                <Medal className={cn("h-5 w-5", 
+                                    result.position === 1 && "text-yellow-500",
+                                    result.position === 2 && "text-gray-400",
+                                    result.position === 3 && "text-orange-400",
+                                )} />
+                                <span className="font-bold">{result.position}.</span>
+                                <span className="flex-grow truncate">{getPlayerDisplayName(player)}</span>
+                            </div>
+                        )
+                    })}
+                </div>
+                <p className="text-xs text-muted-foreground mt-2 truncate">{event.name}</p>
+            </CardContent>
+        </Card>
+    )
+}
+
 export default async function DashboardPage() {
   const cookieStore = cookies();
   const isAuthenticated = cookieStore.get(AUTH_COOKIE_NAME)?.value === 'true';
@@ -104,11 +153,6 @@ export default async function DashboardPage() {
   
   const topGainer = seasonStats?.leaderboard.length > 0 ? seasonStats.leaderboard[0] : null;
   const topGainerPlayer = topGainer ? allPlayers.find(p => p.id === topGainer.playerId) : null;
-  
-  const lastEventWinner = lastCompletedEvent && lastCompletedEvent.results.length > 0 
-    ? lastCompletedEvent.results.find(r => r.position === 1) 
-    : null;
-  const lastWinnerPlayer = lastEventWinner ? allPlayers.find(p => p.id === lastEventWinner.playerId) : null;
   
   const totalPrizePool = completedSeasonEvents.reduce((acc, event) => acc + event.prizePool.total, 0);
 
@@ -153,12 +197,7 @@ export default async function DashboardPage() {
             valueClassName={topGainer && topGainer.totalFinalResult > 0 ? "text-green-600" : ""}
             footer={topGainer ? `Net: €${topGainer.totalFinalResult.toLocaleString()}` : 'No data'}
           />
-          <StatCard 
-            icon={<Award className="h-4 w-4 text-muted-foreground" />}
-            title="Last Event Winner"
-            value={lastWinnerPlayer ? getPlayerDisplayName(lastWinnerPlayer) : 'N/A'}
-            footer={lastCompletedEvent ? lastCompletedEvent.name : 'No completed events'}
-          />
+          <PodiumCard event={lastCompletedEvent} players={allPlayers} />
       </div>
 
        <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
@@ -218,4 +257,3 @@ export default async function DashboardPage() {
     </div>
   );
 }
-
