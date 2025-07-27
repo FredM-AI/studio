@@ -44,18 +44,21 @@ async function getCurrentSeasonData(): Promise<{ currentSeason?: Season; allEven
 
   const sortedSeasons = allSeasons
     .sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime());
-
-  const currentSeason = sortedSeasons.length > 0 ? sortedSeasons[0] : undefined;
   
-  let seasonStats: SeasonStats | undefined = undefined;
-  let seasonEvents: EventType[] = []; // Tous les événements de la saison (draft, active, completed)
+  const today = new Date();
+  
+  // Find the most recent season that has started
+  const seasonToDisplay = sortedSeasons.find(season => new Date(season.startDate) <= today);
 
-  if (currentSeason) {
-    seasonStats = await calculateSeasonStats(currentSeason, allEvents, allPlayers);
-    seasonEvents = allEvents.filter(event => event.seasonId === currentSeason.id).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  let seasonStats: SeasonStats | undefined = undefined;
+  let seasonEvents: EventType[] = []; // All events for the selected season (draft, active, completed)
+
+  if (seasonToDisplay) {
+    seasonStats = await calculateSeasonStats(seasonToDisplay, allEvents, allPlayers);
+    seasonEvents = allEvents.filter(event => event.seasonId === seasonToDisplay.id).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
   }
   
-  return { currentSeason, allEvents, allPlayers, seasonStats, seasonEvents };
+  return { currentSeason: seasonToDisplay, allEvents, allPlayers, seasonStats, seasonEvents };
 }
 
 const StatCard = ({ icon, title, value, footer, valueClassName }: { icon: React.ReactNode, title: string, value: string | number, footer: React.ReactNode, valueClassName?: string}) => (
@@ -135,7 +138,7 @@ export default async function DashboardPage() {
           </CardHeader>
           <CardContent>
             <p className="text-muted-foreground mb-6">
-              There is no season currently configured. Please create a new season to see the dashboard.
+              There is no season currently configured or started. Please create a new season to see the dashboard.
             </p>
             {isAuthenticated ? (
               <Button asChild>
