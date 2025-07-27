@@ -127,6 +127,8 @@ export default function DashboardPage() {
 
             // Date logic
             const sortedSeasons = allSeasons.sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime());
+            
+            // Use UTC date for comparison to avoid timezone issues
             const now = new Date();
             const today = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
 
@@ -157,6 +159,9 @@ export default function DashboardPage() {
         };
         fetchData();
     }, []);
+
+    const formatFullDate = (dateString: string) => format(parseISO(dateString), 'EEEE, MMMM d, yyyy');
+    const formatShortDate = (dateString: string) => format(parseISO(dateString), 'MMMM d');
 
     if (isLoading) {
         return (
@@ -223,14 +228,6 @@ export default function DashboardPage() {
         .sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime())
         .slice(0, 3);
     
-    const formatFullDate = (dateString: string) => new Date(dateString).toLocaleDateString(undefined, {
-        weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC'
-    });
-
-    const formatShortDate = (dateString: string) => new Date(dateString).toLocaleDateString(undefined, {
-        month: 'long', day: 'numeric', timeZone: 'UTC'
-    });
-
     return (
         <div className="space-y-8">
             {nextSeason && (

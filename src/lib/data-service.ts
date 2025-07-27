@@ -91,8 +91,8 @@ export async function getSeasons(): Promise<Season[]> {
     const data = doc.data();
     
     // Helper to safely convert a Firestore Timestamp or a string to an ISO string
-    const toISOString = (dateValue: any): string | undefined => {
-      if (!dateValue) return undefined;
+    const toISOString = (dateValue: any): string => {
+      if (!dateValue) return new Date().toISOString(); // Fallback, though should not happen
       // Check if it's a Firestore Timestamp
       if (typeof dateValue.toDate === 'function') {
         return dateValue.toDate().toISOString();
@@ -101,15 +101,14 @@ export async function getSeasons(): Promise<Season[]> {
       if (typeof dateValue === 'string') {
         return new Date(dateValue).toISOString();
       }
-      return undefined;
+      return new Date().toISOString(); // Fallback for other unexpected types
     };
-
 
     return {
       id: doc.id,
       name: data.name,
       startDate: toISOString(data.startDate),
-      endDate: toISOString(data.endDate),
+      endDate: data.endDate ? toISOString(data.endDate) : undefined,
       isActive: data.isActive,
       leaderboard: data.leaderboard || [], // Ensure leaderboard is always an array
       createdAt: toISOString(data.createdAt),
@@ -194,3 +193,5 @@ export async function deleteBlindStructure(structureId: string): Promise<{ succe
         return { success: false, message: 'Database error while deleting structure.' };
     }
 }
+
+    
