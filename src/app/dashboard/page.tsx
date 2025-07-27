@@ -178,6 +178,12 @@ export default async function DashboardPage() {
   return (
     <div className="space-y-8">
       {nextSeason && (
+        <pre className="bg-muted p-4 rounded-md overflow-x-auto text-xs">
+          <code>{JSON.stringify(nextSeason, null, 2)}</code>
+        </pre>
+      )}
+
+      {nextSeason && (
         <Card className="bg-accent/50 border-accent/70">
           <CardHeader className="text-center">
             <Sparkles className="mx-auto h-8 w-8 text-primary mb-2"/>
