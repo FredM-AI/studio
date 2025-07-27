@@ -22,18 +22,6 @@ type SeasonDocumentData = {
   // leaderboards are calculated, not stored directly in the season document
 };
 
-// Helper function to adjust date from client to a "local" UTC representation
-// This prevents timezone shifts when converting. e.g., a selected date of 'Sept 5' (which becomes Sept 5, 00:00:00 local)
-// won't be saved as 'Sept 4, 22:00:00 UTC'.
-const treatDateAsUTC = (dateString: string): Date => {
-  const date = new Date(dateString);
-  // Get timezone offset in minutes and convert it to milliseconds.
-  const timezoneOffset = date.getTimezoneOffset() * 60000;
-  // Add the offset to the date to counteract the automatic timezone conversion.
-  return new Date(date.getTime() + timezoneOffset);
-};
-
-
 const SeasonSchema = z.object({
   id: z.string().optional(),
   name: z.string().min(3, { message: 'Season name must be at least 3 characters.' }),
@@ -49,7 +37,12 @@ const SeasonSchema = z.object({
 }).refine(data => {
   if (data.startDate && data.endDate && data.endDate.trim() !== '') {
     try {
-      return new Date(data.endDate) >= new Date(data.startDate);
+      // Use UTC dates for comparison to avoid timezone issues
+      const start = new Date(data.startDate);
+      const end = new Date(data.endDate);
+      const utcStart = new Date(Date.UTC(start.getFullYear(), start.getMonth(), start.getDate()));
+      const utcEnd = new Date(Date.UTC(end.getFullYear(), end.getMonth(), end.getDate()));
+      return utcEnd >= utcStart;
     } catch (e) { return false; }
   }
   return true;
@@ -72,18 +65,21 @@ export async function createSeason(prevState: SeasonFormState, formData: FormDat
 
   const data = validatedFields.data;
   const seasonId = crypto.randomUUID();
+  
+  const clientStartDate = new Date(data.startDate);
 
   const seasonDocData: SeasonDocumentData = {
     id: seasonId,
     name: data.name,
-    startDate: treatDateAsUTC(data.startDate).toISOString(),
-    isActive: data.isActive, // Correctly a boolean from Zod preprocess
+    startDate: new Date(Date.UTC(clientStartDate.getFullYear(), clientStartDate.getMonth(), clientStartDate.getDate())).toISOString(),
+    isActive: data.isActive, 
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   };
 
   if (data.endDate && data.endDate.trim() !== '') {
-    seasonDocData.endDate = treatDateAsUTC(data.endDate).toISOString();
+    const clientEndDate = new Date(data.endDate);
+    seasonDocData.endDate = new Date(Date.UTC(clientEndDate.getFullYear(), clientEndDate.getMonth(), clientEndDate.getDate())).toISOString();
   }
 
   try {
@@ -139,17 +135,20 @@ export async function updateSeason(prevState: SeasonFormState, formData: FormDat
       return { message: 'Season not found in database.' };
     }
     const existingSeason = seasonSnap.data() as SeasonDocumentData;
+    
+    const clientStartDate = new Date(data.startDate);
 
     const updatedSeasonDocData: SeasonDocumentData = {
         ...existingSeason,
         name: data.name,
-        startDate: treatDateAsUTC(data.startDate).toISOString(),
+        startDate: new Date(Date.UTC(clientStartDate.getFullYear(), clientStartDate.getMonth(), clientStartDate.getDate())).toISOString(),
         isActive: data.isActive,
         updatedAt: new Date().toISOString(),
     };
 
     if (data.endDate && data.endDate.trim() !== '') {
-        updatedSeasonDocData.endDate = treatDateAsUTC(data.endDate).toISOString();
+        const clientEndDate = new Date(data.endDate);
+        updatedSeasonDocData.endDate = new Date(Date.UTC(clientEndDate.getFullYear(), clientEndDate.getMonth(), clientEndDate.getDate())).toISOString();
     } else {
         delete (updatedSeasonDocData as Partial<SeasonDocumentData>).endDate; // Remove if it's now empty
     }
