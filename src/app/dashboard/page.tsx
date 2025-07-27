@@ -1,15 +1,12 @@
 
 import { getSeasons, getEvents, getPlayers } from "@/lib/data-service";
 import type { Season, Event as EventType, Player } from "@/lib/definitions";
-import { calculateSeasonStats, type SeasonStats } from '@/lib/stats-service';
+import { calculateSeasonStats, type SeasonStats, type LeaderboardEntry } from '@/lib/stats-service';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import Link from 'next/link';
-import { BarChart3, CalendarDays, TrendingUp, Edit, PlusCircle, Info, LogIn, Trophy, Award } from 'lucide-react';
-import SeasonDetailsCalendar from '@/app/seasons/[seasonId]/SeasonDetailsCalendar';
+import { BarChart3, CalendarDays, TrendingUp, Edit, PlusCircle, Info, LogIn, Trophy, Award, Users, DollarSign, ArrowRight } from 'lucide-react';
 import SeasonLeaderboardTable from '@/app/seasons/[seasonId]/SeasonLeaderboardTable';
-import SeasonPlayerProgressChart from '@/app/seasons/[seasonId]/SeasonPlayerProgressChart';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cookies } from 'next/headers';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
@@ -56,6 +53,19 @@ async function getCurrentSeasonData(): Promise<{ currentSeason?: Season; allEven
   return { currentSeason, allEvents, allPlayers, seasonStats, seasonEvents };
 }
 
+const StatCard = ({ icon, title, value, footer, valueClassName }: { icon: React.ReactNode, title: string, value: string | number, footer: React.ReactNode, valueClassName?: string}) => (
+    <Card className="hover:shadow-lg transition-shadow">
+        <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium">{title}</CardTitle>
+            {icon}
+        </CardHeader>
+        <CardContent>
+            <div className={`text-2xl font-bold ${valueClassName}`}>{value}</div>
+            <p className="text-xs text-muted-foreground">{footer}</p>
+        </CardContent>
+    </Card>
+)
+
 export default async function DashboardPage() {
   const cookieStore = cookies();
   const isAuthenticated = cookieStore.get(AUTH_COOKIE_NAME)?.value === 'true';
@@ -92,55 +102,18 @@ export default async function DashboardPage() {
   const completedSeasonEvents = seasonStats?.completedSeasonEvents || [];
   const lastCompletedEvent = completedSeasonEvents.length > 0 ? completedSeasonEvents[completedSeasonEvents.length - 1] : undefined;
   
-  const lastEventPodium = lastCompletedEvent ? lastCompletedEvent.results
-    .filter(r => r.position <= 3)
-    .sort((a, b) => a.position - b.position)
-    .map(result => {
-        const player = allPlayers.find(p => p.id === result.playerId);
-        return {
-            ...result,
-            player,
-        }
-    }) : [];
+  const topGainer = seasonStats?.leaderboard.length > 0 ? seasonStats.leaderboard[0] : null;
+  const topGainerPlayer = topGainer ? allPlayers.find(p => p.id === topGainer.playerId) : null;
+  
+  const lastEventWinner = lastCompletedEvent && lastCompletedEvent.results.length > 0 
+    ? lastCompletedEvent.results.find(r => r.position === 1) 
+    : null;
+  const lastWinnerPlayer = lastEventWinner ? allPlayers.find(p => p.id === lastEventWinner.playerId) : null;
+  
+  const totalPrizePool = completedSeasonEvents.reduce((acc, event) => acc + event.prizePool.total, 0);
 
   return (
     <div className="space-y-8">
-      
-      {lastCompletedEvent && (
-        <Card className="shadow-md hover:shadow-lg transition-shadow">
-          <CardHeader>
-            <CardTitle className="font-headline text-2xl flex items-center gap-3">
-              <Trophy className="h-7 w-7 text-yellow-500" />
-              <span>Last Event Summary: {lastCompletedEvent.name}</span>
-            </CardTitle>
-            <CardDescription>
-              Results from the event on {new Date(lastCompletedEvent.date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })} with {lastCompletedEvent.participants.length} players.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {lastEventPodium.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {lastEventPodium.map((result) => (
-                  <div key={result.playerId} className="flex items-center gap-4 p-3 rounded-lg bg-muted/50">
-                    <Award className={`h-8 w-8 ${result.position === 1 ? 'text-yellow-500' : result.position === 2 ? 'text-gray-400' : 'text-orange-400'}`} />
-                    <Avatar className="h-12 w-12 border">
-                       {result.player?.avatar && <AvatarImage src={result.player.avatar} alt={getPlayerDisplayName(result.player)} />}
-                       <AvatarFallback>{getInitials(result.player?.firstName, result.player?.lastName)}</AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <p className="font-semibold">{result.position}. {getPlayerDisplayName(result.player)}</p>
-                      <p className="text-sm text-green-600">Prize: €{result.prize}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-muted-foreground text-center py-4">Podium results are not available for the last event.</p>
-            )}
-          </CardContent>
-        </Card>
-      )}
-
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 className="font-headline text-3xl font-bold">Current Season: {currentSeason.name}</h1>
@@ -158,64 +131,90 @@ export default async function DashboardPage() {
         )}
       </div>
 
-      <Tabs defaultValue="leaderboard" className="w-full">
-        <TabsList className="grid w-full grid-cols-1 sm:grid-cols-3 mb-6">
-          <TabsTrigger value="leaderboard"><BarChart3 className="mr-2 h-4 w-4" />Leaderboard</TabsTrigger>
-          <TabsTrigger value="calendar"><CalendarDays className="mr-2 h-4 w-4" />Events Calendar</TabsTrigger>
-          <TabsTrigger value="progress"><TrendingUp className="mr-2 h-4 w-4" />Player Progress</TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="leaderboard">
-          <Card>
-            <CardHeader>
-              <CardTitle className="font-headline">Season Leaderboard</CardTitle>
-              <CardDescription>Ranking based on total net profit/loss from season events.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {seasonStats && seasonStats.leaderboard.length > 0 ? (
-                <SeasonLeaderboardTable 
-                  leaderboardData={seasonStats.leaderboard} 
-                  seasonEvents={completedSeasonEvents} 
-                />
-              ) : (
-                <p className="text-muted-foreground text-center py-8">No completed events with results in this season yet to generate a leaderboard.</p>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
+       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <StatCard 
+            icon={<DollarSign className="h-4 w-4 text-muted-foreground" />}
+            title="Total Prize Pool"
+            value={`€${totalPrizePool.toLocaleString()}`}
+            footer={`${completedSeasonEvents.length} completed events`}
+          />
+          <StatCard 
+            icon={<CalendarDays className="h-4 w-4 text-muted-foreground" />}
+            title="Events Played"
+            value={completedSeasonEvents.length}
+            footer={`${seasonEvents.length} total events scheduled`}
+          />
+           <StatCard 
+            icon={<Trophy className="h-4 w-4 text-muted-foreground" />}
+            title="Top Gainer"
+            value={topGainerPlayer ? getPlayerDisplayName(topGainerPlayer) : 'N/A'}
+            valueClassName={topGainer && topGainer.totalFinalResult > 0 ? "text-green-600" : ""}
+            footer={topGainer ? `Net: €${topGainer.totalFinalResult.toLocaleString()}` : 'No data'}
+          />
+          <StatCard 
+            icon={<Award className="h-4 w-4 text-muted-foreground" />}
+            title="Last Event Winner"
+            value={lastWinnerPlayer ? getPlayerDisplayName(lastWinnerPlayer) : 'N/A'}
+            footer={lastCompletedEvent ? lastCompletedEvent.name : 'No completed events'}
+          />
+      </div>
 
-        <TabsContent value="calendar">
-          <Card>
-            <CardHeader>
-              <CardTitle className="font-headline">Events Calendar</CardTitle>
-              <CardDescription>Overview of all events scheduled for this season (includes draft, active, completed).</CardDescription>
-            </CardHeader>
-            <CardContent>
-                <SeasonDetailsCalendar events={seasonEvents} />
-            </CardContent>
-          </Card>
-        </TabsContent>
+       <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
+            <Card className="lg:col-span-3">
+                <CardHeader className="flex flex-row items-center justify-between">
+                    <div>
+                        <CardTitle className="font-headline">Season Leaderboard</CardTitle>
+                        <CardDescription>Ranking based on total net profit/loss from season events.</CardDescription>
+                    </div>
+                     <Button asChild variant="outline" size="sm">
+                        <Link href={`/seasons/${currentSeason.id}`}>
+                          <ArrowRight className="mr-2 h-4 w-4" /> View Full Details
+                        </Link>
+                    </Button>
+                </CardHeader>
+                <CardContent>
+                {seasonStats && seasonStats.leaderboard.length > 0 ? (
+                    <SeasonLeaderboardTable 
+                    leaderboardData={seasonStats.leaderboard} 
+                    seasonEvents={completedSeasonEvents} 
+                    />
+                ) : (
+                    <p className="text-muted-foreground text-center py-8">No completed events with results in this season yet to generate a leaderboard.</p>
+                )}
+                </CardContent>
+            </Card>
 
-        <TabsContent value="progress">
-          <Card>
-            <CardHeader>
-              <CardTitle className="font-headline">Player Progress</CardTitle>
-              <CardDescription>Cumulative net profit/loss over the season's completed events.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {seasonStats && Object.keys(seasonStats.playerProgress).length > 0 && completedSeasonEvents.length > 0 ? (
-                <SeasonPlayerProgressChart
-                  playerProgressData={seasonStats.playerProgress}
-                  players={allPlayers}
-                  seasonEvents={completedSeasonEvents} 
-                />
-              ) : (
-                <p className="text-muted-foreground text-center py-8">No player progress data available. This appears after completed events with results.</p>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+            <div className="lg:col-span-2 space-y-6">
+                 <Card className="hover:shadow-lg transition-shadow">
+                    <CardHeader>
+                        <CardTitle className="font-headline flex items-center gap-2"><CalendarDays /> Events Calendar</CardTitle>
+                        <CardDescription>View all scheduled events for this season.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <Button asChild className="w-full">
+                           <Link href={`/seasons/${currentSeason.id}`}>
+                                Open Calendar View
+                           </Link>
+                        </Button>
+                    </CardContent>
+                 </Card>
+                  <Card className="hover:shadow-lg transition-shadow">
+                    <CardHeader>
+                        <CardTitle className="font-headline flex items-center gap-2"><TrendingUp/> Player Progress</CardTitle>
+                        <CardDescription>Track cumulative profit/loss over time.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <Button asChild className="w-full">
+                           <Link href={`/seasons/${currentSeason.id}`}>
+                                View Progress Chart
+                           </Link>
+                        </Button>
+                    </CardContent>
+                 </Card>
+            </div>
+       </div>
+
     </div>
   );
 }
+
