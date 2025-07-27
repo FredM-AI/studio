@@ -46,7 +46,9 @@ async function getCurrentSeasonData(): Promise<{ currentSeason?: Season; nextSea
   const sortedSeasons = allSeasons
     .sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime());
   
-  const today = new Date();
+  // Use UTC date for comparison to avoid timezone issues
+  const now = new Date();
+  const today = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
 
   const seasonToDisplay = sortedSeasons.find(season => new Date(season.startDate) <= today);
   
