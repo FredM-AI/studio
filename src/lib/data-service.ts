@@ -89,22 +89,31 @@ export async function getSeasons(): Promise<Season[]> {
   }
   const seasonList = seasonSnapshot.docs.map(doc => {
     const data = doc.data();
+    
+    // Helper to safely convert a Firestore Timestamp or a string to an ISO string
+    const toISOString = (dateValue: any): string | undefined => {
+      if (!dateValue) return undefined;
+      // Check if it's a Firestore Timestamp
+      if (typeof dateValue.toDate === 'function') {
+        return dateValue.toDate().toISOString();
+      }
+      // If it's already a string, assume it's in a valid format
+      if (typeof dateValue === 'string') {
+        return new Date(dateValue).toISOString();
+      }
+      return undefined;
+    };
 
-    // Convert Firestore Timestamps to ISO strings
-    const startDate = (data.startDate as Timestamp)?.toDate().toISOString();
-    const endDate = (data.endDate as Timestamp)?.toDate().toISOString();
-    const createdAt = (data.createdAt as Timestamp)?.toDate().toISOString();
-    const updatedAt = (data.updatedAt as Timestamp)?.toDate().toISOString();
 
     return {
       id: doc.id,
       name: data.name,
-      startDate: startDate,
-      endDate: endDate,
+      startDate: toISOString(data.startDate),
+      endDate: toISOString(data.endDate),
       isActive: data.isActive,
       leaderboard: data.leaderboard || [], // Ensure leaderboard is always an array
-      createdAt: createdAt,
-      updatedAt: updatedAt,
+      createdAt: toISOString(data.createdAt),
+      updatedAt: toISOString(data.updatedAt),
     } as Season;
   });
   return seasonList;
