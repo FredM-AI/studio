@@ -41,7 +41,7 @@ const StatCard = ({ icon, title, value, unit, className = '', valueClassName = '
 );
 
 
-export default function PlayerDetailPage({ params }: { params: { playerId: string } }) {
+export default function PlayerDetailPage({ params: { playerId } }: { params: { playerId: string } }) {
   const [player, setPlayer] = useState<Player | undefined>(undefined);
   const [calculatedStats, setCalculatedStats] = useState<PlayerStats | undefined>(undefined);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
@@ -55,7 +55,7 @@ export default function PlayerDetailPage({ params }: { params: { playerId: strin
     // Client-side data fetching and processing
     const fetchData = async () => {
       setIsLoading(true);
-      const { player, allEvents, allPlayers, allSeasons } = await getPlayerInitialData(params.playerId);
+      const { player, allEvents, allPlayers, allSeasons } = await getPlayerInitialData(playerId);
       if (player) {
         setPlayer(player);
         const stats = await calculatePlayerOverallStats(player.id, allEvents, allPlayers, allSeasons);
@@ -65,7 +65,7 @@ export default function PlayerDetailPage({ params }: { params: { playerId: strin
     };
 
     fetchData();
-  }, [params.playerId]);
+  }, [playerId]);
 
 
   if (isLoading) {
