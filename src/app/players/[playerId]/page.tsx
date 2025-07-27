@@ -15,6 +15,7 @@ import React, { useEffect, useState } from "react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { format, parseISO } from 'date-fns';
 import { Skeleton } from "@/components/ui/skeleton";
+import { useParams } from 'next/navigation';
 
 // We keep this server-side function to get the initial data for the page,
 // but the actual rendering will be client-side to use hooks.
@@ -41,13 +42,18 @@ const StatCard = ({ icon, title, value, unit, className = '', valueClassName = '
 );
 
 
-export default function PlayerDetailPage({ params: { playerId } }: { params: { playerId: string } }) {
+export default function PlayerDetailPage() {
+  const params = useParams();
+  const playerId = Array.isArray(params.playerId) ? params.playerId[0] : params.playerId;
+  
   const [player, setPlayer] = useState<Player | undefined>(undefined);
   const [calculatedStats, setCalculatedStats] = useState<PlayerStats | undefined>(undefined);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    if (!playerId) return;
+
     // Client-side cookie check
     const authCookie = document.cookie.split('; ').find(row => row.startsWith('app_session_active='));
     setIsAuthenticated(authCookie ? authCookie.split('=')[1] === 'true' : false);
