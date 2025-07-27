@@ -15,6 +15,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import SeasonLeaderboardTable from "@/app/seasons/[seasonId]/SeasonLeaderboardTable";
 import SeasonDetailsCalendar from "@/app/seasons/[seasonId]/SeasonDetailsCalendar";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { format } from 'date-fns';
 
 const AUTH_COOKIE_NAME = 'app_session_active';
 
@@ -185,7 +186,7 @@ export default async function DashboardPage() {
             <CardDescription className="text-lg font-medium">{nextSeason.name}</CardDescription>
           </CardHeader>
           <CardContent className="text-center">
-             <p className="text-muted-foreground">Starts on {new Date(`${nextSeason.startDate.split('T')[0]}T00:00:00`).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+             <p className="text-muted-foreground">Starts on {format(new Date(nextSeason.startDate), 'EEEE, MMMM d, yyyy')}</p>
           </CardContent>
         </Card>
       )}
@@ -194,8 +195,8 @@ export default async function DashboardPage() {
         <div>
           <h1 className="font-headline text-3xl font-bold">{currentSeason.isActive ? 'Current Season' : 'Last Season'}: {currentSeason.name}</h1>
           <p className="text-muted-foreground">
-            {new Date(currentSeason.startDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })} - 
-            {currentSeason.endDate ? new Date(currentSeason.endDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : 'Ongoing'}
+            {format(new Date(currentSeason.startDate), 'MMMM d, yyyy')} - 
+            {currentSeason.endDate ? format(new Date(currentSeason.endDate), 'MMMM d, yyyy') : 'Ongoing'}
           </p>
         </div>
         {isAuthenticated && (
@@ -314,3 +315,4 @@ export default async function DashboardPage() {
     </div>
   );
 }
+

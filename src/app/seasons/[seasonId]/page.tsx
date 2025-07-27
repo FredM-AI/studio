@@ -11,6 +11,7 @@ import SeasonLeaderboardTable from './SeasonLeaderboardTable';
 import SeasonPlayerProgressChart from './SeasonPlayerProgressChart';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cookies } from 'next/headers';
+import { format } from 'date-fns';
 
 const AUTH_COOKIE_NAME = 'app_session_active';
 
@@ -80,8 +81,8 @@ export default async function SeasonDetailsPage({ params }: { params: { seasonId
           </Button>
           <h1 className="font-headline text-3xl font-bold mt-2">{season.name}</h1>
           <p className="text-muted-foreground">
-            {new Date(season.startDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })} - 
-            {season.endDate ? new Date(season.endDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : 'Ongoing'}
+            {format(new Date(season.startDate), 'MMMM d, yyyy')} - 
+            {season.endDate ? format(new Date(season.endDate), 'MMMM d, yyyy') : 'Ongoing'}
           </p>
         </div>
         {isAuthenticated && (
@@ -157,3 +158,4 @@ export default async function SeasonDetailsPage({ params }: { params: { seasonId
     </div>
   );
 }
+
