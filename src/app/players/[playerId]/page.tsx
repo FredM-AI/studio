@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { ArrowLeft, Edit, Mail, Phone, CheckCircle, XCircle, TrendingUp, TrendingDown, Minus, UserCheck, Target, Trophy, Percent, BarChartHorizontal, LineChart as LineChartIcon, AlertTriangle, Hash } from "lucide-react";
+import { ArrowLeft, Edit, Mail, Phone, CheckCircle, XCircle, TrendingUp, TrendingDown, Minus, UserCheck, Target, Trophy, Percent, BarChartHorizontal, LineChart as LineChartIcon, AlertTriangle, Hash, Banknote } from "lucide-react";
 import Image from "next/image";
 import { cookies } from 'next/headers';
 import React, { useEffect, useState } from "react";
@@ -61,7 +61,7 @@ export default function PlayerDetailPage() {
     // Client-side data fetching and processing
     const fetchData = async () => {
       setIsLoading(true);
-      const { player, allEvents, allPlayers, allSeasons } = await getPlayerInitialData(playerId);
+      const { player, allEvents, allPlayers, allSeasons } = await getPlayerInitialData(playerId as string);
       if (player) {
         setPlayer(player);
         const stats = await calculatePlayerOverallStats(player.id, allEvents, allPlayers, allSeasons);
@@ -116,6 +116,12 @@ export default function PlayerDetailPage() {
   };
 
   const netProfitOrLoss = calculatedStats.totalWinnings - calculatedStats.totalBuyIns;
+
+  const getProfitIcon = () => {
+    if (netProfitOrLoss > 0) return <TrendingUp className="h-5 w-5 text-green-600" />;
+    if (netProfitOrLoss < 0) return <TrendingDown className="h-5 w-5 text-red-600" />;
+    return <Minus className="h-5 w-5" />;
+  };
 
   return (
     <div className="space-y-6">
@@ -181,19 +187,13 @@ export default function PlayerDetailPage() {
                     <StatCard icon={<TrendingUp className="h-5 w-5 text-green-600" />} title="Total Winnings" value={`€${calculatedStats.totalWinnings}`} valueClassName="text-green-600" />
                     <StatCard icon={<TrendingDown className="h-5 w-5 text-red-600"/>} title="Total Investment" value={`€${calculatedStats.totalBuyIns}`} valueClassName="text-red-600" />
                 </div>
-                 <Card className="p-4 bg-background">
-                    <CardHeader className="p-0 mb-2">
-                        <CardTitle className="text-base">Net Profit / Loss</CardTitle>
-                    </CardHeader>
-                    <CardContent className="p-0">
-                        <p className={`text-3xl font-bold flex items-center ${netProfitOrLoss >= 0 ? 'text-green-600' : 'text-red-500'}`}>
-                            {netProfitOrLoss > 0 && <TrendingUp className="mr-2 h-6 w-6" />}
-                            {netProfitOrLoss < 0 && <TrendingDown className="mr-2 h-6 w-6" />}
-                            {netProfitOrLoss === 0 && <Minus className="mr-2 h-6 w-6" />}
-                            €{netProfitOrLoss.toLocaleString()}
-                        </p>
-                    </CardContent>
-                 </Card>
+                 <StatCard 
+                    icon={getProfitIcon()} 
+                    title="Net Profit / Loss" 
+                    value={`€${netProfitOrLoss.toLocaleString()}`}
+                    valueClassName={netProfitOrLoss >= 0 ? 'text-green-600' : 'text-red-500'} 
+                    className="md:col-span-2"
+                />
            </div>
         </CardContent>
 
@@ -238,4 +238,5 @@ export default function PlayerDetailPage() {
       </Card>
     </div>
   );
-}
+
+    
