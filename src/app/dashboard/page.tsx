@@ -271,7 +271,7 @@ export default async function DashboardPage() {
                                     <div key={event.id} className="flex items-center justify-between text-sm p-2 bg-muted/40 rounded-md">
                                         <div>
                                             <p className="font-medium truncate text-foreground">{event.name}</p>
-                                            <p className="text-xs text-muted-foreground">{new Date(event.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}</p>
+                                            <p className="text-xs text-muted-foreground">{format(parseISO(event.date), 'MMMM d')}</p>
                                         </div>
                                         <Badge
                                           variant={
