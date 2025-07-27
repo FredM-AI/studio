@@ -6,9 +6,9 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import Link from 'next/link';
 import { BarChart3, CalendarDays, TrendingUp, Edit, PlusCircle, Info, LogIn, Trophy, Award, Users, DollarSign, ArrowRight } from 'lucide-react';
-import SeasonLeaderboardTable from '@/app/seasons/[seasonId]/SeasonLeaderboardTable';
 import { cookies } from 'next/headers';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import SimpleLeaderboardTable from "@/components/SimpleLeaderboardTable";
 
 const AUTH_COOKIE_NAME = 'app_session_active';
 
@@ -112,6 +112,8 @@ export default async function DashboardPage() {
   
   const totalPrizePool = completedSeasonEvents.reduce((acc, event) => acc + event.prizePool.total, 0);
 
+  const topLeaderboard = seasonStats?.leaderboard.filter(e => !e.isGuest).slice(0, 10) || [];
+
   return (
     <div className="space-y-8">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -164,7 +166,7 @@ export default async function DashboardPage() {
                 <CardHeader className="flex flex-row items-center justify-between">
                     <div>
                         <CardTitle className="font-headline">Season Leaderboard</CardTitle>
-                        <CardDescription>Ranking based on total net profit/loss from season events.</CardDescription>
+                        <CardDescription>Top 10 players based on total net profit/loss.</CardDescription>
                     </div>
                      <Button asChild variant="outline" size="sm">
                         <Link href={`/seasons/${currentSeason.id}`}>
@@ -173,10 +175,9 @@ export default async function DashboardPage() {
                     </Button>
                 </CardHeader>
                 <CardContent>
-                {seasonStats && seasonStats.leaderboard.length > 0 ? (
-                    <SeasonLeaderboardTable 
-                    leaderboardData={seasonStats.leaderboard} 
-                    seasonEvents={completedSeasonEvents} 
+                {topLeaderboard.length > 0 ? (
+                    <SimpleLeaderboardTable 
+                      leaderboardData={topLeaderboard}
                     />
                 ) : (
                     <p className="text-muted-foreground text-center py-8">No completed events with results in this season yet to generate a leaderboard.</p>
