@@ -46,13 +46,10 @@ async function getCurrentSeasonData(): Promise<{ currentSeason?: Season; nextSea
     .sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime());
   
   const now = new Date();
-  // Get today's date by taking the current date and removing the time part.
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const today = new Date(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
 
-  // Find the most recent season that has started (date is in the past or today UTC)
   const seasonToDisplay = sortedSeasons.find(season => new Date(season.startDate) <= today);
   
-  // Find the next upcoming season (date is in the future UTC)
   const futureSeasons = sortedSeasons
     .filter(season => new Date(season.startDate) > today)
     .sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime());
@@ -60,7 +57,7 @@ async function getCurrentSeasonData(): Promise<{ currentSeason?: Season; nextSea
 
 
   let seasonStats: SeasonStats | undefined = undefined;
-  let seasonEvents: EventType[] = []; // All events for the selected season (draft, active, completed)
+  let seasonEvents: EventType[] = [];
 
   if (seasonToDisplay) {
     seasonStats = await calculateSeasonStats(seasonToDisplay, allEvents, allPlayers);
@@ -188,7 +185,7 @@ export default async function DashboardPage() {
             <CardDescription className="text-lg font-medium">{nextSeason.name}</CardDescription>
           </CardHeader>
           <CardContent className="text-center">
-             <p className="text-muted-foreground">Starts on {new Date(nextSeason.startDate).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+             <p className="text-muted-foreground">Starts on {new Date(`${nextSeason.startDate.split('T')[0]}T00:00:00`).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
           </CardContent>
         </Card>
       )}
