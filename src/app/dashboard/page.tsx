@@ -179,7 +179,7 @@ export default async function DashboardPage() {
   return (
     <div className="space-y-8">
       {nextSeason && (
-        <Card className="bg-primary/10 border-primary/20">
+        <Card className="bg-accent/50 border-accent/70">
           <CardHeader className="text-center">
             <Sparkles className="mx-auto h-8 w-8 text-primary mb-2"/>
             <CardTitle className="font-headline text-2xl">New Season Coming Soon!</CardTitle>
