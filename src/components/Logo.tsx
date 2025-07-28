@@ -38,7 +38,7 @@ const Logo = () => {
     <Link href="/" className="flex items-center gap-3 text-primary hover:text-primary/90 transition-colors">
       <BullIcon className="h-10 w-auto" />
       <span className="font-headline text-lg font-bold uppercase leading-tight text-amber-500">
-        Poker Bulls<br/>Championship
+        Poker Bulls
       </span>
     </Link>
   );
