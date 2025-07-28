@@ -76,11 +76,11 @@ body {
   }
 
   .theme-classic {
-    --background: 48 28% 45%; /* Desaturated Gold/Olive */
+    --background: 222 47% 11%; /* Midnight Blue */
     --foreground: 48 83% 96%; /* Off-white/Cream */
 
-    --card: 222 47% 13%; /* Midnight Blue for cards */
-    --card-foreground: 48 83% 96%;
+    --card: 0 0% 100%; /* White */
+    --card-foreground: 240 10% 3.9%; /* Dark Charcoal */
 
     --popover: 222 47% 11%; /* Midnight Blue for popovers */
     --popover-foreground: 48 83% 96%;
@@ -88,11 +88,11 @@ body {
     --primary: 0 65% 51%; /* Rich Red */
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 48 22% 35%;
+    --secondary: 217 33% 17%;
     --secondary-foreground: 48 83% 96%;
 
-    --muted: 48 18% 25%;
-    --muted-foreground: 48 25% 70%;
+    --muted: 217 33% 17%; /* Darker color for muted elements on dark bg */
+    --muted-foreground: 215 20% 65%; /* Lighter text for muted elements */
 
     --accent: 48 30% 55%;
     --accent-foreground: 0 0% 100%;
@@ -101,7 +101,7 @@ body {
     --destructive-foreground: 0 0% 100%;
 
     --border: 0 65% 45%; /* Red border */
-    --input: 48 18% 20%;
+    --input: 217 33% 17%;
     --ring: 0 65% 51%;
 
     --chart-1: 0 65% 51%;
