@@ -14,11 +14,6 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 const Header = ({ isAuthenticated }: { isAuthenticated: boolean }) => {
   const pathname = usePathname(); 
 
-  const navItems = [
-    { href: '/dashboard', label: 'Dashboard', icon: Home },
-    { href: '/hall-of-fame', label: 'HOF', icon: Trophy },
-  ];
-
   const championshipItems = [
     { href: '/seasons', label: 'Seasons', icon: BarChart3 },
     { href: '/events', label: 'Events', icon: CalendarDays },

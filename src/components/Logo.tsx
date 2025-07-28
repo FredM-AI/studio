@@ -36,8 +36,10 @@ const BullIcon = (props: React.SVGProps<SVGSVGElement>) => (
 const Logo = () => {
   return (
     <Link href="/" className="flex items-center gap-3 text-primary hover:text-primary/90 transition-colors">
-      <BullIcon className="h-14 w-auto text-primary" />
-      <span className="font-headline text-2xl font-bold text-amber-500 tracking-wider">POKER BULLS CHAMPIONSHIP</span>
+      <BullIcon className="h-10 w-auto" />
+      <span className="font-headline text-lg font-bold uppercase leading-tight text-amber-500">
+        Poker Bulls<br/>Championship
+      </span>
     </Link>
   );
 };

@@ -54,8 +54,13 @@ export default function LoginPage() {
     <div className="flex min-h-[calc(100vh-8rem)] items-center justify-center bg-gradient-to-br from-muted/30 to-background p-4">
       <Card className="w-full max-w-md shadow-2xl">
         <CardHeader className="text-center">
-          <BullIcon className="mx-auto h-24 w-auto text-primary" />
-          <CardTitle className="font-headline text-3xl">Poker Bulls Championship</CardTitle>
+           <div className="flex justify-center items-center gap-3 text-primary mb-4">
+            <BullIcon className="h-20 w-auto" />
+             <span className="font-headline text-2xl font-bold uppercase leading-tight text-amber-500">
+               Poker Bulls<br/>Championship
+             </span>
+           </div>
+          <CardTitle className="font-headline text-3xl">Welcome</CardTitle>
           <CardDescription>Access your dashboard or continue as a guest.</CardDescription>
         </CardHeader>
         
