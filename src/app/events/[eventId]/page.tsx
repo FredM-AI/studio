@@ -133,6 +133,10 @@ export default async function EventDetailsPage({ params }: { params: { eventId: 
           <h3 className="font-headline text-lg text-primary flex items-center mb-3"><Info className="mr-2 h-5 w-5"/>Details</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-2 text-sm border p-4 rounded-lg bg-muted/20">
               <div className="flex items-center justify-between">
+                <span className="text-muted-foreground flex items-center"><Users className="mr-2 h-4 w-4"/>Participants:</span>
+                <span className="font-medium">{event.participants.length}</span>
+              </div>
+              <div className="flex items-center justify-between">
                 <span className="text-muted-foreground flex items-center"><DollarSign className="mr-2 h-4 w-4"/>Buy-in (Main Pool):</span>
                 <span className="font-medium">€{event.buyIn}</span>
               </div>
