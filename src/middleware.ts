@@ -39,5 +39,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico|poker-bulls-championship-logo.png|api/).*)'],
+  matcher: ['/((?!_next/static|_next/image|favicon.ico|poker-bulls-club-logo.png|api/).*)'],
 };
