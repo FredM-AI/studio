@@ -127,7 +127,7 @@ const EventTable = ({ events, isAuthenticated, allPlayers }: { events: Event[], 
 export default async function EventsPage() {
   const cookieStore = cookies();
   const isAuthenticated = cookieStore.get(AUTH_COOKIE_NAME)?.value === 'true';
-  const allEvents: Event[] = (await getEvents()).sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  const allEvents: Event[] = (await getEvents()).sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime());
   const allSeasons: Season[] = (await getSeasons()).sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime());
   const allPlayers: Player[] = await getPlayers();
 
