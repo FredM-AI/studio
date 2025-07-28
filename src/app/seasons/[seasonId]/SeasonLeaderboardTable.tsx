@@ -45,10 +45,10 @@ export default function SeasonLeaderboardTable({ leaderboardData, seasonEvents }
                 className="min-w-[100px] w-[100px] text-center px-2 py-3"
                 title={event.name}
               >
-                <div className="flex flex-col items-center">
-                  <CalendarDays className="h-4 w-4 mb-0.5 text-muted-foreground/80"/>
+                <Link href={`/events/${event.id}`} className="flex flex-col items-center hover:text-primary transition-colors">
+                  <CalendarDays className="h-4 w-4 mb-0.5 text-muted-foreground/80 group-hover:text-primary"/>
                   <span className="text-xs">{formatDateInUTC(event.date)}</span>
-                </div>
+                </Link>
               </TableHead>
             ))}
             <TableHead className="min-w-[150px] w-[150px] text-right px-4 py-3 sticky right-0 bg-card z-10">Total Net (€)</TableHead> 
