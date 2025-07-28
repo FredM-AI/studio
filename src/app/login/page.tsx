@@ -23,14 +23,14 @@ export default function LoginPage() {
       <Card className="w-full max-w-md shadow-2xl">
         <CardHeader className="text-center">
           <Image 
-            src="/poker-bulls-club-logo.png" 
+            src="/poker-bulls-championship-logo.png" 
             alt="Poker Bulls Championship Logo"
-            width={100}
-            height={141}
-            className="mx-auto mb-4 h-20 w-auto object-contain"
-            data-ai-hint="poker bull card"
+            width={400}
+            height={400}
+            className="mx-auto mb-4 h-24 w-auto object-contain"
+            data-ai-hint="poker bull logo"
           />
-          <CardTitle className="font-headline text-3xl">Poker Bulls Club</CardTitle>
+          <CardTitle className="font-headline text-3xl">Poker Bulls Championship</CardTitle>
           <CardDescription>Access your dashboard or continue as a guest.</CardDescription>
         </CardHeader>
         

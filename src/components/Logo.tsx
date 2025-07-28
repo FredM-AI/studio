@@ -5,14 +5,14 @@ const Logo = () => {
   return (
     <Link href="/" className="flex items-center gap-3 text-primary hover:text-primary/90 transition-colors">
       <Image
-        src="/poker-bulls-club-logo.png" 
-        alt="Bulls Poker Club Logo"
-        width={283} 
+        src="/poker-bulls-championship-logo.png" 
+        alt="Poker Bulls Championship Logo"
+        width={400} 
         height={400} 
-        className="h-12 w-auto object-contain" 
-        data-ai-hint="poker card bull"
+        className="h-14 w-auto object-contain" 
+        data-ai-hint="poker bull logo"
       />
-      <span className="font-headline text-2xl font-bold text-amber-500 tracking-wider">BULLS POKER CLUB</span>
+      <span className="font-headline text-2xl font-bold text-amber-500 tracking-wider">POKER BULLS CHAMPIONSHIP</span>
     </Link>
   );
 };
