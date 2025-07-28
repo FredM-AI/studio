@@ -75,19 +75,27 @@ export default async function EventDetailsPage({ params }: { params: { eventId: 
   const includeBountiesInNetCalc = event.includeBountiesInNet ?? true;
 
   return (
-    <div className="space-y-4">
-      {linkedSeason && (
-        <EventCarousel 
-          seasonEvents={eventsInSameSeason.map(e => ({ id: e.id, name: e.name }))}
-          currentEventId={event.id}
-          seasonName={linkedSeason.name}
-        />
-      )}
-      <Button variant="outline" asChild>
-        <Link href="/events">
-          <ArrowLeft className="mr-2 h-4 w-4" /> Back to Events
-        </Link>
-      </Button>
+    <div className="space-y-6">
+      <div className="flex justify-between items-center gap-4">
+        <div className="flex-none">
+          <Button variant="outline" asChild>
+            <Link href="/events">
+              <ArrowLeft className="mr-2 h-4 w-4" /> Back to Events
+            </Link>
+          </Button>
+        </div>
+        <div className="flex-grow">
+          {linkedSeason && (
+            <EventCarousel 
+              seasonEvents={eventsInSameSeason.map(e => ({ id: e.id, name: e.name }))}
+              currentEventId={event.id}
+              seasonName={linkedSeason.name}
+            />
+          )}
+        </div>
+        <div className="flex-none w-[138px]"></div> {/* Spacer to balance the layout */}
+      </div>
+
       <Card className="max-w-4xl mx-auto shadow-lg">
         <CardHeader className="bg-muted/30 p-4">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-2">
