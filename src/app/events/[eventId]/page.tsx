@@ -129,86 +129,68 @@ export default async function EventDetailsPage({ params }: { params: { eventId: 
             )}
           </div>
         </CardHeader>
-        <CardContent className="p-4 grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
-          <div className="space-y-3">
-            <h3 className="font-headline text-lg text-primary flex items-center"><Info className="mr-2 h-5 w-5"/>Details</h3>
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground flex items-center"><DollarSign className="mr-2 h-4 w-4"/>Buy-in (Main Pool):</span>
-              <span className="font-medium">€{event.buyIn}</span>
-            </div>
-            {event.maxPlayers && (
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground flex items-center"><Tag className="mr-2 h-4 w-4"/>Max Players:</span>
-                <span className="font-medium">{event.maxPlayers}</span>
+        <CardContent className="p-4">
+          <h3 className="font-headline text-lg text-primary flex items-center mb-3"><Info className="mr-2 h-5 w-5"/>Details</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-2 text-sm border p-4 rounded-lg bg-muted/20">
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground flex items-center"><DollarSign className="mr-2 h-4 w-4"/>Buy-in (Main Pool):</span>
+                <span className="font-medium">€{event.buyIn}</span>
               </div>
-            )}
-             <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground flex items-center">
-                {rebuysActive ? <CheckCircle className="mr-2 h-4 w-4 text-green-500"/> : <XCircle className="mr-2 h-4 w-4 text-red-500"/>}
-                Rebuys (Prize Pool part):
-              </span>
-              <span className="font-medium">{rebuysActive ? `Yes (Price: €${event.rebuyPrice})` : 'No'}</span>
-            </div>
-            {(event.bounties !== undefined && event.bounties > 0) && (
-                <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground flex items-center"><Star className="mr-2 h-4 w-4 text-yellow-500"/>Bounty Value:</span>
-                    <span className="font-medium">€{event.bounties}</span>
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground flex items-center"><DollarSign className="mr-2 h-4 w-4"/>Total Main Prize Pool:</span>
+                <span className="font-medium">€{event.prizePool.total}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground flex items-center">
+                  {rebuysActive ? <CheckCircle className="mr-2 h-4 w-4 text-green-500"/> : <XCircle className="mr-2 h-4 w-4 text-red-500"/>}
+                  Rebuys (Prize Pool part):
+                </span>
+                <span className="font-medium">{rebuysActive ? `Yes (Price: €${event.rebuyPrice})` : 'No'}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground flex items-center"><CalendarDays className="mr-2 h-4 w-4"/>Status:</span>
+                <Badge
+                  variant={
+                    event.status === 'completed' ? 'default' :
+                    event.status === 'active' ? 'secondary' :
+                    event.status === 'cancelled' ? 'destructive' :
+                    'outline'
+                  }
+                  className={
+                    event.status === 'active' ? 'bg-green-500 text-white' : ''
+                  }
+                >
+                  {event.status.charAt(0).toUpperCase() + event.status.slice(1)}
+                </Badge>
+              </div>
+              {(event.bounties !== undefined && event.bounties > 0) && (
+                  <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground flex items-center"><Star className="mr-2 h-4 w-4 text-yellow-500"/>Bounty Value:</span>
+                      <span className="font-medium">€{event.bounties}</span>
+                  </div>
+              )}
+              {(event.mysteryKo !== undefined && event.mysteryKo > 0) && (
+                  <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground flex items-center"><Gift className="mr-2 h-4 w-4 text-purple-500"/>Mystery KO Value:</span>
+                      <span className="font-medium">€{event.mysteryKo}</span>
+                  </div>
+              )}
+              {event.maxPlayers && (
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground flex items-center"><Tag className="mr-2 h-4 w-4"/>Max Players:</span>
+                  <span className="font-medium">{event.maxPlayers}</span>
                 </div>
-            )}
-            {(event.mysteryKo !== undefined && event.mysteryKo > 0) && (
-                <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground flex items-center"><Gift className="mr-2 h-4 w-4 text-purple-500"/>Mystery KO Value:</span>
-                    <span className="font-medium">€{event.mysteryKo}</span>
-                </div>
-            )}
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground flex items-center"><DollarSign className="mr-2 h-4 w-4"/>Total Main Prize Pool:</span>
-              <span className="font-medium">€{event.prizePool.total}</span>
-            </div>
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground flex items-center"><CalendarDays className="mr-2 h-4 w-4"/>Status:</span>
-              <Badge
-                variant={
-                  event.status === 'completed' ? 'default' :
-                  event.status === 'active' ? 'secondary' :
-                  event.status === 'cancelled' ? 'destructive' :
-                  'outline'
-                }
-                className={
-                  event.status === 'active' ? 'bg-green-500 text-white' : ''
-                }
-              >
-                {event.status.charAt(0).toUpperCase() + event.status.slice(1)}
-              </Badge>
-            </div>
-            <div className="flex items-center justify-between text-sm pt-2 border-t">
-              <span className="text-muted-foreground flex items-center"><HelpCircle className="mr-2 h-4 w-4"/>Bounties in Net Calc:</span>
-              <span className="font-medium">{includeBountiesInNetCalc ? "Yes" : "No"}</span>
-            </div>
+              )}
+              <div className="flex items-center justify-between md:col-start-2">
+                <span className="text-muted-foreground flex items-center"><HelpCircle className="mr-2 h-4 w-4"/>Bounties in Net Calc:</span>
+                <span className="font-medium">{includeBountiesInNetCalc ? "Yes" : "No"}</span>
+              </div>
           </div>
-
-          <div className="space-y-3">
-            <h3 className="font-headline text-lg text-primary flex items-center"><Users className="mr-2 h-5 w-5"/>Participants ({event.participants.length})</h3>
-            {event.participants.length > 0 ? (
-              <ScrollArea className="h-36 w-full rounded-md border p-2">
-                <ul className="space-y-1">
-                  {event.participants.map(playerId => (
-                    <li key={playerId} className="text-sm p-1 hover:bg-muted/50 rounded-md">
-                      <Link href={`/players/${playerId}`} className="hover:underline">
-                        {getPlayerDisplayName(allPlayers.find(p => p.id === playerId))}
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </ScrollArea>
-            ) : (
-              <p className="text-sm text-muted-foreground">No participants registered for this event yet.</p>
-            )}
-          </div>
+          
 
           {event.status === 'completed' && sortedResults.length > 0 && (
-            <div className="md:col-span-2 space-y-3 pt-3 border-t mt-3">
-              <h3 className="font-headline text-lg text-primary flex items-center"><Trophy className="mr-2 h-5 w-5"/>Results</h3>
+            <div className="md:col-span-2 space-y-3 pt-4 mt-4 border-t">
+              <h3 className="font-headline text-lg text-primary flex items-center"><Trophy className="mr-2 h-5 w-5"/>Results ({event.participants.length} Participants)</h3>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead className="bg-muted">
