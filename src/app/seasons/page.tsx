@@ -73,8 +73,8 @@ export default async function SeasonsPage() {
 
 
   return (
-    <div className="space-y-8">
-      <div className="flex items-center justify-between">
+    <div className="flex flex-col h-full space-y-8">
+      <div className="flex items-center justify-between flex-shrink-0">
         <h1 className="font-headline text-3xl font-bold">Seasons & Leaderboards</h1>
         {isAuthenticated && (
           <Button asChild>
@@ -85,46 +85,48 @@ export default async function SeasonsPage() {
         )}
       </div>
 
-      {sortedSeasons.length === 0 ? (
-        <Card>
-          <CardContent className="text-center py-20">
-            <BarChart3 className="mx-auto h-16 w-16 text-muted-foreground mb-4" />
-            <p className="text-muted-foreground text-xl">No seasons created yet.</p>
-            <p className="mt-2">Track player performance over time by organizing events into seasons.</p>
-            {isAuthenticated && (
-              <Button asChild className="mt-6">
-                <Link href="/seasons/new">
-                  <PlusCircle className="mr-2 h-5 w-5" /> Create Season
-                </Link>
-              </Button>
-            )}
-          </CardContent>
-        </Card>
-      ) : (
-         <Carousel
-            opts={{
-              align: "start",
-              loop: false,
-              startIndex: initialIndex,
-            }}
-            className="w-full"
-          >
-            <CarouselContent>
-              {sortedSeasons.map((season) => {
-                const associatedEvents = allEvents.filter(event => event.seasonId === season.id);
-                return (
-                  <CarouselItem key={season.id} className="md:basis-1/2 lg:basis-1/3">
-                    <div className="p-1 h-full">
-                      <SeasonCard season={season} associatedEvents={associatedEvents} isAuthenticated={isAuthenticated} />
-                    </div>
-                  </CarouselItem>
-                )
-              })}
-            </CarouselContent>
-            <CarouselPrevious />
-            <CarouselNext />
-          </Carousel>
-      )}
+      <div className="flex-grow flex items-center justify-center">
+        {sortedSeasons.length === 0 ? (
+          <Card className="w-full max-w-lg">
+            <CardContent className="text-center py-20">
+              <BarChart3 className="mx-auto h-16 w-16 text-muted-foreground mb-4" />
+              <p className="text-muted-foreground text-xl">No seasons created yet.</p>
+              <p className="mt-2">Track player performance over time by organizing events into seasons.</p>
+              {isAuthenticated && (
+                <Button asChild className="mt-6">
+                  <Link href="/seasons/new">
+                    <PlusCircle className="mr-2 h-5 w-5" /> Create Season
+                  </Link>
+                </Button>
+              )}
+            </CardContent>
+          </Card>
+        ) : (
+           <Carousel
+              opts={{
+                align: "start",
+                loop: false,
+                startIndex: initialIndex,
+              }}
+              className="w-full max-w-xs sm:max-w-xl md:max-w-2xl lg:max-w-4xl"
+            >
+              <CarouselContent>
+                {sortedSeasons.map((season) => {
+                  const associatedEvents = allEvents.filter(event => event.seasonId === season.id);
+                  return (
+                    <CarouselItem key={season.id} className="md:basis-1/2 lg:basis-1/3">
+                      <div className="p-1 h-full">
+                        <SeasonCard season={season} associatedEvents={associatedEvents} isAuthenticated={isAuthenticated} />
+                      </div>
+                    </CarouselItem>
+                  )
+                })}
+              </CarouselContent>
+              <CarouselPrevious />
+              <CarouselNext />
+            </Carousel>
+        )}
+      </div>
     </div>
   );
 }
