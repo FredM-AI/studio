@@ -8,11 +8,23 @@ import type { Timestamp } from 'firebase-admin/firestore';
 
 // Constants for collection names
 const PLAYERS_COLLECTION = 'players';
-const EVENTS_COLlection = 'events';
+const EVENTS_COLLECTION = 'events';
 const SEASONS_COLLECTION = 'seasons';
 const SETTINGS_COLLECTION = 'settings';
 const BLIND_STRUCTURES_COLLECTION = 'blindStructures';
 const GLOBAL_SETTINGS_DOC_ID = 'global';
+
+// Helper to safely convert a Firestore Timestamp or a string to an ISO string
+const toISOString = (dateValue: any): string => {
+  if (!dateValue) return new Date().toISOString(); // Fallback
+  if (typeof dateValue.toDate === 'function') { // It's a Firestore Timestamp
+    return dateValue.toDate().toISOString();
+  }
+  if (typeof dateValue === 'string') { // It's already a string
+    return new Date(dateValue).toISOString();
+  }
+  return new Date().toISOString(); // Fallback for other unexpected types
+};
 
 // --- Data Fetching Functions ---
 
@@ -46,7 +58,7 @@ export async function getPlayers(): Promise<Player[]> {
 
 // Event data functions
 export async function getEvents(): Promise<Event[]> {
-  const eventsCol = db.collection(EVENTS_COLlection);
+  const eventsCol = db.collection(EVENTS_COLLECTION);
   const eventSnapshot = await eventsCol.get();
   if (eventSnapshot.empty) {
       console.log("Firestore 'events' collection is empty.");
@@ -57,7 +69,7 @@ export async function getEvents(): Promise<Event[]> {
     return {
       id: doc.id,
       name: data.name,
-      date: data.date,
+      date: toISOString(data.date),
       buyIn: data.buyIn,
       rebuyPrice: data.rebuyPrice,
       bounties: data.bounties,
@@ -72,8 +84,8 @@ export async function getEvents(): Promise<Event[]> {
       blindStructure: data.blindStructure,
       participants: data.participants || [],
       results: data.results || [],
-      createdAt: data.createdAt,
-      updatedAt: data.updatedAt,
+      createdAt: toISOString(data.createdAt),
+      updatedAt: toISOString(data.updatedAt),
     } as Event;
   });
   return eventList;
@@ -90,20 +102,6 @@ export async function getSeasons(): Promise<Season[]> {
   const seasonList = seasonSnapshot.docs.map(doc => {
     const data = doc.data();
     
-    // Helper to safely convert a Firestore Timestamp or a string to an ISO string
-    const toISOString = (dateValue: any): string => {
-      if (!dateValue) return new Date().toISOString(); // Fallback, though should not happen
-      // Check if it's a Firestore Timestamp
-      if (typeof dateValue.toDate === 'function') {
-        return dateValue.toDate().toISOString();
-      }
-      // If it's already a string, assume it's in a valid format
-      if (typeof dateValue === 'string') {
-        return new Date(dateValue).toISOString();
-      }
-      return new Date().toISOString(); // Fallback for other unexpected types
-    };
-
     return {
       id: doc.id,
       name: data.name,
@@ -193,5 +191,3 @@ export async function deleteBlindStructure(structureId: string): Promise<{ succe
         return { success: false, message: 'Database error while deleting structure.' };
     }
 }
-
-    

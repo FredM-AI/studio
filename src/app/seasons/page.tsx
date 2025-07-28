@@ -87,7 +87,7 @@ export default async function SeasonsPage() {
   const isAuthenticated = cookieStore.get(AUTH_COOKIE_NAME)?.value === 'true';
   const seasons = await getSeasons();
   const allEvents = await getEvents(); 
-  const sortedSeasons = seasons.sort((a,b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime());
+  const sortedSeasons = seasons.sort((a,b) => new Date(b.startDate).getTime() - new Date(a.date).getTime());
 
   return (
     <div className="space-y-8">
