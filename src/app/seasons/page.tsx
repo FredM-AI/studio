@@ -9,43 +9,49 @@ import { Badge } from "@/components/ui/badge";
 import { cookies } from 'next/headers';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import { parseISO, isPast } from 'date-fns';
+import { cn } from "@/lib/utils";
 
 const AUTH_COOKIE_NAME = 'app_session_active';
 
 const SeasonCard = ({ season, associatedEvents, isAuthenticated }: { season: Season, associatedEvents: EventType[], isAuthenticated: boolean }) => (
-    <Card className="hover:shadow-lg transition-shadow duration-300 flex flex-col h-full">
-        <CardHeader className="flex-grow text-left w-full">
-            <CardTitle className="font-headline text-xl">{season.name}</CardTitle>
-            <CardDescription className="flex items-center text-sm">
-                <CalendarRange className="mr-2 h-4 w-4 text-muted-foreground" />
-                {new Date(season.startDate).toLocaleDateString()} - {season.endDate ? new Date(season.endDate).toLocaleDateString() : 'Ongoing'}
-            </CardDescription>
-        </CardHeader>
-        <CardContent className="flex-grow space-y-3 pt-0">
-            <div className="flex items-center">
-            <Badge variant={season.isActive ? "default" : "outline"} className={season.isActive ? "bg-green-500 hover:bg-green-600 text-primary-foreground" : "border-destructive text-destructive"}>
-                {season.isActive ? <CheckCircle className="mr-1 h-3 w-3"/> : <XCircle className="mr-1 h-3 w-3"/>}
-                {season.isActive ? "Active" : "Inactive"}
-            </Badge>
-            </div>
-            <div className="text-sm text-muted-foreground flex items-center">
-            <ListTree className="mr-2 h-4 w-4" /> Associated Events: {associatedEvents.length}
-            </div>
-        </CardContent>
-        <CardFooter className="flex justify-end gap-2 border-t pt-4 mt-auto">
-            <Button variant="default" size="sm" asChild title="View Season Details">
-            <Link href={`/seasons/${season.id}`}>
-                <Eye className="mr-1 h-4 w-4" /> View Details
-            </Link>
-            </Button>
-            {isAuthenticated && (
-            <Button variant="outline" size="sm" asChild title="Edit Season">
-                <Link href={`/seasons/${season.id}/edit`}>
-                <Edit className="mr-1 h-4 w-4" /> Edit
+    <Card className={cn(
+        "group perspective-1000 flex flex-col h-full",
+        "transition-all duration-300 ease-in-out hover:shadow-2xl hover:shadow-primary/20"
+    )}>
+        <div className="transition-transform duration-300 ease-in-out group-hover:-translate-y-2 group-hover:rotate-x-[-2deg] group-hover:rotate-y-[2deg] transform-style-3d backface-hidden flex flex-col h-full">
+            <CardHeader className="flex-grow text-left w-full">
+                <CardTitle className="font-headline text-xl">{season.name}</CardTitle>
+                <CardDescription className="flex items-center text-sm">
+                    <CalendarRange className="mr-2 h-4 w-4 text-muted-foreground" />
+                    {new Date(season.startDate).toLocaleDateString()} - {season.endDate ? new Date(season.endDate).toLocaleDateString() : 'Ongoing'}
+                </CardDescription>
+            </CardHeader>
+            <CardContent className="flex-grow space-y-3 pt-0">
+                <div className="flex items-center">
+                <Badge variant={season.isActive ? "default" : "outline"} className={season.isActive ? "bg-green-500 hover:bg-green-600 text-primary-foreground" : "border-destructive text-destructive"}>
+                    {season.isActive ? <CheckCircle className="mr-1 h-3 w-3"/> : <XCircle className="mr-1 h-3 w-3"/>}
+                    {season.isActive ? "Active" : "Inactive"}
+                </Badge>
+                </div>
+                <div className="text-sm text-muted-foreground flex items-center">
+                <ListTree className="mr-2 h-4 w-4" /> Associated Events: {associatedEvents.length}
+                </div>
+            </CardContent>
+            <CardFooter className="flex justify-end gap-2 border-t pt-4 mt-auto">
+                <Button variant="default" size="sm" asChild title="View Season Details">
+                <Link href={`/seasons/${season.id}`}>
+                    <Eye className="mr-1 h-4 w-4" /> View Details
                 </Link>
-            </Button>
-            )}
-        </CardFooter>
+                </Button>
+                {isAuthenticated && (
+                <Button variant="outline" size="sm" asChild title="Edit Season">
+                    <Link href={`/seasons/${season.id}/edit`}>
+                    <Edit className="mr-1 h-4 w-4" /> Edit
+                    </Link>
+                </Button>
+                )}
+            </CardFooter>
+        </div>
     </Card>
 );
 
