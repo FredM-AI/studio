@@ -53,7 +53,7 @@ export default function DeletePlayerButton({ playerId, playerName }: DeletePlaye
   return (
     <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
       <AlertDialogTrigger asChild>
-        <Button variant="destructive" size="icon" title="Delete Player" disabled={isDeleting}>
+        <Button variant="destructive" size="icon" className="h-8 w-8" title="Delete Player" disabled={isDeleting}>
           {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
         </Button>
       </AlertDialogTrigger>

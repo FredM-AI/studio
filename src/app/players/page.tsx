@@ -89,20 +89,20 @@ export default async function PlayersPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="py-2 px-4">Name</TableHead>
-                    <TableHead className="py-2 px-4">Full Name (for ref)</TableHead>
-                    <TableHead className="py-2 px-4">Email</TableHead>
-                    <TableHead className="py-2 px-4">Status</TableHead>
-                    <TableHead className="text-right py-2 px-4">Actions</TableHead>
+                    <TableHead className="py-1 px-4">Name</TableHead>
+                    <TableHead className="py-1 px-4">Full Name (for ref)</TableHead>
+                    <TableHead className="py-1 px-4">Email</TableHead>
+                    <TableHead className="py-1 px-4">Status</TableHead>
+                    <TableHead className="text-right py-1 px-4">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {sortedPlayers.map((player) => (
                     <TableRow key={player.id}>
-                      <TableCell className="font-medium py-2 px-4">{getPlayerDisplayName(player)}</TableCell>
-                      <TableCell className="text-xs text-muted-foreground py-2 px-4">{player.firstName} {player.lastName}</TableCell>
-                      <TableCell className="py-2 px-4">{player.email}</TableCell>
-                      <TableCell className="py-2 px-4">
+                      <TableCell className="font-medium py-1 px-4">{getPlayerDisplayName(player)}</TableCell>
+                      <TableCell className="text-xs text-muted-foreground py-1 px-4">{player.firstName} {player.lastName}</TableCell>
+                      <TableCell className="py-1 px-4">{player.email}</TableCell>
+                      <TableCell className="py-1 px-4">
                          <div className="flex items-center gap-2">
                           <span className={`px-2 py-1 text-xs rounded-full ${
                             player.isActive 
@@ -118,15 +118,15 @@ export default async function PlayersPage() {
                           )}
                         </div>
                       </TableCell>
-                      <TableCell className="text-right space-x-2 py-2 px-4">
-                         <Button variant="outline" size="icon" asChild title="View Player">
+                      <TableCell className="text-right space-x-2 py-1 px-4">
+                         <Button variant="outline" size="icon" className="h-8 w-8" asChild title="View Player">
                            <Link href={`/players/${player.id}`}>
                              <Eye className="h-4 w-4" />
                            </Link>
                          </Button>
                          {isAuthenticated && (
                            <>
-                             <Button variant="outline" size="icon" asChild title="Edit Player">
+                             <Button variant="outline" size="icon" className="h-8 w-8" asChild title="Edit Player">
                                <Link href={`/players/${player.id}/edit`}>
                                  <Edit className="h-4 w-4" />
                                </Link>
