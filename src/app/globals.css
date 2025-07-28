@@ -76,39 +76,39 @@ body {
   }
 
   .theme-classic {
-    --background: 222 47% 11%; /* Midnight Blue */
-    --foreground: 210 40% 98%;
+    --background: 148 70% 21%; /* Dark Green */
+    --foreground: 42 75% 85%; /* Light Gold/Cream text */
 
-    --card: 222 47% 13%; /* Darker Midnight Blue for cards */
-    --card-foreground: 210 40% 98%;
+    --card: 151 70% 18%; /* Slightly lighter green for cards */
+    --card-foreground: 42 75% 85%;
 
-    --popover: 222 47% 11%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 148 70% 15%;
+    --popover-foreground: 42 75% 85%;
 
-    --primary: 355 81% 48%; /* Brighter Bull Red for dark mode */
-    --primary-foreground: 0 0% 100%;
+    --primary: 42 84% 50%; /* Gold/Amber */
+    --primary-foreground: 148 70% 10%; /* Dark Green for text on primary */
 
-    --secondary: 217 33% 17%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 148 50% 30%; /* Muted green */
+    --secondary-foreground: 42 75% 85%;
 
-    --muted: 217 33% 17%;
-    --muted-foreground: 215 20% 65%;
+    --muted: 151 50% 25%;
+    --muted-foreground: 151 25% 65%;
 
-    --accent: 217 33% 17%;
-    --accent-foreground: 210 40% 98%;
+    --accent: 148 50% 30%;
+    --accent-foreground: 42 84% 50%;
 
-    --destructive: 0 63% 31%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 63% 40%;
+    --destructive-foreground: 42 75% 85%;
 
-    --border: 217 33% 25%;
-    --input: 217 33% 17%;
-    --ring: 355 81% 48%;
+    --border: 148 50% 30%;
+    --input: 148 50% 25%;
+    --ring: 42 84% 50%;
 
-    --chart-1: 355 81% 48%;
-    --chart-2: 45 59% 77%;
-    --chart-3: 30 60% 60%;
-    --chart-4: 0 40% 50%;
-    --chart-5: 50 40% 40%;
+    --chart-1: 42 84% 50%; /* Gold/Amber */
+    --chart-2: 80 60% 60%;  /* Lime Green */
+    --chart-3: 42 60% 70%;  /* Lighter Gold */
+    --chart-4: 150 40% 50%; /* Tealish Green */
+    --chart-5: 0 0% 80%;    /* Light Gray/White */
   }
 }
 
