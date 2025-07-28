@@ -70,7 +70,7 @@ const EventTableRow = ({ event, isAuthenticated, allPlayers }: { event: Event, i
           }
            className={cn(
             'text-xs',
-             event.status === 'active' ? 'bg-green-500 text-white' : 
+             event.status === 'active' ? 'bg-green-100 text-green-700 dark:bg-green-700 dark:text-green-100' : 
              event.status === 'draft' ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-700 dark:text-yellow-100' :
              event.status === 'completed' ? 'bg-blue-100 text-blue-700 dark:bg-blue-700 dark:text-blue-100' :
              event.status === 'cancelled' ? 'bg-red-100 text-red-700 dark:bg-red-700 dark:text-red-100' :
