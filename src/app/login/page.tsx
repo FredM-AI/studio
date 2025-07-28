@@ -13,15 +13,26 @@ import { AlertCircle, LogIn, Eye } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Separator } from '@/components/ui/separator';
+import { cn } from '@/lib/utils';
 
 export default function LoginPage() {
   const initialState: LoginFormState = { message: null, errors: {} };
   const [state, dispatch] = useActionState(loginUser, initialState);
+  const [activeTheme, setActiveTheme] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    // Read the theme from localStorage only on the client side.
+    const storedTheme = localStorage.getItem('poker-theme') || 'light';
+    setActiveTheme(storedTheme);
+  }, []);
 
   return (
     <div>
       <div className="flex min-h-[calc(100vh-8rem)] items-center justify-center bg-gradient-to-br from-muted/30 to-background p-4">
-        <Card className="w-full max-w-md shadow-2xl dark">
+        <Card className={cn(
+          "w-full max-w-md shadow-2xl",
+           activeTheme === 'light' && 'dark' // Only apply 'dark' class to card if light theme is active
+        )}>
           <CardHeader className="text-center">
             <div className="flex justify-center items-center mb-4">
               <Image 
