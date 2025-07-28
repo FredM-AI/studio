@@ -13,7 +13,10 @@ import {
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
-} from "@/components/ui/accordion"
+} from "@/components/ui/accordion";
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
+import { format, isPast, parseISO } from "date-fns";
+import { cn } from "@/lib/utils";
 
 const AUTH_COOKIE_NAME = 'app_session_active';
 
@@ -65,13 +68,14 @@ const EventTableRow = ({ event, isAuthenticated, allPlayers }: { event: Event, i
             event.status === 'cancelled' ? 'destructive' :
             'outline'
           }
-          className={
-            event.status === 'active' ? 'bg-green-500 text-white' : 
-            event.status === 'draft' ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-700 dark:text-yellow-100' :
-            event.status === 'completed' ? 'bg-blue-100 text-blue-700 dark:bg-blue-700 dark:text-blue-100' :
-            event.status === 'cancelled' ? 'bg-red-100 text-red-700 dark:bg-red-700 dark:text-red-100' :
-            ''
-          }
+           className={cn(
+            'text-xs',
+             event.status === 'active' ? 'bg-green-500 text-white' : 
+             event.status === 'draft' ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-700 dark:text-yellow-100' :
+             event.status === 'completed' ? 'bg-blue-100 text-blue-700 dark:bg-blue-700 dark:text-blue-100' :
+             event.status === 'cancelled' ? 'bg-red-100 text-red-700 dark:bg-red-700 dark:text-red-100' :
+             ''
+          )}
         >
           {event.status.charAt(0).toUpperCase() + event.status.slice(1)}
         </Badge>
@@ -142,6 +146,22 @@ export default async function EventsPage() {
   });
 
   const activeSeasonIds = allSeasons.filter(season => season.isActive).map(season => season.id);
+  
+  // Determine index for carousel start
+  let initialIndex = 0;
+  if(allSeasons.length > 0) {
+    const activeSeasonIndex = allSeasons.findIndex(s => s.isActive);
+    if(activeSeasonIndex !== -1) {
+      initialIndex = activeSeasonIndex;
+    } else {
+       const completedSeasons = allSeasons.filter(s => s.endDate && isPast(parseISO(s.endDate)));
+       if(completedSeasons.length > 0) {
+           const lastCompleted = completedSeasons[completedSeasons.length - 1];
+           initialIndex = allSeasons.findIndex(s => s.id === lastCompleted.id);
+       }
+    }
+  }
+
 
   return (
     <div className="space-y-6">
@@ -174,61 +194,72 @@ export default async function EventsPage() {
           </CardContent>
         </Card>
       ) : (
-        <Accordion type="multiple" defaultValue={activeSeasonIds} className="w-full space-y-4">
-          {allSeasons.map(season => {
-            const seasonEvents = eventsBySeason.get(season.id) || [];
-            // if (seasonEvents.length === 0 && !isAuthenticated) return null; // Keep this line if you want to hide empty seasons for guests
-            
-            return (
-              <AccordionItem value={season.id} key={season.id} className="border rounded-lg overflow-hidden">
-                <Card className="border-none rounded-none shadow-none">
-                  <AccordionTrigger className="p-0 hover:no-underline">
-                    <CardHeader className="w-full text-left p-4">
-                      <CardTitle className="font-headline text-xl flex items-center">
-                        <BarChart3 className="mr-3 h-5 w-5 text-primary"/>
-                        Season: {season.name}
-                        {season.isActive && <Badge className="ml-3 bg-green-500 text-white">Active</Badge>}
-                      </CardTitle>
-                      <CardDescription>
-                        {new Date(season.startDate).toLocaleDateString()} - {season.endDate ? new Date(season.endDate).toLocaleDateString() : 'Ongoing'}
-                      </CardDescription>
-                    </CardHeader>
-                  </AccordionTrigger>
-                  <AccordionContent className="p-0">
-                    <CardContent className="pt-0">
-                      {seasonEvents.length > 0 ? (
-                        <EventTable events={seasonEvents} isAuthenticated={isAuthenticated} allPlayers={allPlayers} />
-                      ) : (
-                        <p className="text-muted-foreground text-sm py-4 text-center">No events scheduled for this season yet.</p>
-                      )}
-                    </CardContent>
-                  </AccordionContent>
-                </Card>
-              </AccordionItem>
-            );
-          })}
+        <>
+          <Carousel
+            opts={{
+              align: "start",
+              loop: false,
+              startIndex: initialIndex,
+            }}
+            className="w-full"
+          >
+            <CarouselContent className="-ml-4">
+              {allSeasons.map(season => {
+                const seasonEvents = eventsBySeason.get(season.id) || [];
+                return (
+                  <CarouselItem key={season.id} className="pl-4">
+                    <Card className="border-none rounded-none shadow-none">
+                       <CardHeader className="w-full text-left p-4">
+                         <CardTitle className="font-headline text-xl flex items-center">
+                           <BarChart3 className="mr-3 h-5 w-5 text-primary"/>
+                           SEASON: {season.name}
+                           {season.isActive && <Badge className="ml-3 bg-green-500 text-white">Active</Badge>}
+                         </CardTitle>
+                         <CardDescription>
+                           {format(parseISO(season.startDate), 'MM/dd/yyyy')} - {season.endDate ? format(parseISO(season.endDate), 'MM/dd/yyyy') : 'Ongoing'}
+                         </CardDescription>
+                       </CardHeader>
+                       <CardContent className="pt-0">
+                         {seasonEvents.length > 0 ? (
+                           <EventTable events={seasonEvents} isAuthenticated={isAuthenticated} allPlayers={allPlayers} />
+                         ) : (
+                           <p className="text-muted-foreground text-sm py-4 text-center">No events scheduled for this season yet.</p>
+                         )}
+                       </CardContent>
+                     </Card>
+                  </CarouselItem>
+                )
+              })}
+            </CarouselContent>
+             <CarouselPrevious className="ml-[-10px] sm:ml-[-50px]" />
+             <CarouselNext className="mr-[-10px] sm:mr-[-50px]" />
+          </Carousel>
 
           {unassignedEvents.length > 0 && (
-            <AccordionItem value="unassigned-events" className="border rounded-lg overflow-hidden">
-              <Card className="border-none rounded-none shadow-none">
-                <AccordionTrigger className="p-0 hover:no-underline">
-                  <CardHeader className="w-full text-left p-4">
-                    <CardTitle className="font-headline text-xl flex items-center">
-                        <FolderOpen className="mr-3 h-5 w-5 text-primary"/>
-                        Other Events
-                    </CardTitle>
-                    <CardDescription>Events not currently assigned to a specific season.</CardDescription>
-                  </CardHeader>
-                </AccordionTrigger>
-                <AccordionContent className="p-0">
-                  <CardContent className="pt-0">
-                    <EventTable events={unassignedEvents} isAuthenticated={isAuthenticated} allPlayers={allPlayers}/>
-                  </CardContent>
-                </AccordionContent>
-              </Card>
-            </AccordionItem>
+            <div className="pt-8">
+              <Accordion type="single" collapsible defaultValue="unassigned-events" className="w-full border rounded-lg overflow-hidden">
+                <AccordionItem value="unassigned-events">
+                  <Card className="border-none rounded-none shadow-none">
+                    <AccordionTrigger className="p-0 hover:no-underline">
+                      <CardHeader className="w-full text-left p-4">
+                        <CardTitle className="font-headline text-xl flex items-center">
+                            <FolderOpen className="mr-3 h-5 w-5 text-primary"/>
+                            Other Events
+                        </CardTitle>
+                        <CardDescription>Events not currently assigned to a specific season.</CardDescription>
+                      </CardHeader>
+                    </AccordionTrigger>
+                    <AccordionContent className="p-0">
+                      <CardContent className="pt-0">
+                        <EventTable events={unassignedEvents} isAuthenticated={isAuthenticated} allPlayers={allPlayers}/>
+                      </CardContent>
+                    </AccordionContent>
+                  </Card>
+                </AccordionItem>
+              </Accordion>
+            </div>
           )}
-        </Accordion>
+        </>
       )}
     </div>
   );
