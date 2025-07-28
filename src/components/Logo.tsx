@@ -7,9 +7,9 @@ const Logo = () => {
       <Image 
         src="/poker-bulls-club-logo.png"
         alt="Poker Bulls Club Logo"
-        width={50}
-        height={50}
-        className="h-12 w-auto"
+        width={60}
+        height={60}
+        className="h-14 w-auto"
         unoptimized
       />
       <span className="font-headline text-xl font-bold uppercase leading-tight text-amber-500">

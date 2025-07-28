@@ -13,7 +13,6 @@ import { AlertCircle, LogIn, Eye } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Separator } from '@/components/ui/separator';
-import Logo from '@/components/Logo';
 
 export default function LoginPage() {
   const initialState: LoginFormState = { message: null, errors: {} };
@@ -23,8 +22,15 @@ export default function LoginPage() {
     <div className="flex min-h-[calc(100vh-8rem)] items-center justify-center bg-gradient-to-br from-muted/30 to-background p-4">
       <Card className="w-full max-w-md shadow-2xl">
         <CardHeader className="text-center">
-           <div className="flex justify-center items-center mb-4 transform scale-125">
-            <Logo />
+           <div className="flex justify-center items-center mb-4">
+            <Image 
+              src="/poker-bulls-club-logo.png"
+              alt="Poker Bulls Club Logo"
+              width={300}
+              height={300}
+              className="h-auto w-auto"
+              unoptimized
+            />
            </div>
           <CardTitle className="font-headline text-3xl">Welcome</CardTitle>
           <CardDescription>Access your dashboard or continue as a guest.</CardDescription>
