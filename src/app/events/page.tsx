@@ -64,11 +64,11 @@ const EventTableRow = ({ event, isAuthenticated, allPlayers }: { event: Event, i
         <Badge
           className={cn(
             'text-xs font-semibold border-transparent',
-             event.status === 'active' ? 'bg-green-100 text-green-800 dark:bg-green-800/20 dark:text-green-300' : 
-             event.status === 'draft' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-800/20 dark:text-yellow-300' :
-             event.status === 'completed' ? 'bg-blue-100 text-blue-800 dark:bg-blue-800/20 dark:text-blue-300' :
-             event.status === 'cancelled' ? 'bg-red-100 text-red-800 dark:bg-red-800/20 dark:text-red-300' :
-             'bg-gray-100 text-gray-800 dark:bg-gray-800/20 dark:text-gray-300'
+             event.status === 'active' ? 'bg-green-100 text-green-800 dark:bg-green-800/20 dark:text-green-300 hover:bg-green-100 dark:hover:bg-green-800/20' : 
+             event.status === 'draft' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-800/20 dark:text-yellow-300 hover:bg-yellow-100 dark:hover:bg-yellow-800/20' :
+             event.status === 'completed' ? 'bg-blue-100 text-blue-800 dark:bg-blue-800/20 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-800/20' :
+             event.status === 'cancelled' ? 'bg-red-100 text-red-800 dark:bg-red-800/20 dark:text-red-300 hover:bg-red-100 dark:hover:bg-red-800/20' :
+             'bg-gray-100 text-gray-800 dark:bg-gray-800/20 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800/20'
           )}
         >
           {event.status.charAt(0).toUpperCase() + event.status.slice(1)}
