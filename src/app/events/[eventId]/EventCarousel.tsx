@@ -52,10 +52,7 @@ export default function EventCarousel({ seasonEvents, currentEventId, seasonName
   }
 
   return (
-    <div className="w-full relative mb-6">
-       <div className="text-center mb-2">
-            <p className="text-sm font-medium text-muted-foreground flex items-center justify-center gap-2"><ChevronsLeftRight className="h-4 w-4"/> Event Navigation: <span className="font-bold text-foreground">{seasonName}</span></p>
-       </div>
+    <div className="w-full relative">
       <Carousel
         setApi={setApi}
         opts={{
