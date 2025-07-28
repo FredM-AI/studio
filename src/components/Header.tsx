@@ -9,6 +9,7 @@ import { Menu, LogOut, Home, MessageSquare, CalendarDays, Users, BarChart3, LogI
 import { logoutUser } from '@/app/login/actions';
 import { usePathname } from 'next/navigation'; 
 import ThemeToggle from './ThemeToggle';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from './ui/dropdown-menu';
 
 const Header = ({ isAuthenticated }: { isAuthenticated: boolean }) => {
   const pathname = usePathname(); 
@@ -16,10 +17,14 @@ const Header = ({ isAuthenticated }: { isAuthenticated: boolean }) => {
   const navItems = [
     { href: '/dashboard', label: 'Dashboard', icon: Home },
     { href: '/hall-of-fame', label: 'HOF', icon: Trophy },
-    { href: '/events', label: 'Events', icon: CalendarDays },
-    { href: '/players', label: 'Players', icon: Users },
-    { href: '/seasons', label: 'Seasons', icon: BarChart3 },
   ];
+
+  const championshipItems = [
+    { href: '/seasons', label: 'Seasons', icon: BarChart3 },
+    { href: '/events', label: 'Events', icon: CalendarDays },
+  ];
+
+  const playerItem = { href: '/players', label: 'Players', icon: Users };
 
   if (isAuthenticated) {
     navItems.push({ href: '/assistant', label: 'Assistant', icon: MessageSquare });
@@ -44,6 +49,34 @@ const Header = ({ isAuthenticated }: { isAuthenticated: boolean }) => {
                   </Link>
                 </Button>
               ))}
+
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost">
+                    <Trophy className="mr-2 h-4 w-4" />
+                    Championships
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  {championshipItems.map(item => (
+                     <DropdownMenuItem key={item.label} asChild>
+                       <Link href={item.href}>
+                         <item.icon className="mr-2 h-4 w-4" />
+                         {item.label}
+                       </Link>
+                     </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              <Button variant="ghost" asChild>
+                <Link href={playerItem.href}>
+                  <playerItem.icon className="mr-2 h-4 w-4" />
+                  {playerItem.label}
+                </Link>
+              </Button>
+
+
               <div className="flex items-center gap-2 ml-2">
                 <ThemeToggle />
                 {isAuthenticated ? (
@@ -82,6 +115,22 @@ const Header = ({ isAuthenticated }: { isAuthenticated: boolean }) => {
                         </Link>
                       </Button>
                     ))}
+                     <p className="text-sm font-medium text-muted-foreground px-4 pt-2">Championships</p>
+                    {championshipItems.map((item) => (
+                      <Button key={item.label} variant="ghost" className="justify-start text-base py-3 h-auto" asChild>
+                        <Link href={item.href}>
+                          <item.icon className="mr-3 h-5 w-5" />
+                          {item.label}
+                        </Link>
+                      </Button>
+                    ))}
+                     <Button variant="ghost" className="justify-start text-base py-3 h-auto" asChild>
+                        <Link href={playerItem.href}>
+                          <playerItem.icon className="mr-3 h-5 w-5" />
+                          {playerItem.label}
+                        </Link>
+                      </Button>
+
                     <div className="mt-4 border-t pt-4">
                       {isAuthenticated ? (
                         <form action={logoutUser}>
