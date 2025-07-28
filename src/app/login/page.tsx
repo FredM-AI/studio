@@ -19,9 +19,9 @@ export default function LoginPage() {
   const [state, dispatch] = useActionState(loginUser, initialState);
 
   return (
-    <div className="dark">
+    <div>
       <div className="flex min-h-[calc(100vh-8rem)] items-center justify-center bg-gradient-to-br from-muted/30 to-background p-4">
-        <Card className="w-full max-w-md shadow-2xl">
+        <Card className="w-full max-w-md shadow-2xl dark">
           <CardHeader className="text-center">
             <div className="flex justify-center items-center mb-4">
               <Image 
