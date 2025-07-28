@@ -26,8 +26,8 @@ export default function LoginPage() {
             <Image 
               src="/poker-bulls-club-logo.png"
               alt="Poker Bulls Club Logo"
-              width={300}
-              height={300}
+              width={225}
+              height={225}
               className="h-auto w-auto"
               unoptimized
             />
