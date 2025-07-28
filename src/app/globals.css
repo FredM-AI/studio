@@ -76,35 +76,35 @@ body {
   }
 
   .theme-classic {
-    --background: 48 30% 55%; /* Classic Accent Color */
-    --foreground: 0 0% 100%; /* White */
+    --background: 222 47% 11%; /* Midnight Blue */
+    --foreground: 210 40% 98%;
 
-    --card: 45 59% 77%; /* Light Theme Accent Color */
-    --card-foreground: 240 10% 3.9%; /* Dark Charcoal */
+    --card: 222 47% 13%; /* Darker Midnight Blue for cards */
+    --card-foreground: 210 40% 98%;
 
     --popover: 222 47% 11%;
-    --popover-foreground: 48 83% 96%;
+    --popover-foreground: 210 40% 98%;
 
-    --primary: 0 65% 51%; /* Rich Red */
+    --primary: 355 81% 48%; /* Brighter Bull Red for dark mode */
     --primary-foreground: 0 0% 100%;
 
     --secondary: 217 33% 17%;
-    --secondary-foreground: 48 83% 96%;
+    --secondary-foreground: 210 40% 98%;
 
     --muted: 217 33% 17%;
     --muted-foreground: 215 20% 65%;
 
-    --accent: 48 30% 55%;
-    --accent-foreground: 0 0% 100%;
+    --accent: 217 33% 17%;
+    --accent-foreground: 210 40% 98%;
 
-    --destructive: 0 65% 51%;
-    --destructive-foreground: 0 0% 100%;
+    --destructive: 0 63% 31%;
+    --destructive-foreground: 210 40% 98%;
 
-    --border: 0 65% 45%; /* Red border */
+    --border: 217 33% 25%;
     --input: 217 33% 17%;
-    --ring: 0 65% 51%;
+    --ring: 355 81% 48%;
 
-    --chart-1: 0 65% 51%;
+    --chart-1: 355 81% 48%;
     --chart-2: 45 59% 77%;
     --chart-3: 30 60% 60%;
     --chart-4: 0 40% 50%;
