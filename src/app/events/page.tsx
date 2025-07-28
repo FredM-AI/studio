@@ -128,7 +128,7 @@ export default async function EventsPage() {
   const cookieStore = cookies();
   const isAuthenticated = cookieStore.get(AUTH_COOKIE_NAME)?.value === 'true';
   const allEvents: Event[] = (await getEvents()).sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-  const allSeasons: Season[] = (await getSeasons()).sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime());
+  const allSeasons: Season[] = (await getSeasons()).sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime());
   const allPlayers: Player[] = await getPlayers();
 
   const eventsBySeason: Map<string, Event[]> = new Map();
