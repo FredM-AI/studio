@@ -1,9 +1,10 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { getSeasons, getEvents } from "@/lib/data-service"; 
-import type { Season, Event as EventType } from "@/lib/definitions"; 
-import { BarChart3, PlusCircle, CalendarRange, Edit, Eye, CheckCircle, XCircle, ListTree, CalendarDays } from "lucide-react";
+import { getSeasons, getEvents, getPlayers } from "@/lib/data-service"; 
+import { calculateSeasonStats } from "@/lib/stats-service";
+import type { Season, Event as EventType, Player, LeaderboardEntry } from "@/lib/definitions"; 
+import { BarChart3, PlusCircle, CalendarRange, Edit, Eye, CheckCircle, XCircle, ListTree, Crown, Award, Trophy } from "lucide-react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { cookies } from 'next/headers';
@@ -13,55 +14,106 @@ import { cn } from "@/lib/utils";
 
 const AUTH_COOKIE_NAME = 'app_session_active';
 
-const SeasonCard = ({ season, associatedEvents, isAuthenticated }: { season: Season, associatedEvents: EventType[], isAuthenticated: boolean }) => (
-    <Card className={cn(
-        "group perspective-1000 flex flex-col h-full",
-        "transition-all duration-300 ease-in-out hover:shadow-2xl hover:shadow-primary/20"
-    )}>
-        <div className="transition-transform duration-300 ease-in-out group-hover:-translate-y-2 group-hover:rotate-x-[-2deg] group-hover:rotate-y-[2deg] transform-style-3d backface-hidden flex flex-col h-full">
-            <CardHeader className="flex-grow text-left w-full">
-                <CardTitle className="font-headline text-xl">{season.name}</CardTitle>
-                <CardDescription className="flex items-center text-sm">
-                    <CalendarRange className="mr-2 h-4 w-4 text-muted-foreground" />
-                    {new Date(season.startDate).toLocaleDateString()} - {season.endDate ? new Date(season.endDate).toLocaleDateString() : 'Ongoing'}
-                </CardDescription>
-            </CardHeader>
-            <CardContent className="flex-grow space-y-3 pt-0">
-                <div className="flex items-center">
-                <Badge variant={season.isActive ? "default" : "outline"} className={season.isActive ? "bg-green-500 hover:bg-green-600 text-primary-foreground" : "border-destructive text-destructive"}>
-                    {season.isActive ? <CheckCircle className="mr-1 h-3 w-3"/> : <XCircle className="mr-1 h-3 w-3"/>}
-                    {season.isActive ? "Active" : "Inactive"}
-                </Badge>
-                </div>
-                <div className="text-sm text-muted-foreground flex items-center">
-                <ListTree className="mr-2 h-4 w-4" /> Associated Events: {associatedEvents.length}
-                </div>
-            </CardContent>
-            <CardFooter className="flex justify-end gap-2 border-t pt-4 mt-auto">
-                <Button variant="default" size="sm" asChild title="View Season Details">
-                <Link href={`/seasons/${season.id}`}>
-                    <Eye className="mr-1 h-4 w-4" /> View Details
-                </Link>
-                </Button>
-                {isAuthenticated && (
-                <Button variant="outline" size="sm" asChild title="Edit Season">
-                    <Link href={`/seasons/${season.id}/edit`}>
-                    <Edit className="mr-1 h-4 w-4" /> Edit
+const getPlayerDisplayName = (player: Player | undefined): string => {
+  if (!player) return "N/A";
+  if (player.nickname && player.nickname.trim() !== '') {
+    return player.nickname;
+  }
+  if (player.firstName) {
+    return `${player.firstName}${player.lastName ? ' ' + player.lastName.charAt(0) + '.' : ''}`;
+  }
+  if (player.lastName) {
+    return player.lastName;
+  }
+  return "Unnamed";
+};
+
+const SeasonCard = ({ season, associatedEvents, leaderboard, isAuthenticated }: { season: Season, associatedEvents: EventType[], leaderboard: LeaderboardEntry[], isAuthenticated: boolean }) => {
+    
+    const podium = leaderboard.filter(p => !p.isGuest).slice(0, 3);
+    
+    return (
+        <Card className={cn(
+            "group perspective-1000 flex flex-col h-full",
+            "transition-all duration-300 ease-in-out hover:shadow-2xl hover:shadow-primary/20"
+        )}>
+            <div className="transition-transform duration-300 ease-in-out group-hover:-translate-y-2 group-hover:rotate-x-[-2deg] group-hover:rotate-y-[2deg] transform-style-3d backface-hidden flex flex-col h-full bg-card rounded-lg">
+                <CardHeader className="text-left w-full">
+                    <CardTitle className="font-headline text-xl">{season.name}</CardTitle>
+                    <CardDescription className="flex items-center text-sm">
+                        <CalendarRange className="mr-2 h-4 w-4 text-muted-foreground" />
+                        {new Date(season.startDate).toLocaleDateString()} - {season.endDate ? new Date(season.endDate).toLocaleDateString() : 'Ongoing'}
+                    </CardDescription>
+                </CardHeader>
+                <CardContent className="flex-grow space-y-4 pt-0">
+                    <div className="flex items-center gap-2">
+                        <Badge variant={season.isActive ? "default" : "outline"} className={cn(season.isActive && "bg-green-500 hover:bg-green-600 text-primary-foreground", !season.isActive && "border-destructive text-destructive")}>
+                            {season.isActive ? <CheckCircle className="mr-1 h-3 w-3"/> : <XCircle className="mr-1 h-3 w-3"/>}
+                            {season.isActive ? "Active" : "Inactive"}
+                        </Badge>
+                        <Badge variant="secondary">{associatedEvents.length} Events</Badge>
+                    </div>
+
+                    <div className="space-y-2 pt-2 border-t">
+                        <h4 className="font-medium text-sm flex items-center"><Trophy className="mr-2 h-4 w-4 text-primary" />Podium</h4>
+                        {podium.length > 0 ? (
+                            <ul className="space-y-1 text-sm">
+                                {podium.map((entry, index) => (
+                                    <li key={entry.playerId} className="flex items-center justify-between gap-2">
+                                        <div className="flex items-center gap-1 truncate">
+                                            {index === 0 && <Crown className="h-4 w-4 text-yellow-500 shrink-0"/>}
+                                            {index === 1 && <Award className="h-4 w-4 text-gray-400 shrink-0"/>}
+                                            {index === 2 && <Trophy className="h-4 w-4 text-orange-400 shrink-0"/>}
+                                            <span className="truncate">{entry.playerName}</span>
+                                        </div>
+                                        <span className={cn("font-semibold", entry.totalFinalResult > 0 && "text-green-600", entry.totalFinalResult < 0 && "text-red-600")}>
+                                            €{entry.totalFinalResult.toLocaleString()}
+                                        </span>
+                                    </li>
+                                ))}
+                            </ul>
+                        ) : (
+                            <p className="text-xs text-muted-foreground">No leaderboard data yet.</p>
+                        )}
+                    </div>
+                </CardContent>
+                <CardFooter className="flex justify-end gap-2 border-t pt-4 mt-auto">
+                    <Button variant="default" size="sm" asChild title="View Season Details">
+                    <Link href={`/seasons/${season.id}`}>
+                        <Eye className="mr-1 h-4 w-4" /> View Details
                     </Link>
-                </Button>
-                )}
-            </CardFooter>
-        </div>
-    </Card>
-);
+                    </Button>
+                    {isAuthenticated && (
+                    <Button variant="outline" size="sm" asChild title="Edit Season">
+                        <Link href={`/seasons/${season.id}/edit`}>
+                        <Edit className="mr-1 h-4 w-4" /> Edit
+                        </Link>
+                    </Button>
+                    )}
+                </CardFooter>
+            </div>
+        </Card>
+    )
+};
 
 export default async function SeasonsPage() {
   const cookieStore = cookies();
   const isAuthenticated = cookieStore.get(AUTH_COOKIE_NAME)?.value === 'true';
   const seasons = await getSeasons();
   const allEvents = await getEvents(); 
+  const allPlayers = await getPlayers();
 
   const sortedSeasons = seasons.sort((a,b) => parseISO(a.startDate).getTime() - parseISO(b.startDate).getTime());
+  
+  const seasonData = await Promise.all(sortedSeasons.map(async season => {
+      const stats = await calculateSeasonStats(season, allEvents, allPlayers);
+      const associatedEvents = allEvents.filter(event => event.seasonId === season.id);
+      return {
+          ...season,
+          leaderboard: stats.leaderboard,
+          associatedEvents,
+      }
+  }));
 
   // Find the index of the last completed season
   let initialIndex = 0;
@@ -114,22 +166,26 @@ export default async function SeasonsPage() {
                 loop: false,
                 startIndex: initialIndex,
               }}
-              className="w-full max-w-xs sm:max-w-xl md:max-w-2xl lg:max-w-4xl"
+              className="w-full max-w-xs sm:max-w-xl md:max-w-2xl lg:max-w-4xl xl:max-w-6xl"
             >
-              <CarouselContent>
-                {sortedSeasons.map((season) => {
-                  const associatedEvents = allEvents.filter(event => event.seasonId === season.id);
+              <CarouselContent className="-ml-4">
+                {seasonData.map((season) => {
                   return (
-                    <CarouselItem key={season.id} className="md:basis-1/2 lg:basis-1/3">
+                    <CarouselItem key={season.id} className="md:basis-1/2 xl:basis-1/3 pl-4">
                       <div className="p-1 h-full">
-                        <SeasonCard season={season} associatedEvents={associatedEvents} isAuthenticated={isAuthenticated} />
+                        <SeasonCard 
+                            season={season} 
+                            associatedEvents={season.associatedEvents} 
+                            leaderboard={season.leaderboard}
+                            isAuthenticated={isAuthenticated} 
+                        />
                       </div>
                     </CarouselItem>
                   )
                 })}
               </CarouselContent>
-              <CarouselPrevious />
-              <CarouselNext />
+              <CarouselPrevious className="ml-[-50px]" />
+              <CarouselNext className="mr-[-50px]" />
             </Carousel>
         )}
       </div>
