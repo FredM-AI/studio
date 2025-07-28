@@ -76,13 +76,13 @@ body {
   }
 
   .theme-classic {
-    --background: 222 47% 11%; /* Midnight Blue */
-    --foreground: 48 83% 96%; /* Off-white/Cream */
+    --background: 48 30% 55%; /* Classic Accent Color */
+    --foreground: 0 0% 100%; /* White */
 
-    --card: 0 0% 100%; /* White */
+    --card: 45 59% 77%; /* Light Theme Accent Color */
     --card-foreground: 240 10% 3.9%; /* Dark Charcoal */
 
-    --popover: 222 47% 11%; /* Midnight Blue for popovers */
+    --popover: 222 47% 11%;
     --popover-foreground: 48 83% 96%;
 
     --primary: 0 65% 51%; /* Rich Red */
@@ -91,8 +91,8 @@ body {
     --secondary: 217 33% 17%;
     --secondary-foreground: 48 83% 96%;
 
-    --muted: 217 33% 17%; /* Darker color for muted elements on dark bg */
-    --muted-foreground: 215 20% 65%; /* Lighter text for muted elements */
+    --muted: 217 33% 17%;
+    --muted-foreground: 215 20% 65%;
 
     --accent: 48 30% 55%;
     --accent-foreground: 0 0% 100%;
