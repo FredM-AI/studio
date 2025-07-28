@@ -31,7 +31,11 @@ const getPlayerDisplayName = (player: Player | undefined): string => {
 export default async function PlayersPage() {
   const cookieStore = cookies();
   const isAuthenticated = cookieStore.get(AUTH_COOKIE_NAME)?.value === 'true';
-  const players: Player[] = await getPlayers();
+  let players: Player[] = await getPlayers();
+
+  if (!isAuthenticated) {
+    players = players.filter(player => player.isActive);
+  }
 
   // Sort players: alphabetical by display name (which prioritizes nickname), with guests at the end.
   const sortedPlayers = players.sort((a, b) => {
