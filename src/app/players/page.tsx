@@ -10,6 +10,7 @@ import { cookies } from 'next/headers';
 import PlayerImportForm from "@/components/PlayerImportForm";
 import { Separator } from "@/components/ui/separator";
 import DeletePlayerButton from "@/components/DeletePlayerButton"; // Import the new component
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 
 const AUTH_COOKIE_NAME = 'app_session_active';
@@ -84,62 +85,64 @@ export default async function PlayersPage() {
               </p>
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Full Name (for ref)</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {sortedPlayers.map((player) => (
-                  <TableRow key={player.id}>
-                    <TableCell className="font-medium">{getPlayerDisplayName(player)}</TableCell>
-                    <TableCell className="text-xs text-muted-foreground">{player.firstName} {player.lastName}</TableCell>
-                    <TableCell>{player.email}</TableCell>
-                    <TableCell>
-                       <div className="flex items-center gap-2">
-                        <span className={`px-2 py-1 text-xs rounded-full ${
-                          player.isActive 
-                            ? 'bg-green-100 text-green-700 dark:bg-green-700 dark:text-green-100' 
-                            : 'bg-red-100 text-red-700 dark:bg-red-700 dark:text-red-100'
-                        }`}>
-                          {player.isActive ? "Active" : "Inactive"}
-                        </span>
-                        {player.isGuest && (
-                          <span className="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-700 dark:bg-blue-700 dark:text-blue-100">
-                            Guest
-                          </span>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-right space-x-2">
-                       <Button variant="outline" size="icon" asChild title="View Player">
-                         <Link href={`/players/${player.id}`}>
-                           <Eye className="h-4 w-4" />
-                         </Link>
-                       </Button>
-                       {isAuthenticated && (
-                         <>
-                           <Button variant="outline" size="icon" asChild title="Edit Player">
-                             <Link href={`/players/${player.id}/edit`}>
-                               <Edit className="h-4 w-4" />
-                             </Link>
-                           </Button>
-                           <DeletePlayerButton 
-                              playerId={player.id} 
-                              playerName={getPlayerDisplayName(player)}
-                           />
-                         </>
-                       )}
-                    </TableCell>
+            <ScrollArea className="h-[600px]">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Full Name (for ref)</TableHead>
+                    <TableHead>Email</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {sortedPlayers.map((player) => (
+                    <TableRow key={player.id}>
+                      <TableCell className="font-medium">{getPlayerDisplayName(player)}</TableCell>
+                      <TableCell className="text-xs text-muted-foreground">{player.firstName} {player.lastName}</TableCell>
+                      <TableCell>{player.email}</TableCell>
+                      <TableCell>
+                         <div className="flex items-center gap-2">
+                          <span className={`px-2 py-1 text-xs rounded-full ${
+                            player.isActive 
+                              ? 'bg-green-100 text-green-700 dark:bg-green-700 dark:text-green-100' 
+                              : 'bg-red-100 text-red-700 dark:bg-red-700 dark:text-red-100'
+                          }`}>
+                            {player.isActive ? "Active" : "Inactive"}
+                          </span>
+                          {player.isGuest && (
+                            <span className="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-700 dark:bg-blue-700 dark:text-blue-100">
+                              Guest
+                            </span>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right space-x-2">
+                         <Button variant="outline" size="icon" asChild title="View Player">
+                           <Link href={`/players/${player.id}`}>
+                             <Eye className="h-4 w-4" />
+                           </Link>
+                         </Button>
+                         {isAuthenticated && (
+                           <>
+                             <Button variant="outline" size="icon" asChild title="Edit Player">
+                               <Link href={`/players/${player.id}/edit`}>
+                                 <Edit className="h-4 w-4" />
+                               </Link>
+                             </Button>
+                             <DeletePlayerButton 
+                                playerId={player.id} 
+                                playerName={getPlayerDisplayName(player)}
+                             />
+                           </>
+                         )}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </ScrollArea>
           )}
         </CardContent>
       </Card>
