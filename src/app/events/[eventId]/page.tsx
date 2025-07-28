@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { getEvents, getPlayers, getSeasons } from "@/lib/data-service";
 import type { Event, Player, Season } from "@/lib/definitions";
-import { ArrowLeft, Edit, Users, DollarSign, CalendarDays, Trophy, Info, Tag, CheckCircle, XCircle, Trash2, Star, Gift, BarChart3, HelpCircle, PlayCircle } from "lucide-react";
+import { ArrowLeft, Edit, Users, DollarSign, CalendarDays, Trophy, Info, Tag, CheckCircle, XCircle, Trash2, Star, Gift, BarChart3, HelpCircle, PlayCircle, Repeat } from "lucide-react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -73,6 +73,7 @@ export default async function EventDetailsPage({ params }: { params: { eventId: 
   const sortedResults = event.results.sort((a, b) => a.position - b.position);
   const rebuysActive = event.rebuyPrice !== undefined && event.rebuyPrice > 0;
   const includeBountiesInNetCalc = event.includeBountiesInNet ?? true;
+  const totalRebuys = event.results.reduce((acc, result) => acc + (result.rebuys || 0), 0);
 
   return (
     <div className="space-y-6">
@@ -152,20 +153,8 @@ export default async function EventDetailsPage({ params }: { params: { eventId: 
                 <span className="font-medium">{rebuysActive ? `Yes (Price: €${event.rebuyPrice})` : 'No'}</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-muted-foreground flex items-center"><CalendarDays className="mr-2 h-4 w-4"/>Status:</span>
-                <Badge
-                  variant={
-                    event.status === 'completed' ? 'default' :
-                    event.status === 'active' ? 'secondary' :
-                    event.status === 'cancelled' ? 'destructive' :
-                    'outline'
-                  }
-                  className={
-                    event.status === 'active' ? 'bg-green-500 text-white' : ''
-                  }
-                >
-                  {event.status.charAt(0).toUpperCase() + event.status.slice(1)}
-                </Badge>
+                <span className="text-muted-foreground flex items-center"><Repeat className="mr-2 h-4 w-4"/>Total Rebuys:</span>
+                <span className="font-medium">{totalRebuys}</span>
               </div>
               {(event.bounties !== undefined && event.bounties > 0) && (
                   <div className="flex items-center justify-between">
