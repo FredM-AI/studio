@@ -237,7 +237,7 @@ export default async function EventsPage() {
 
           {unassignedEvents.length > 0 && (
             <div className="pt-8">
-              <Accordion type="single" collapsible defaultValue="unassigned-events" className="w-full border rounded-lg overflow-hidden">
+              <Accordion type="single" collapsible className="w-full border rounded-lg overflow-hidden">
                 <AccordionItem value="unassigned-events">
                   <Card className="border-none rounded-none shadow-none">
                     <AccordionTrigger className="p-0 hover:no-underline">
