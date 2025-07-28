@@ -1,23 +1,24 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { getEvents, getPlayers, getSeasons } from "@/lib/data-service"; // Added getSeasons
-import type { Event, Player, Season } from "@/lib/definitions"; // Added Season
-import { ArrowLeft, Edit, Users, DollarSign, CalendarDays, Trophy, Info, Tag, CheckCircle, XCircle, Trash2, Star, Gift, BarChart3, HelpCircle, PlayCircle } from "lucide-react"; // Added BarChart3
+import { getEvents, getPlayers, getSeasons } from "@/lib/data-service";
+import type { Event, Player, Season } from "@/lib/definitions";
+import { ArrowLeft, Edit, Users, DollarSign, CalendarDays, Trophy, Info, Tag, CheckCircle, XCircle, Trash2, Star, Gift, BarChart3, HelpCircle, PlayCircle } from "lucide-react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cookies } from 'next/headers';
 import DeleteEventButton from "./DeleteEventButton";
+import EventCarousel from './EventCarousel';
 
 const AUTH_COOKIE_NAME = 'app_session_active';
 
-async function getEventDetails(id: string): Promise<{ event: Event | undefined, players: Player[], seasons: Season[] }> {
-  const events = await getEvents();
-  const event = events.find(e => e.id === id);
+async function getEventDetails(id: string): Promise<{ event: Event | undefined, players: Player[], seasons: Season[], events: Event[] }> {
+  const allEvents = await getEvents();
+  const event = allEvents.find(e => e.id === id);
   const players = await getPlayers();
   const seasons = await getSeasons();
-  return { event, players, seasons };
+  return { event, players, seasons, events: allEvents };
 }
 
 const getPlayerDisplayName = (player: Player | undefined): string => {
@@ -37,7 +38,7 @@ const getPlayerDisplayName = (player: Player | undefined): string => {
 export default async function EventDetailsPage({ params }: { params: { eventId: string } }) {
   const cookieStore = cookies();
   const isAuthenticated = cookieStore.get(AUTH_COOKIE_NAME)?.value === 'true';
-  const { event, players: allPlayers, seasons: allSeasons } = await getEventDetails(params.eventId);
+  const { event, players: allPlayers, seasons: allSeasons, events: allEvents } = await getEventDetails(params.eventId);
 
   if (!event) {
     return (
@@ -65,12 +66,23 @@ export default async function EventDetailsPage({ params }: { params: { eventId: 
   }
 
   const linkedSeason = event.seasonId ? allSeasons.find(s => s.id === event.seasonId) : undefined;
+  const eventsInSameSeason = linkedSeason 
+    ? allEvents.filter(e => e.seasonId === linkedSeason.id).sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+    : [];
+
   const sortedResults = event.results.sort((a, b) => a.position - b.position);
   const rebuysActive = event.rebuyPrice !== undefined && event.rebuyPrice > 0;
   const includeBountiesInNetCalc = event.includeBountiesInNet ?? true;
 
   return (
     <div className="space-y-4">
+      {linkedSeason && (
+        <EventCarousel 
+          seasonEvents={eventsInSameSeason.map(e => ({ id: e.id, name: e.name }))}
+          currentEventId={event.id}
+          seasonName={linkedSeason.name}
+        />
+      )}
       <Button variant="outline" asChild>
         <Link href="/events">
           <ArrowLeft className="mr-2 h-4 w-4" /> Back to Events
