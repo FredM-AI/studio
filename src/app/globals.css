@@ -64,8 +64,8 @@ body {
     --muted: 217 33% 17%;
     --muted-foreground: 215 20% 65%;
 
-    --accent: 217 33% 17%;
-    --accent-foreground: 210 40% 98%;
+    --accent: 42 84% 25%; /* Gold/Amber for hover backgrounds */
+    --accent-foreground: 42 84% 90%; /* Lighter gold for text on hover */
 
     --destructive: 0 63% 31%;
     --destructive-foreground: 210 40% 98%;
