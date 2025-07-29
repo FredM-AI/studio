@@ -55,8 +55,8 @@ body {
     --popover: 222 47% 11%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 355 81% 48%; /* Brighter Bull Red for dark mode */
-    --primary-foreground: 0 0% 100%;
+    --primary: 42 84% 50%; /* Gold/Amber */
+    --primary-foreground: 148 70% 10%; /* Dark Green for text on primary */
 
     --secondary: 217 33% 17%;
     --secondary-foreground: 210 40% 98%;
@@ -72,7 +72,7 @@ body {
 
     --border: 217 33% 25%;
     --input: 217 33% 17%;
-    --ring: 355 81% 48%;
+    --ring: 42 84% 50%;
   }
 
   .theme-classic {
