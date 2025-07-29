@@ -131,7 +131,7 @@ export default function PokerTimerModal({
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-       levelEndAudioRef.current = new Audio('https://cdn.freesound.org/previews/219/219244_3226338-lq.mp3');
+       levelEndAudioRef.current = new Audio('https://universal-soundbank.com/sounds/22459.mp3');
     }
   }, []);
 
