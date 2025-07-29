@@ -12,9 +12,6 @@ const Logo = () => {
         className="h-14 w-auto"
         unoptimized
       />
-      <span className="font-headline text-xl font-bold uppercase leading-tight text-amber-500">
-        Poker Bulls
-      </span>
     </Link>
   );
 };
