@@ -131,7 +131,8 @@ export default function PokerTimerModal({
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-       levelEndAudioRef.current = new Audio('/sounds/level-end.mp3');
+       // Use a reliable, publicly hosted sound file to avoid 404 errors from missing local files.
+       levelEndAudioRef.current = new Audio('https://www.warlegend.net/wp-content/uploads/level-end.mp3');
     }
   }, []);
 
