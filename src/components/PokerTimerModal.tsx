@@ -33,6 +33,17 @@ interface PokerTimerModalProps {
   refreshBlindStructures: () => Promise<void>;
 }
 
+// --- Sound Bank ---
+// Add your sound URLs here. A random one will be picked for each level-end alert.
+const soundBank: string[] = [
+  'https://universal-soundbank.com/sounds/22459.mp3',
+  // Example of how to add more sounds:
+  // 'https://example.com/sound2.mp3',
+  // 'https://example.com/sound3.mp3',
+];
+// --- End of Sound Bank ---
+
+
 const formatTime = (seconds: number) => {
   if (seconds < 0) seconds = 0;
   const mins = Math.floor(seconds / 60);
@@ -99,7 +110,13 @@ export default function PokerTimerModal({
     theme: 'dark',
   }));
 
-  const levelEndAudioRef = useRef<HTMLAudioElement | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && !audioRef.current) {
+        audioRef.current = new Audio();
+    }
+  }, []);
 
   useEffect(() => {
     // Propagate structure changes up to the parent `LiveTournamentClient`
@@ -130,14 +147,8 @@ export default function PokerTimerModal({
 
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-       levelEndAudioRef.current = new Audio('https://universal-soundbank.com/sounds/22459.mp3');
-    }
-  }, []);
-
-  useEffect(() => {
-    if(levelEndAudioRef.current) {
-        levelEndAudioRef.current.volume = settings.volume;
+    if(audioRef.current) {
+        audioRef.current.volume = settings.volume;
     }
   }, [settings.volume]);
 
@@ -182,8 +193,11 @@ export default function PokerTimerModal({
   }, []);
 
   const playLevelEndSound = () => {
-    if(settings.soundEnabled && levelEndAudioRef.current) {
-        levelEndAudioRef.current.play().catch(e => console.error("Error playing sound:", e));
+    if(settings.soundEnabled && audioRef.current && soundBank.length > 0) {
+        const randomIndex = Math.floor(Math.random() * soundBank.length);
+        const randomSoundSrc = soundBank[randomIndex];
+        audioRef.current.src = randomSoundSrc;
+        audioRef.current.play().catch(e => console.error("Error playing sound:", e));
     }
   }
 
