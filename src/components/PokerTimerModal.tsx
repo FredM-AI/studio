@@ -37,9 +37,14 @@ interface PokerTimerModalProps {
 // Add your sound URLs here. A random one will be picked for each level-end alert.
 const soundBank: string[] = [
   'https://universal-soundbank.com/sounds/22459.mp3',
-  // Example of how to add more sounds:
-  // 'https://example.com/sound2.mp3',
-  // 'https://example.com/sound3.mp3',
+  'https://universal-soundbank.com/sounds/12680.mp3',
+  'https://universal-soundbank.com/sounds/12556.mp3',
+  'https://universal-soundbank.com/sounds/3238.mp3',
+  'https://universal-soundbank.com/sounds/11895.mp3',
+  'https://universal-soundbank.com/sounds/1097.mp3',
+  'https://universal-soundbank.com/sounds/7367.mp3',
+  'https://universal-soundbank.com/sounds/2500.mp3',
+  'https://universal-soundbank.com/sounds/2335.mp3',
 ];
 // --- End of Sound Bank ---
 
