@@ -1,4 +1,7 @@
 
+'use client';
+
+import * as React from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -6,7 +9,6 @@ import { getEvents, getSeasons, getPlayers } from "@/lib/data-service";
 import type { Event, Player, Season } from "@/lib/definitions"; 
 import { PlusCircle, CalendarDays, Users, DollarSign, Edit, Eye, BarChart3, FolderOpen, Trophy } from "lucide-react";
 import Link from "next/link";
-import { cookies } from 'next/headers';
 import { Badge } from "@/components/ui/badge";
 import {
   Accordion,
@@ -17,8 +19,7 @@ import {
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import { format, isPast, parseISO } from "date-fns";
 import { cn } from "@/lib/utils";
-
-const AUTH_COOKIE_NAME = 'app_session_active';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const getPlayerDisplayName = (player: Player | undefined): string => {
   if (!player) return "N/A";
@@ -35,6 +36,12 @@ const getPlayerDisplayName = (player: Player | undefined): string => {
 };
 
 const EventTableRow = ({ event, isAuthenticated, allPlayers }: { event: Event, isAuthenticated: boolean, allPlayers: Player[] }) => {
+  const [displayDate, setDisplayDate] = React.useState('Loading...');
+
+  React.useEffect(() => {
+    setDisplayDate(format(parseISO(event.date), 'PPP'));
+  }, [event.date]);
+  
   let winnerName = "N/A";
   if (event.status === 'completed' && event.results && event.results.length > 0) {
     const winnerResult = event.results.find(r => r.position === 1);
@@ -47,7 +54,7 @@ const EventTableRow = ({ event, isAuthenticated, allPlayers }: { event: Event, i
   return (
     <TableRow>
       <TableCell className="font-medium py-2 px-3">{event.name}</TableCell>
-      <TableCell className="py-2 px-3">{new Date(event.date).toLocaleDateString()}</TableCell>
+      <TableCell className="py-2 px-3">{displayDate}</TableCell>
       <TableCell className="py-2 px-3">€{event.buyIn}</TableCell>
       <TableCell className="py-2 px-3">{event.participants.length}</TableCell>
       <TableCell className="py-2 px-3">
@@ -118,44 +125,81 @@ const EventTable = ({ events, isAuthenticated, allPlayers }: { events: Event[], 
   );
 };
 
-export default async function EventsPage() {
-  const cookieStore = cookies();
-  const isAuthenticated = cookieStore.get(AUTH_COOKIE_NAME)?.value === 'true';
-  const allEvents: Event[] = (await getEvents()).sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-  const allSeasons: Season[] = (await getSeasons()).sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime());
-  const allPlayers: Player[] = await getPlayers();
+export default function EventsPage() {
+    const [isLoading, setIsLoading] = React.useState(true);
+    const [isAuthenticated, setIsAuthenticated] = React.useState(false);
+    const [allEvents, setAllEvents] = React.useState<Event[]>([]);
+    const [allSeasons, setAllSeasons] = React.useState<Season[]>([]);
+    const [allPlayers, setAllPlayers] = React.useState<Player[]>([]);
+    const [eventsBySeason, setEventsBySeason] = React.useState<Map<string, Event[]>>(new Map());
+    const [unassignedEvents, setUnassignedEvents] = React.useState<Event[]>([]);
+    const [initialIndex, setInitialIndex] = React.useState(0);
 
-  const eventsBySeason: Map<string, Event[]> = new Map();
-  const unassignedEvents: Event[] = [];
+    React.useEffect(() => {
+        const fetchData = async () => {
+            setIsLoading(true);
 
-  allEvents.forEach(event => {
-    if (event.seasonId) {
-      if (!eventsBySeason.has(event.seasonId)) {
-        eventsBySeason.set(event.seasonId, []);
-      }
-      eventsBySeason.get(event.seasonId)!.push(event);
-    } else {
-      unassignedEvents.push(event);
+            // Fetch all data
+            const authCookie = document.cookie.split('; ').find(row => row.startsWith('app_session_active='));
+            const isAuth = authCookie ? authCookie.split('=')[1] === 'true' : false;
+            setIsAuthenticated(isAuth);
+
+            const events = (await getEvents()).sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+            const seasons = (await getSeasons()).sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime());
+            const players = await getPlayers();
+
+            setAllEvents(events);
+            setAllSeasons(seasons);
+            setAllPlayers(players);
+            
+            const eventsBySeasonMap: Map<string, Event[]> = new Map();
+            const unassigned: Event[] = [];
+
+            events.forEach(event => {
+                if (event.seasonId) {
+                if (!eventsBySeasonMap.has(event.seasonId)) {
+                    eventsBySeasonMap.set(event.seasonId, []);
+                }
+                eventsBySeasonMap.get(event.seasonId)!.push(event);
+                } else {
+                unassigned.push(event);
+                }
+            });
+            setEventsBySeason(eventsBySeasonMap);
+            setUnassignedEvents(unassigned);
+
+            // Determine index for carousel start
+            let index = 0;
+            if(seasons.length > 0) {
+                const activeSeasonIndex = seasons.findIndex(s => s.isActive);
+                if(activeSeasonIndex !== -1) {
+                    index = activeSeasonIndex;
+                } else {
+                    const completedSeasons = seasons.filter(s => s.endDate && isPast(parseISO(s.endDate)));
+                    if(completedSeasons.length > 0) {
+                        const lastCompleted = completedSeasons[completedSeasons.length - 1];
+                        index = seasons.findIndex(s => s.id === lastCompleted.id);
+                    }
+                }
+            }
+            setInitialIndex(index);
+            
+            setIsLoading(false);
+        };
+        fetchData();
+    }, []);
+
+    if (isLoading) {
+        return (
+            <div className="space-y-6">
+                <div className="flex items-center justify-between">
+                    <Skeleton className="h-10 w-48" />
+                    <Skeleton className="h-10 w-36" />
+                </div>
+                <Skeleton className="h-[400px] w-full" />
+            </div>
+        )
     }
-  });
-
-  const activeSeasonIds = allSeasons.filter(season => season.isActive).map(season => season.id);
-  
-  // Determine index for carousel start
-  let initialIndex = 0;
-  if(allSeasons.length > 0) {
-    const activeSeasonIndex = allSeasons.findIndex(s => s.isActive);
-    if(activeSeasonIndex !== -1) {
-      initialIndex = activeSeasonIndex;
-    } else {
-       const completedSeasons = allSeasons.filter(s => s.endDate && isPast(parseISO(s.endDate)));
-       if(completedSeasons.length > 0) {
-           const lastCompleted = completedSeasons[completedSeasons.length - 1];
-           initialIndex = allSeasons.findIndex(s => s.id === lastCompleted.id);
-       }
-    }
-  }
-
 
   return (
     <div className="space-y-6">

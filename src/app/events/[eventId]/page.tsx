@@ -1,25 +1,21 @@
 
+'use client';
+
+import * as React from 'react';
+import type { Event, Player, Season } from "@/lib/definitions";
+import { getEvents, getPlayers, getSeasons } from "@/lib/data-service";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { getEvents, getPlayers, getSeasons } from "@/lib/data-service";
-import type { Event, Player, Season } from "@/lib/definitions";
-import { ArrowLeft, Edit, Users, DollarSign, CalendarDays, Trophy, Info, Tag, CheckCircle, XCircle, Trash2, Star, Gift, BarChart3, HelpCircle, PlayCircle, Repeat } from "lucide-react";
 import Link from "next/link";
+import { ArrowLeft, Edit, Users, DollarSign, CalendarDays, Trophy, Info, Tag, CheckCircle, XCircle, Trash2, Star, Gift, BarChart3, HelpCircle, PlayCircle, Repeat, AlertTriangle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { cookies } from 'next/headers';
 import DeleteEventButton from "./DeleteEventButton";
 import EventCarousel from './EventCarousel';
+import { Skeleton } from '@/components/ui/skeleton';
+import { format, parseISO } from 'date-fns';
+import { useParams } from 'next/navigation';
 
-const AUTH_COOKIE_NAME = 'app_session_active';
-
-async function getEventDetails(id: string): Promise<{ event: Event | undefined, players: Player[], seasons: Season[], events: Event[] }> {
-  const allEvents = await getEvents();
-  const event = allEvents.find(e => e.id === id);
-  const players = await getPlayers();
-  const seasons = await getSeasons();
-  return { event, players, seasons, events: allEvents };
-}
 
 const getPlayerDisplayName = (player: Player | undefined): string => {
   if (!player) return "Unknown Player";
@@ -35,10 +31,68 @@ const getPlayerDisplayName = (player: Player | undefined): string => {
   return "Unnamed";
 };
 
-export default async function EventDetailsPage({ params }: { params: { eventId: string } }) {
-  const cookieStore = cookies();
-  const isAuthenticated = cookieStore.get(AUTH_COOKIE_NAME)?.value === 'true';
-  const { event, players: allPlayers, seasons: allSeasons, events: allEvents } = await getEventDetails(params.eventId);
+export default function EventDetailsPage() {
+    const params = useParams();
+    const eventId = params.eventId as string;
+
+    const [isLoading, setIsLoading] = React.useState(true);
+    const [event, setEvent] = React.useState<Event | null>(null);
+    const [allPlayers, setAllPlayers] = React.useState<Player[]>([]);
+    const [linkedSeason, setLinkedSeason] = React.useState<Season | undefined>(undefined);
+    const [eventsInSameSeason, setEventsInSameSeason] = React.useState<{id: string, name: string}[]>([]);
+    const [isAuthenticated, setIsAuthenticated] = React.useState<boolean | null>(null);
+    const [displayDate, setDisplayDate] = React.useState('Loading...');
+
+    React.useEffect(() => {
+        if (!eventId) return;
+
+        const authCookie = document.cookie.split('; ').find(row => row.startsWith('app_session_active='));
+        setIsAuthenticated(authCookie ? authCookie.split('=')[1] === 'true' : false);
+        
+        const fetchData = async () => {
+            setIsLoading(true);
+            const { event, players, seasons, events } = await getEventDetails(eventId);
+            
+            if(event) {
+                setEvent(event);
+                setAllPlayers(players);
+                
+                const season = event.seasonId ? seasons.find(s => s.id === event.seasonId) : undefined;
+                setLinkedSeason(season);
+
+                const sameSeasonEvents = season 
+                    ? events.filter(e => e.seasonId === season.id).sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+                    : [];
+                setEventsInSameSeason(sameSeasonEvents.map(e => ({ id: e.id, name: e.name })));
+                
+                setDisplayDate(format(parseISO(event.date), 'EEEE, MMMM d, yyyy'));
+            }
+            
+            setIsLoading(false);
+        };
+
+        fetchData();
+
+    }, [eventId]);
+
+    if (isLoading) {
+        return (
+             <div className="space-y-6">
+                <Skeleton className="h-9 w-32" />
+                <Card className="max-w-4xl mx-auto shadow-lg">
+                    <CardHeader className="p-4">
+                        <Skeleton className="h-8 w-3/4" />
+                        <Skeleton className="h-5 w-1/2" />
+                    </CardHeader>
+                    <CardContent className="p-4">
+                         <Skeleton className="h-32 w-full" />
+                         <Skeleton className="h-64 w-full mt-4" />
+                    </CardContent>
+                </Card>
+             </div>
+        );
+    }
+
 
   if (!event) {
     return (
@@ -50,6 +104,7 @@ export default async function EventDetailsPage({ params }: { params: { eventId: 
         </Button>
         <Card className="max-w-md mx-auto">
           <CardHeader>
+             <AlertTriangle className="mx-auto h-12 w-12 text-destructive" />
             <CardTitle className="font-headline text-destructive">Event Not Found</CardTitle>
           </CardHeader>
           <CardContent>
@@ -65,16 +120,11 @@ export default async function EventDetailsPage({ params }: { params: { eventId: 
     );
   }
 
-  const linkedSeason = event.seasonId ? allSeasons.find(s => s.id === event.seasonId) : undefined;
-  const eventsInSameSeason = linkedSeason 
-    ? allEvents.filter(e => e.seasonId === linkedSeason.id).sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-    : [];
-
   const sortedResults = event.results.sort((a, b) => a.position - b.position);
   const rebuysActive = event.rebuyPrice !== undefined && event.rebuyPrice > 0;
   const includeBountiesInNetCalc = event.includeBountiesInNet ?? true;
   const totalRebuys = event.results.reduce((acc, result) => acc + (result.rebuys || 0), 0);
-
+  
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center gap-4">
@@ -88,7 +138,7 @@ export default async function EventDetailsPage({ params }: { params: { eventId: 
         <div className="flex-grow">
           {linkedSeason && (
             <EventCarousel 
-              seasonEvents={eventsInSameSeason.map(e => ({ id: e.id, name: e.name }))}
+              seasonEvents={eventsInSameSeason}
               currentEventId={event.id}
               seasonName={linkedSeason.name}
             />
@@ -103,7 +153,7 @@ export default async function EventDetailsPage({ params }: { params: { eventId: 
             <div>
               <CardTitle className="font-headline text-2xl mb-1">{event.name}</CardTitle>
               <CardDescription className="text-md text-muted-foreground">
-                {new Date(event.date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                {displayDate}
               </CardDescription>
               {linkedSeason && (
                 <Link href={`/seasons/${linkedSeason.id}`} className="text-sm text-primary hover:underline flex items-center mt-1">
@@ -256,10 +306,19 @@ export default async function EventDetailsPage({ params }: { params: { eventId: 
         </CardContent>
          <CardFooter className="p-3 bg-muted/30 border-t">
             <p className="text-xs text-muted-foreground">
-                Created: {new Date(event.createdAt).toLocaleDateString()} | Last Updated: {new Date(event.updatedAt).toLocaleDateString()}
+                Created: {format(parseISO(event.createdAt), 'PP')} | Last Updated: {format(parseISO(event.updatedAt), 'PP')}
             </p>
         </CardFooter>
       </Card>
     </div>
   );
+}
+
+// Server-side function to get the initial data for the page.
+async function getEventDetails(id: string): Promise<{ event: Event | undefined, players: Player[], seasons: Season[], events: Event[] }> {
+  const allEvents = await getEvents();
+  const event = allEvents.find(e => e.id === id);
+  const players = await getPlayers();
+  const seasons = await getSeasons();
+  return { event, players, seasons, events: allEvents };
 }
