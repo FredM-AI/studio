@@ -365,6 +365,7 @@ export default function EventForm({ event, allPlayers, allSeasons, blindStructur
   const resultsJson = JSON.stringify(finalResultsForJson);
 
   const isCreating = !event?.id;
+  const canGoLive = event && event.status !== 'active' && event.status !== 'completed';
 
   return (
     <Card className="max-w-4xl mx-auto">
@@ -774,7 +775,7 @@ export default function EventForm({ event, allPlayers, allSeasons, blindStructur
             <Button variant="outline" asChild>
               <Link href={event ? `/events/${event.id}` : "/events"}>Cancel</Link>
             </Button>
-            <Button type="submit" name="submitAction" value="create">
+            <Button type="submit" name="submitAction" value="save">
               {submitButtonText}
             </Button>
             {isCreating && (
@@ -786,7 +787,18 @@ export default function EventForm({ event, allPlayers, allSeasons, blindStructur
                 >
                   <PlayCircle className="mr-2 h-4 w-4" /> Create and Go Live
                 </Button>
-              )}
+            )}
+            {!isCreating && canGoLive && (
+              <Button
+                type="submit"
+                name="submitAction"
+                value="updateAndGoLive"
+                className="bg-green-600 hover:bg-green-700"
+                disabled={currentStatus === 'active' || currentStatus === 'completed'}
+              >
+                <PlayCircle className="mr-2 h-4 w-4" /> Go Live
+              </Button>
+            )}
           </div>
         </CardFooter>
       </form>

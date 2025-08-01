@@ -236,6 +236,11 @@ export async function updateEvent(prevState: EventFormState, formData: FormData)
       }
   }
 
+  let finalStatus = data.status;
+  if (data.submitAction === 'updateAndGoLive') {
+    finalStatus = 'active';
+  }
+
 
   try {
     const eventRef = db.collection(EVENTS_COLLECTION).doc(eventId);
@@ -256,7 +261,7 @@ export async function updateEvent(prevState: EventFormState, formData: FormData)
       startingStack: data.startingStack,
       includeBountiesInNet: data.includeBountiesInNet,
       maxPlayers: data.maxPlayers,
-      status: data.status as EventStatus,
+      status: finalStatus as EventStatus,
       seasonId: seasonIdValue,
       blindStructureId: data.blindStructureId,
       blindStructure: blindStructure,
@@ -299,8 +304,13 @@ export async function updateEvent(prevState: EventFormState, formData: FormData)
   revalidatePath(`/events/${eventId}`);
   revalidatePath(`/events/${eventId}/edit`);
   revalidatePath('/dashboard');
-  revalidatePath('/seasons'); // Also revalidate seasons in case event association changes season stats
-  redirect(`/events/${eventId}`);
+  revalidatePath('/seasons');
+
+  if (data.submitAction === 'updateAndGoLive') {
+    redirect(`/events/${eventId}/live`);
+  } else {
+    redirect(`/events/${eventId}`);
+  }
 }
 
 export async function deleteEvent(eventId: string): Promise<{ success: boolean; message: string }> {
