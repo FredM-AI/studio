@@ -36,8 +36,13 @@ const getPlayerDisplayName = (player: Player | undefined): string => {
 };
 
 const EventTableRow = ({ event, isAuthenticated, allPlayers }: { event: Event, isAuthenticated: boolean, allPlayers: Player[] }) => {
-  const displayDate = format(parseISO(event.date), 'PPP');
-  
+  const [displayDate, setDisplayDate] = React.useState('Loading...');
+
+  React.useEffect(() => {
+    // Formatting is done on the client to avoid hydration mismatch
+    setDisplayDate(format(parseISO(event.date), 'PPP'));
+  }, [event.date]);
+
   let winnerName = "N/A";
   if (event.status === 'completed' && event.results && event.results.length > 0) {
     const winnerResult = event.results.find(r => r.position === 1);

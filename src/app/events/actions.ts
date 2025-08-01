@@ -8,6 +8,7 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import type { EventFormState } from '@/lib/definitions';
 import { getBlindStructures } from '@/lib/data-service';
+import { Timestamp } from 'firebase-admin/firestore';
 
 const EVENTS_COLLECTION = 'events';
 
@@ -144,10 +145,10 @@ export async function createEvent(prevState: EventFormState, formData: FormData)
       }
   }
 
-  const eventDataForFirestore: Omit<Event, 'createdAt' | 'updatedAt'> & { createdAt?: string, updatedAt?: string, seasonId?: string | null } = {
+  const eventDataForFirestore = {
     id: eventId,
     name: data.name,
-    date: new Date(data.date).toISOString(),
+    date: Timestamp.fromDate(new Date(data.date)),
     buyIn: data.buyIn,
     rebuyPrice: data.rebuyPrice,
     bounties: data.bounties,
@@ -177,9 +178,9 @@ export async function createEvent(prevState: EventFormState, formData: FormData)
 
   const finalEventPayload = {
       ...cleanUndefinedProperties(eventDataForFirestore),
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-  } as Event;
+      createdAt: Timestamp.now(),
+      updatedAt: Timestamp.now(),
+  };
 
 
   try {
@@ -245,9 +246,9 @@ export async function updateEvent(prevState: EventFormState, formData: FormData)
     }
     const existingEvent = eventSnap.data() as Event;
 
-    const eventDataToUpdate: Partial<Event> & { seasonId?: string | null } = {
+    const eventDataToUpdate = {
       name: data.name,
-      date: new Date(data.date).toISOString(),
+      date: Timestamp.fromDate(new Date(data.date)),
       buyIn: data.buyIn,
       rebuyPrice: data.rebuyPrice,
       bounties: data.bounties,
@@ -275,13 +276,11 @@ export async function updateEvent(prevState: EventFormState, formData: FormData)
     };
 
     const finalEventPayload = {
-        ...existingEvent,
         ...cleanUndefinedProperties(eventDataToUpdate),
-        updatedAt: new Date().toISOString(),
-    } as Event;
+        updatedAt: Timestamp.now(),
+    };
 
-
-    await eventRef.set(finalEventPayload);
+    await eventRef.update(finalEventPayload);
 
   } catch (error: any)
 {
@@ -342,14 +341,14 @@ export async function saveLiveResults(
     const eventData = eventSnap.data() as Event;
     
     // Update the event with final data
-    const updatedData: Partial<Event> = {
-      status: 'completed',
+    const updatedData = {
+      status: 'completed' as EventStatus,
       results: finalResults,
       prizePool: {
         ...eventData.prizePool,
         total: finalPrizePool,
       },
-      updatedAt: new Date().toISOString(),
+      updatedAt: Timestamp.now(),
     };
 
     await eventRef.update(updatedData);
