@@ -232,7 +232,7 @@ export default function DashboardPage() {
                     <CardHeader className="text-center">
                         <Sparkles className="mx-auto h-8 w-8 text-primary mb-2"/>
                         <CardTitle className="font-headline text-2xl">New Season Coming Soon!</CardTitle>
-                        <CardDescription className="font-headline text-2xl text-primary mt-2">{nextSeason.name}</CardDescription>
+                        <CardDescription className="font-headline text-2xl text-primary mt-2 font-bold">{nextSeason.name}</CardDescription>
                     </CardHeader>
                     <CardContent className="text-center">
                         <p className="text-muted-foreground mb-4">Starts on {formatFullDate(nextSeason.startDate)}</p>
