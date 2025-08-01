@@ -224,9 +224,8 @@ export default function DashboardPage() {
 
     const fullLeaderboard = seasonStats?.leaderboard || [];
     
-    const recentEvents = [...seasonEvents]
-        .sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-        .slice(0, 3);
+    const allSeasonEvents = [...seasonEvents]
+        .sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime());
     
     return (
         <div className="space-y-8">
@@ -321,35 +320,37 @@ export default function DashboardPage() {
                             <CardDescription>View upcoming events for this season.</CardDescription>
                         </CardHeader>
                         <CardContent>
-                            <div className="space-y-3">
-                                {recentEvents.length > 0 ? (
-                                    recentEvents.map(event => (
-                                        <div key={event.id} className="flex items-center justify-between text-sm p-2 bg-muted/40 rounded-md">
-                                            <div>
-                                                <p className="font-medium truncate text-foreground">{event.name}</p>
-                                                <p className="text-xs text-muted-foreground">{formatShortDate(event.date)}</p>
+                            <ScrollArea className="h-72 pr-4">
+                                <div className="space-y-3">
+                                    {allSeasonEvents.length > 0 ? (
+                                        allSeasonEvents.map(event => (
+                                            <div key={event.id} className="flex items-center justify-between text-sm p-2 bg-muted/40 rounded-md">
+                                                <div>
+                                                    <p className="font-medium truncate text-foreground">{event.name}</p>
+                                                    <p className="text-xs text-muted-foreground">{formatShortDate(event.date)}</p>
+                                                </div>
+                                                <Badge
+                                                    variant={
+                                                        event.status === 'completed' ? 'default' :
+                                                        event.status === 'active' ? 'secondary' :
+                                                        event.status === 'cancelled' ? 'destructive' :
+                                                        'outline'
+                                                    }
+                                                    className={cn(
+                                                        'text-xs',
+                                                        event.status === 'active' && 'bg-green-500 text-white',
+                                                        event.status === 'draft' && 'bg-yellow-100 text-yellow-800'
+                                                    )}
+                                                >
+                                                    {event.status.charAt(0).toUpperCase() + event.status.slice(1)}
+                                                </Badge>
                                             </div>
-                                            <Badge
-                                                variant={
-                                                    event.status === 'completed' ? 'default' :
-                                                    event.status === 'active' ? 'secondary' :
-                                                    event.status === 'cancelled' ? 'destructive' :
-                                                    'outline'
-                                                }
-                                                className={cn(
-                                                    'text-xs',
-                                                    event.status === 'active' && 'bg-green-500 text-white',
-                                                    event.status === 'draft' && 'bg-yellow-100 text-yellow-800'
-                                                )}
-                                            >
-                                                {event.status.charAt(0).toUpperCase() + event.status.slice(1)}
-                                            </Badge>
-                                        </div>
-                                    ))
-                                ) : (
-                                    <p className="text-sm text-muted-foreground text-center py-4">No events scheduled.</p>
-                                )}
-                            </div>
+                                        ))
+                                    ) : (
+                                        <p className="text-sm text-muted-foreground text-center py-4">No events scheduled.</p>
+                                    )}
+                                </div>
+                            </ScrollArea>
                             <Dialog>
                                 <DialogTrigger asChild>
                                     <Button className="w-full mt-4">
@@ -370,5 +371,3 @@ export default function DashboardPage() {
         </div>
     );
 }
-
-    
