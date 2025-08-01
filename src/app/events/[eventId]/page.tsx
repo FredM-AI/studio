@@ -1,6 +1,4 @@
 
-'use client';
-
 import * as React from 'react';
 import type { Event, Player, Season } from "@/lib/definitions";
 import { getEvents, getPlayers, getSeasons } from "@/lib/data-service";
@@ -13,39 +11,12 @@ import DeleteEventButton from "./DeleteEventButton";
 import EventCarousel from './EventCarousel';
 import { Skeleton } from '@/components/ui/skeleton';
 import { format, parseISO } from 'date-fns';
-import { useParams, useRouter } from 'next/navigation';
 import { goLiveFromDetails } from '@/app/events/actions';
 import { useToast } from '@/hooks/use-toast';
+import { cookies } from 'next/headers';
+import GoLiveButtonWrapper from './GoLiveButtonWrapper';
 
-const GoLiveButton = ({ eventId, currentStatus }: { eventId: string, currentStatus: string }) => {
-    const [isPending, startTransition] = React.useTransition();
-    const router = useRouter();
-    const { toast } = useToast();
-
-    const handleGoLive = () => {
-        startTransition(async () => {
-            const result = await goLiveFromDetails(eventId);
-            if (result.success) {
-                toast({ title: 'Success', description: 'Event is now live!' });
-                router.push(`/events/${eventId}/live`);
-            } else {
-                toast({ title: 'Error', description: result.message, variant: 'destructive' });
-            }
-        });
-    };
-    
-    if (currentStatus !== 'draft') {
-        return null;
-    }
-
-    return (
-        <Button onClick={handleGoLive} disabled={isPending} size="sm" className="w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white">
-            {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <PlayCircle className="mr-2 h-4 w-4" />}
-            {isPending ? 'Going Live...' : 'Go Live'}
-        </Button>
-    );
-};
-
+const AUTH_COOKIE_NAME = 'app_session_active';
 
 const getPlayerDisplayName = (player: Player | undefined): string => {
   if (!player) return "Unknown Player";
@@ -61,100 +32,58 @@ const getPlayerDisplayName = (player: Player | undefined): string => {
   return "Unnamed";
 };
 
-export default function EventDetailsPage() {
-    const params = useParams();
-    const eventId = params.eventId as string;
+// Server-side function to get the initial data for the page.
+async function getEventDetails(id: string): Promise<{ event: Event | undefined, players: Player[], seasons: Season[], events: Event[] }> {
+  const allEvents = await getEvents();
+  const event = allEvents.find(e => e.id === id);
+  const players = await getPlayers();
+  const seasons = await getSeasons();
+  return { event, players, seasons, events: allEvents };
+}
 
-    const [isLoading, setIsLoading] = React.useState(true);
-    const [event, setEvent] = React.useState<Event | null>(null);
-    const [allPlayers, setAllPlayers] = React.useState<Player[]>([]);
-    const [linkedSeason, setLinkedSeason] = React.useState<Season | undefined>(undefined);
-    const [eventsInSameSeason, setEventsInSameSeason] = React.useState<{id: string, name: string}[]>([]);
-    const [isAuthenticated, setIsAuthenticated] = React.useState<boolean | null>(null);
-    const [displayDate, setDisplayDate] = React.useState('Loading...');
+export default async function EventDetailsPage({ params }: { params: { eventId: string } }) {
+    const eventId = params.eventId;
+    const cookieStore = cookies();
+    const isAuthenticated = cookieStore.get(AUTH_COOKIE_NAME)?.value === 'true';
 
-    React.useEffect(() => {
-        if (!eventId) return;
+    const { event, players: allPlayers, seasons, events: allEvents } = await getEventDetails(eventId);
 
-        const authCookie = document.cookie.split('; ').find(row => row.startsWith('app_session_active='));
-        setIsAuthenticated(authCookie ? authCookie.split('=')[1] === 'true' : false);
-        
-        const fetchData = async () => {
-            setIsLoading(true);
-            const { event, players, seasons, events } = await getEventDetails(eventId);
-            
-            if(event) {
-                setEvent(event);
-                setAllPlayers(players);
-                
-                const season = event.seasonId ? seasons.find(s => s.id === event.seasonId) : undefined;
-                setLinkedSeason(season);
-
-                const sameSeasonEvents = season 
-                    ? events.filter(e => e.seasonId === season.id).sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-                    : [];
-                setEventsInSameSeason(sameSeasonEvents.map(e => ({ id: e.id, name: e.name })));
-                
-                setDisplayDate(format(parseISO(event.date), 'EEEE, MMMM d, yyyy'));
-            }
-            
-            setIsLoading(false);
-        };
-
-        fetchData();
-
-    }, [eventId]);
-
-    if (isLoading) {
+    if (!event) {
         return (
-             <div className="space-y-6">
-                <Skeleton className="h-9 w-32" />
-                <Card className="max-w-4xl mx-auto shadow-lg">
-                    <CardHeader className="p-4">
-                        <Skeleton className="h-8 w-3/4" />
-                        <Skeleton className="h-5 w-1/2" />
-                    </CardHeader>
-                    <CardContent className="p-4">
-                         <Skeleton className="h-32 w-full" />
-                         <Skeleton className="h-64 w-full mt-4" />
-                    </CardContent>
-                </Card>
-             </div>
+          <div className="space-y-4 text-center">
+             <Button variant="outline" asChild className="mb-4 mr-auto">
+              <Link href="/events">
+                <ArrowLeft className="mr-2 h-4 w-4" /> Back to Events List
+              </Link>
+            </Button>
+            <Card className="max-w-md mx-auto">
+              <CardHeader>
+                 <AlertTriangle className="mx-auto h-12 w-12 text-destructive" />
+                <CardTitle className="font-headline text-destructive">Event Not Found</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground">The event you are looking for does not exist.</p>
+                 <Button asChild className="mt-4">
+                    <Link href="/events">
+                        <ArrowLeft className="mr-2 h-4 w-4" /> Go to Events
+                    </Link>
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
         );
     }
 
+    const linkedSeason = event.seasonId ? seasons.find(s => s.id === event.seasonId) : undefined;
+    const eventsInSameSeason = linkedSeason
+        ? allEvents.filter(e => e.seasonId === linkedSeason.id).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+        : [];
+    const displayDate = format(parseISO(event.date), 'EEEE, MMMM d, yyyy');
+    const sortedResults = event.results.sort((a, b) => a.position - b.position);
+    const rebuysActive = event.rebuyPrice !== undefined && event.rebuyPrice > 0;
+    const includeBountiesInNetCalc = event.includeBountiesInNet ?? true;
+    const totalRebuys = event.results.reduce((acc, result) => acc + (result.rebuys || 0), 0);
 
-  if (!event) {
-    return (
-      <div className="space-y-4 text-center">
-         <Button variant="outline" asChild className="mb-4 mr-auto">
-          <Link href="/events">
-            <ArrowLeft className="mr-2 h-4 w-4" /> Back to Events List
-          </Link>
-        </Button>
-        <Card className="max-w-md mx-auto">
-          <CardHeader>
-             <AlertTriangle className="mx-auto h-12 w-12 text-destructive" />
-            <CardTitle className="font-headline text-destructive">Event Not Found</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-muted-foreground">The event you are looking for does not exist.</p>
-             <Button asChild className="mt-4">
-                <Link href="/events">
-                    <ArrowLeft className="mr-2 h-4 w-4" /> Go to Events
-                </Link>
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  const sortedResults = event.results.sort((a, b) => a.position - b.position);
-  const rebuysActive = event.rebuyPrice !== undefined && event.rebuyPrice > 0;
-  const includeBountiesInNetCalc = event.includeBountiesInNet ?? true;
-  const totalRebuys = event.results.reduce((acc, result) => acc + (result.rebuys || 0), 0);
-  
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center gap-4">
@@ -167,8 +96,8 @@ export default function EventDetailsPage() {
         </div>
         <div className="flex-grow">
           {linkedSeason && (
-            <EventCarousel 
-              seasonEvents={eventsInSameSeason}
+            <EventCarousel
+              seasonEvents={eventsInSameSeason.map(e => ({ id: e.id, name: e.name }))}
               currentEventId={event.id}
               seasonName={linkedSeason.name}
             />
@@ -200,7 +129,7 @@ export default function EventDetailsPage() {
                     </Link>
                   </Button>
                 )}
-                 <GoLiveButton eventId={event.id} currentStatus={event.status} />
+                 <GoLiveButtonWrapper eventId={event.id} currentStatus={event.status} />
                 <Button asChild size="sm" variant="outline" className="w-full sm:w-auto">
                   <Link href={`/events/${event.id}/edit`}>
                     <Edit className="mr-2 h-4 w-4" /> Edit Event
@@ -260,7 +189,7 @@ export default function EventDetailsPage() {
                 <span className="font-medium">{includeBountiesInNetCalc ? "Yes" : "No"}</span>
               </div>
           </div>
-          
+
 
           {event.status === 'completed' && sortedResults.length > 0 && (
             <div className="md:col-span-2 space-y-3 pt-4 mt-4 border-t">
@@ -289,7 +218,7 @@ export default function EventDetailsPage() {
                       const eventMysteryKoValue = event.mysteryKo || 0;
                       const rebuysNum = result.rebuys || 0;
                       const rebuyPriceNum = event.rebuyPrice || 0;
-                      
+
                       const investmentInMainPot = mainBuyInNum + (rebuysNum * rebuyPriceNum);
                       let netResult = 0;
 
@@ -343,13 +272,4 @@ export default function EventDetailsPage() {
       </Card>
     </div>
   );
-}
-
-// Server-side function to get the initial data for the page.
-async function getEventDetails(id: string): Promise<{ event: Event | undefined, players: Player[], seasons: Season[], events: Event[] }> {
-  const allEvents = await getEvents();
-  const event = allEvents.find(e => e.id === id);
-  const players = await getPlayers();
-  const seasons = await getSeasons();
-  return { event, players, seasons, events: allEvents };
 }
