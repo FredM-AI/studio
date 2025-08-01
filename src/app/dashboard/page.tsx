@@ -238,7 +238,12 @@ export default function DashboardPage() {
                         <CardDescription className="text-lg font-medium">{nextSeason.name}</CardDescription>
                     </CardHeader>
                     <CardContent className="text-center">
-                        <p className="text-muted-foreground">Starts on {formatFullDate(nextSeason.startDate)}</p>
+                        <p className="text-muted-foreground mb-4">Starts on {formatFullDate(nextSeason.startDate)}</p>
+                        <Button asChild>
+                            <Link href={`/seasons/${nextSeason.id}`}>
+                                <CalendarDays className="mr-2 h-4 w-4" /> View Season Events
+                            </Link>
+                        </Button>
                     </CardContent>
                 </Card>
             )}
