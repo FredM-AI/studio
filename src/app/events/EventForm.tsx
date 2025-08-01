@@ -16,6 +16,7 @@ import { Switch } from '@/components/ui/switch';
 import { Trophy, PlusCircle, MinusCircle, Users, DollarSign, CalendarDays, Settings, Info, Repeat, Star, Gift, BarChart3, HelpCircle, Clock, Hash, PlayCircle } from 'lucide-react'; 
 import Link from 'next/link';
 import { eventStatuses } from '@/lib/definitions';
+import DeleteEventButton from './[eventId]/DeleteEventButton';
 
 interface EventFormProps {
   event?: Event;
@@ -763,27 +764,32 @@ export default function EventForm({ event, allPlayers, allSeasons, blindStructur
           {state.message && <p className="text-sm text-destructive mt-2 text-center p-2 bg-destructive/10 rounded-md">{state.message}</p>}
           {state.errors?._form && <p className="text-sm text-destructive mt-2 text-center p-2 bg-destructive/10 rounded-md">{state.errors._form.join(', ')}</p>}
         </CardContent>
-        <CardFooter className="flex justify-end gap-4 p-4 border-t">
-          <Button variant="outline" asChild>
-            <Link href={event ? `/events/${event.id}` : "/events"}>Cancel</Link>
-          </Button>
-          <Button type="submit" name="submitAction" value="create">
-            {submitButtonText}
-          </Button>
-           {isCreating && (
-              <Button 
-                type="submit" 
-                name="submitAction" 
-                value="createAndGoLive" 
-                className="bg-green-600 hover:bg-green-700"
-              >
-                <PlayCircle className="mr-2 h-4 w-4" /> Create and Go Live
-              </Button>
+        <CardFooter className="flex justify-between items-center p-4 border-t">
+          <div>
+            {!isCreating && event && (
+              <DeleteEventButton eventId={event.id} eventName={event.name} />
             )}
+          </div>
+          <div className="flex gap-4">
+            <Button variant="outline" asChild>
+              <Link href={event ? `/events/${event.id}` : "/events"}>Cancel</Link>
+            </Button>
+            <Button type="submit" name="submitAction" value="create">
+              {submitButtonText}
+            </Button>
+            {isCreating && (
+                <Button 
+                  type="submit" 
+                  name="submitAction" 
+                  value="createAndGoLive" 
+                  className="bg-green-600 hover:bg-green-700"
+                >
+                  <PlayCircle className="mr-2 h-4 w-4" /> Create and Go Live
+                </Button>
+              )}
+          </div>
         </CardFooter>
       </form>
     </Card>
   );
 }
-
-    
