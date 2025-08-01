@@ -35,7 +35,7 @@ const getPlayerDisplayName = (player: Player | undefined): string => {
   return "Unnamed";
 };
 
-const EventTableRow = ({ event, isAuthenticated, allPlayers }: { event: Event, isAuthenticated: boolean, allPlayers: Player[] }) => {
+const EventTableRow = ({ event, isAuthenticated, allPlayers }: { event: Event, isAuthenticated: boolean | null, allPlayers: Player[] }) => {
   const [displayDate, setDisplayDate] = React.useState('Loading...');
 
   React.useEffect(() => {
@@ -99,7 +99,7 @@ const EventTableRow = ({ event, isAuthenticated, allPlayers }: { event: Event, i
   );
 };
 
-const EventTable = ({ events, isAuthenticated, allPlayers }: { events: Event[], isAuthenticated: boolean, allPlayers: Player[] }) => {
+const EventTable = ({ events, isAuthenticated, allPlayers }: { events: Event[], isAuthenticated: boolean | null, allPlayers: Player[] }) => {
   if (events.length === 0) {
     return <p className="text-muted-foreground text-sm py-4">No events in this category.</p>;
   }
@@ -127,7 +127,7 @@ const EventTable = ({ events, isAuthenticated, allPlayers }: { events: Event[], 
 
 export default function EventsPage() {
     const [isLoading, setIsLoading] = React.useState(true);
-    const [isAuthenticated, setIsAuthenticated] = React.useState(false);
+    const [isAuthenticated, setIsAuthenticated] = React.useState<boolean | null>(null);
     const [allEvents, setAllEvents] = React.useState<Event[]>([]);
     const [allSeasons, setAllSeasons] = React.useState<Season[]>([]);
     const [allPlayers, setAllPlayers] = React.useState<Player[]>([]);
@@ -136,13 +136,13 @@ export default function EventsPage() {
     const [initialIndex, setInitialIndex] = React.useState(0);
 
     React.useEffect(() => {
+        // We set auth state first to avoid UI flashes
+        const authCookie = document.cookie.split('; ').find(row => row.startsWith('app_session_active='));
+        const isAuth = authCookie ? authCookie.split('=')[1] === 'true' : false;
+        setIsAuthenticated(isAuth);
+
         const fetchData = async () => {
             setIsLoading(true);
-
-            // Client-side cookie check is the single source of truth for UI interactivity
-            const authCookie = document.cookie.split('; ').find(row => row.startsWith('app_session_active='));
-            const isAuth = authCookie ? authCookie.split('=')[1] === 'true' : false;
-            setIsAuthenticated(isAuth);
 
             // Fetch all data
             const events = (await getEvents()).sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
