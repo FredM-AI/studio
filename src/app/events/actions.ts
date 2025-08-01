@@ -84,7 +84,6 @@ const EventFormSchema = z.object({
       return z.NEVER;
     }
   }).pipe(z.array(EventResultInputSchema).optional().default([])),
-  submitAction: z.string().optional(), // Used to determine which button was clicked
 }).refine(data => {
   if (data.status === 'completed' && data.participantIds.length > 0 && (!data.resultsJson || data.resultsJson.length === 0)) {
     // This validation might need adjustment based on exact requirements
@@ -156,7 +155,7 @@ export async function createEvent(prevState: EventFormState, formData: FormData)
     startingStack: data.startingStack,
     includeBountiesInNet: data.includeBountiesInNet,
     maxPlayers: data.maxPlayers,
-    status: data.submitAction === 'createAndGoLive' ? 'active' : data.status as EventStatus,
+    status: data.status,
     seasonId: seasonIdValue,
     blindStructureId: data.blindStructureId,
     blindStructure: blindStructure,
@@ -199,11 +198,7 @@ export async function createEvent(prevState: EventFormState, formData: FormData)
   revalidatePath('/dashboard');
   revalidatePath('/seasons');
   
-  if (data.submitAction === 'createAndGoLive') {
-    redirect(`/events/${eventId}/live`);
-  } else {
-    redirect('/events');
-  }
+  redirect('/events');
 }
 
 export async function updateEvent(prevState: EventFormState, formData: FormData): Promise<EventFormState> {
@@ -236,12 +231,6 @@ export async function updateEvent(prevState: EventFormState, formData: FormData)
       }
   }
 
-  let finalStatus = data.status;
-  if (data.submitAction === 'updateAndGoLive') {
-    finalStatus = 'active';
-  }
-
-
   try {
     const eventRef = db.collection(EVENTS_COLLECTION).doc(eventId);
     const eventSnap = await eventRef.get();
@@ -261,7 +250,7 @@ export async function updateEvent(prevState: EventFormState, formData: FormData)
       startingStack: data.startingStack,
       includeBountiesInNet: data.includeBountiesInNet,
       maxPlayers: data.maxPlayers,
-      status: finalStatus as EventStatus,
+      status: data.status,
       seasonId: seasonIdValue,
       blindStructureId: data.blindStructureId,
       blindStructure: blindStructure,
@@ -306,11 +295,7 @@ export async function updateEvent(prevState: EventFormState, formData: FormData)
   revalidatePath('/dashboard');
   revalidatePath('/seasons');
 
-  if (data.submitAction === 'updateAndGoLive') {
-    redirect(`/events/${eventId}/live`);
-  } else {
-    redirect(`/events/${eventId}`);
-  }
+  redirect(`/events/${eventId}`);
 }
 
 export async function deleteEvent(eventId: string): Promise<{ success: boolean; message: string }> {
