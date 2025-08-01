@@ -15,7 +15,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
-import { parseISO, isPast } from "date-fns";
+import { parseISO, isPast, format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { cookies } from 'next/headers';
 import EventTableRowClient from './EventTableRowClient';
