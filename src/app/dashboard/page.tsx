@@ -12,9 +12,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import SimpleLeaderboardTable from "@/components/SimpleLeaderboardTable";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import SeasonLeaderboardTable from "@/app/seasons/[seasonId]/SeasonLeaderboardTable";
-import SeasonDetailsCalendar from "@/app/seasons/[seasonId]/SeasonDetailsCalendar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { format, parseISO } from 'date-fns';
 import { getSeasons, getEvents, getPlayers } from "@/lib/data-service";
@@ -240,7 +238,7 @@ export default function DashboardPage() {
                         <p className="text-muted-foreground mb-4">Starts on {formatFullDate(nextSeason.startDate)}</p>
                         <Button asChild>
                             <Link href="/events">
-                                <CalendarDays className="mr-2 h-4 w-4" /> View Season Events
+                                <CalendarDays className="mr-2 h-4 w-4" /> View Events
                             </Link>
                         </Button>
                     </CardContent>
@@ -316,54 +314,58 @@ export default function DashboardPage() {
                 <div className="lg:col-span-2 space-y-6">
                     <Card className="hover:shadow-lg transition-shadow">
                         <CardHeader>
-                            <CardTitle className="font-headline flex items-center gap-2"><CalendarDays /> Events Calendar</CardTitle>
-                            <CardDescription>View upcoming events for this season.</CardDescription>
+                            <CardTitle className="font-headline flex items-center gap-2"><CalendarDays /> Events</CardTitle>
+                            <CardDescription>All events for {currentSeason.name}.</CardDescription>
                         </CardHeader>
                         <CardContent>
                             <ScrollArea className="h-72 pr-4">
                                 <div className="space-y-3">
                                     {allSeasonEvents.length > 0 ? (
-                                        allSeasonEvents.map(event => (
-                                            <div key={event.id} className="flex items-center justify-between text-sm p-2 bg-muted/40 rounded-md">
-                                                <div>
-                                                    <p className="font-medium truncate text-foreground">{event.name}</p>
-                                                    <p className="text-xs text-muted-foreground">{formatShortDate(event.date)}</p>
-                                                </div>
-                                                <Badge
-                                                    variant={
-                                                        event.status === 'completed' ? 'default' :
-                                                        event.status === 'active' ? 'secondary' :
-                                                        event.status === 'cancelled' ? 'destructive' :
-                                                        'outline'
-                                                    }
-                                                    className={cn(
-                                                        'text-xs',
-                                                        event.status === 'active' && 'bg-green-500 text-white',
-                                                        event.status === 'draft' && 'bg-yellow-100 text-yellow-800'
+                                        allSeasonEvents.map(event => {
+                                            const winner = event.status === 'completed' 
+                                                ? event.results.find(r => r.position === 1) 
+                                                : undefined;
+                                            const winnerPlayer = winner 
+                                                ? allPlayers.find(p => p.id === winner.playerId) 
+                                                : undefined;
+
+                                            return (
+                                                <Link href={`/events/${event.id}`} key={event.id} className="block hover:bg-muted/60 p-2 rounded-md transition-colors">
+                                                    <div className="flex items-start justify-between text-sm">
+                                                        <div className="flex-grow">
+                                                            <p className="font-medium truncate text-foreground">{event.name}</p>
+                                                            <p className="text-xs text-muted-foreground">{formatShortDate(event.date)}</p>
+                                                        </div>
+                                                        <Badge
+                                                            variant={
+                                                                event.status === 'completed' ? 'default' :
+                                                                event.status === 'active' ? 'secondary' :
+                                                                event.status === 'cancelled' ? 'destructive' :
+                                                                'outline'
+                                                            }
+                                                            className={cn(
+                                                                'text-xs shrink-0',
+                                                                event.status === 'active' && 'bg-green-500 text-white',
+                                                                event.status === 'draft' && 'bg-yellow-100 text-yellow-800'
+                                                            )}
+                                                        >
+                                                            {event.status.charAt(0).toUpperCase() + event.status.slice(1)}
+                                                        </Badge>
+                                                    </div>
+                                                    {winnerPlayer && (
+                                                        <div className="flex items-center gap-2 text-xs text-yellow-600 mt-1">
+                                                            <Trophy className="h-3 w-3" />
+                                                            <span>Winner: {getPlayerDisplayName(winnerPlayer)}</span>
+                                                        </div>
                                                     )}
-                                                >
-                                                    {event.status.charAt(0).toUpperCase() + event.status.slice(1)}
-                                                </Badge>
-                                            </div>
-                                        ))
+                                                </Link>
+                                            );
+                                        })
                                     ) : (
                                         <p className="text-sm text-muted-foreground text-center py-4">No events scheduled.</p>
                                     )}
                                 </div>
                             </ScrollArea>
-                            <Dialog>
-                                <DialogTrigger asChild>
-                                    <Button className="w-full mt-4">
-                                        Open Full Calendar View
-                                    </Button>
-                                </DialogTrigger>
-                                <DialogContent className="max-w-fit">
-                                    <DialogHeader>
-                                        <DialogTitle>Event Calendar: {currentSeason.name}</DialogTitle>
-                                    </DialogHeader>
-                                    <SeasonDetailsCalendar events={seasonEvents} />
-                                </DialogContent>
-                            </Dialog>
                         </CardContent>
                     </Card>
                 </div>
