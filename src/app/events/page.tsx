@@ -1,11 +1,11 @@
 
 import * as React from 'react';
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { getEvents, getSeasons, getPlayers } from "@/lib/data-service"; 
 import type { Event, Player, Season } from "@/lib/definitions"; 
-import { PlusCircle, CalendarDays, Users, DollarSign, Edit, Eye, BarChart3, FolderOpen, Trophy } from "lucide-react";
+import { PlusCircle, CalendarDays, Users, FolderOpen, Trophy, Eye, Edit } from "lucide-react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -15,85 +15,12 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
-import { format, isPast, parseISO } from "date-fns";
+import { parseISO, isPast } from "date-fns";
 import { cn } from "@/lib/utils";
 import { cookies } from 'next/headers';
+import EventTableRowClient from './EventTableRowClient';
 
 const AUTH_COOKIE_NAME = 'app_session_active';
-
-const getPlayerDisplayName = (player: Player | undefined): string => {
-  if (!player) return "N/A";
-  if (player.nickname && player.nickname.trim() !== '') {
-    return player.nickname;
-  }
-  if (player.firstName) {
-    return `${player.firstName}${player.lastName ? ' ' + player.lastName.charAt(0) + '.' : ''}`;
-  }
-  if (player.lastName) {
-    return player.lastName;
-  }
-  return "Unnamed";
-};
-
-const EventTableRow = ({ event, isAuthenticated, allPlayers }: { event: Event, isAuthenticated: boolean, allPlayers: Player[] }) => {
-  const displayDate = format(parseISO(event.date), 'PPP');
-
-  let winnerName = "N/A";
-  if (event.status === 'completed' && event.results && event.results.length > 0) {
-    const winnerResult = event.results.find(r => r.position === 1);
-    if (winnerResult) {
-      const winnerPlayer = allPlayers.find(p => p.id === winnerResult.playerId);
-      winnerName = getPlayerDisplayName(winnerPlayer);
-    }
-  }
-
-  return (
-    <TableRow>
-      <TableCell className="font-medium py-2 px-3">{event.name}</TableCell>
-      <TableCell className="py-2 px-3">{displayDate}</TableCell>
-      <TableCell className="py-2 px-3">€{event.buyIn}</TableCell>
-      <TableCell className="py-2 px-3">{event.participants.length}</TableCell>
-      <TableCell className="py-2 px-3">
-        {winnerName !== "N/A" ? (
-          <span className="flex items-center">
-            <Trophy className="h-4 w-4 mr-1.5 text-yellow-500" />
-            {winnerName}
-          </span>
-        ) : (
-          <span className="text-muted-foreground">{winnerName}</span>
-        )}
-      </TableCell>
-      <TableCell className="py-2 px-3">
-        <Badge
-          className={cn(
-            'text-xs font-semibold border-transparent',
-             event.status === 'active' ? 'bg-green-100 text-green-800 dark:bg-green-800/20 dark:text-green-300 hover:bg-green-100 dark:hover:bg-green-800/20' : 
-             event.status === 'draft' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-800/20 dark:text-yellow-300 hover:bg-yellow-100 dark:hover:bg-yellow-800/20' :
-             event.status === 'completed' ? 'bg-blue-100 text-blue-800 dark:bg-blue-800/20 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-800/20' :
-             event.status === 'cancelled' ? 'bg-red-100 text-red-800 dark:bg-red-800/20 dark:text-red-300 hover:bg-red-100 dark:hover:bg-red-800/20' :
-             'bg-gray-100 text-gray-800 dark:bg-gray-800/20 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800/20'
-          )}
-        >
-          {event.status.charAt(0).toUpperCase() + event.status.slice(1)}
-        </Badge>
-      </TableCell>
-      <TableCell className="text-right space-x-2 py-2 px-3">
-        <Button variant="outline" size="icon" className="h-8 w-8" asChild title="View Event">
-          <Link href={`/events/${event.id}`}>
-            <Eye className="h-4 w-4" />
-          </Link>
-        </Button>
-        {isAuthenticated && (
-          <Button variant="outline" size="icon" className="h-8 w-8" asChild title="Edit Event">
-            <Link href={`/events/${event.id}/edit`}>
-              <Edit className="h-4 w-4" />
-            </Link>
-          </Button>
-        )}
-      </TableCell>
-    </TableRow>
-  );
-};
 
 const EventTable = ({ events, isAuthenticated, allPlayers }: { events: Event[], isAuthenticated: boolean, allPlayers: Player[] }) => {
   if (events.length === 0) {
@@ -114,7 +41,7 @@ const EventTable = ({ events, isAuthenticated, allPlayers }: { events: Event[], 
       </TableHeader>
       <TableBody>
         {events.map((event) => (
-          <EventTableRow key={event.id} event={event} isAuthenticated={isAuthenticated} allPlayers={allPlayers} />
+          <EventTableRowClient key={event.id} event={event} isAuthenticated={isAuthenticated} allPlayers={allPlayers} />
         ))}
       </TableBody>
     </Table>
@@ -205,7 +132,7 @@ export default async function EventsPage() {
                     <Card className="border-none rounded-none shadow-none">
                        <CardHeader className="w-full text-left p-4">
                          <CardTitle className="font-headline text-xl flex items-center">
-                           <BarChart3 className="mr-3 h-5 w-5 text-primary"/>
+                           <Users className="mr-3 h-5 w-5 text-primary"/>
                            SEASON: {season.name}
                            {season.isActive && <Badge className="ml-3 bg-green-500 text-white">Active</Badge>}
                          </CardTitle>
