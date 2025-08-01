@@ -1,6 +1,4 @@
 
-'use client';
-
 import * as React from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
@@ -19,7 +17,9 @@ import {
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import { format, isPast, parseISO } from "date-fns";
 import { cn } from "@/lib/utils";
-import { Skeleton } from '@/components/ui/skeleton';
+import { cookies } from 'next/headers';
+
+const AUTH_COOKIE_NAME = 'app_session_active';
 
 const getPlayerDisplayName = (player: Player | undefined): string => {
   if (!player) return "N/A";
@@ -35,12 +35,8 @@ const getPlayerDisplayName = (player: Player | undefined): string => {
   return "Unnamed";
 };
 
-const EventTableRow = ({ event, isAuthenticated, allPlayers }: { event: Event, isAuthenticated: boolean | null, allPlayers: Player[] }) => {
-  const [displayDate, setDisplayDate] = React.useState('Loading...');
-
-  React.useEffect(() => {
-    setDisplayDate(format(parseISO(event.date), 'PPP'));
-  }, [event.date]);
+const EventTableRow = ({ event, isAuthenticated, allPlayers }: { event: Event, isAuthenticated: boolean, allPlayers: Player[] }) => {
+  const displayDate = format(parseISO(event.date), 'PPP');
   
   let winnerName = "N/A";
   if (event.status === 'completed' && event.results && event.results.length > 0) {
@@ -99,7 +95,7 @@ const EventTableRow = ({ event, isAuthenticated, allPlayers }: { event: Event, i
   );
 };
 
-const EventTable = ({ events, isAuthenticated, allPlayers }: { events: Event[], isAuthenticated: boolean | null, allPlayers: Player[] }) => {
+const EventTable = ({ events, isAuthenticated, allPlayers }: { events: Event[], isAuthenticated: boolean, allPlayers: Player[] }) => {
   if (events.length === 0) {
     return <p className="text-muted-foreground text-sm py-4">No events in this category.</p>;
   }
@@ -125,81 +121,40 @@ const EventTable = ({ events, isAuthenticated, allPlayers }: { events: Event[], 
   );
 };
 
-export default function EventsPage() {
-    const [isLoading, setIsLoading] = React.useState(true);
-    const [isAuthenticated, setIsAuthenticated] = React.useState<boolean | null>(null);
-    const [allEvents, setAllEvents] = React.useState<Event[]>([]);
-    const [allSeasons, setAllSeasons] = React.useState<Season[]>([]);
-    const [allPlayers, setAllPlayers] = React.useState<Player[]>([]);
-    const [eventsBySeason, setEventsBySeason] = React.useState<Map<string, Event[]>>(new Map());
-    const [unassignedEvents, setUnassignedEvents] = React.useState<Event[]>([]);
-    const [initialIndex, setInitialIndex] = React.useState(0);
+export default async function EventsPage() {
+    const cookieStore = cookies();
+    const isAuthenticated = cookieStore.get(AUTH_COOKIE_NAME)?.value === 'true';
 
-    React.useEffect(() => {
-        // We set auth state first to avoid UI flashes
-        const authCookie = document.cookie.split('; ').find(row => row.startsWith('app_session_active='));
-        const isAuth = authCookie ? authCookie.split('=')[1] === 'true' : false;
-        setIsAuthenticated(isAuth);
+    const allEvents = (await getEvents()).sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    const allSeasons = (await getSeasons()).sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime());
+    const allPlayers = await getPlayers();
+    
+    const eventsBySeasonMap: Map<string, Event[]> = new Map();
+    const unassignedEvents: Event[] = [];
 
-        const fetchData = async () => {
-            setIsLoading(true);
+    allEvents.forEach(event => {
+        if (event.seasonId) {
+        if (!eventsBySeasonMap.has(event.seasonId)) {
+            eventsBySeasonMap.set(event.seasonId, []);
+        }
+        eventsBySeasonMap.get(event.seasonId)!.push(event);
+        } else {
+        unassignedEvents.push(event);
+        }
+    });
 
-            // Fetch all data
-            const events = (await getEvents()).sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-            const seasons = (await getSeasons()).sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime());
-            const players = await getPlayers();
-
-            setAllEvents(events);
-            setAllSeasons(seasons);
-            setAllPlayers(players);
-            
-            const eventsBySeasonMap: Map<string, Event[]> = new Map();
-            const unassigned: Event[] = [];
-
-            events.forEach(event => {
-                if (event.seasonId) {
-                if (!eventsBySeasonMap.has(event.seasonId)) {
-                    eventsBySeasonMap.set(event.seasonId, []);
-                }
-                eventsBySeasonMap.get(event.seasonId)!.push(event);
-                } else {
-                unassigned.push(event);
-                }
-            });
-            setEventsBySeason(eventsBySeasonMap);
-            setUnassignedEvents(unassigned);
-
-            // Determine index for carousel start
-            let index = 0;
-            if(seasons.length > 0) {
-                const activeSeasonIndex = seasons.findIndex(s => s.isActive);
-                if(activeSeasonIndex !== -1) {
-                    index = activeSeasonIndex;
-                } else {
-                    const completedSeasons = seasons.filter(s => s.endDate && isPast(parseISO(s.endDate)));
-                    if(completedSeasons.length > 0) {
-                        const lastCompleted = completedSeasons[completedSeasons.length - 1];
-                        index = seasons.findIndex(s => s.id === lastCompleted.id);
-                    }
-                }
+    let initialIndex = 0;
+    if(allSeasons.length > 0) {
+        const activeSeasonIndex = allSeasons.findIndex(s => s.isActive);
+        if(activeSeasonIndex !== -1) {
+            initialIndex = activeSeasonIndex;
+        } else {
+            const completedSeasons = allSeasons.filter(s => s.endDate && isPast(parseISO(s.endDate)));
+            if(completedSeasons.length > 0) {
+                const lastCompleted = completedSeasons[completedSeasons.length - 1];
+                initialIndex = allSeasons.findIndex(s => s.id === lastCompleted.id);
             }
-            setInitialIndex(index);
-            
-            setIsLoading(false);
-        };
-        fetchData();
-    }, []);
-
-    if (isLoading) {
-        return (
-            <div className="space-y-6">
-                <div className="flex items-center justify-between">
-                    <Skeleton className="h-10 w-48" />
-                    <Skeleton className="h-10 w-36" />
-                </div>
-                <Skeleton className="h-[400px] w-full" />
-            </div>
-        )
+        }
     }
 
   return (
@@ -244,7 +199,7 @@ export default function EventsPage() {
           >
             <CarouselContent className="-ml-4">
               {allSeasons.map(season => {
-                const seasonEvents = eventsBySeason.get(season.id) || [];
+                const seasonEvents = eventsBySeasonMap.get(season.id) || [];
                 return (
                   <CarouselItem key={season.id} className="pl-4">
                     <Card className="border-none rounded-none shadow-none">
