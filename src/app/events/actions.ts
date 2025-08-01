@@ -377,3 +377,22 @@ export async function saveLiveResults(
     return { success: false, message: 'Database Error: Failed to save final results.' };
   }
 }
+
+export async function goLiveFromDetails(eventId: string): Promise<{ success: boolean; message?: string }> {
+  if (!eventId) {
+    return { success: false, message: 'Event ID is required.' };
+  }
+  try {
+    const eventRef = db.collection(EVENTS_COLLECTION).doc(eventId);
+    await eventRef.update({
+      status: 'active',
+      updatedAt: Timestamp.now(),
+    });
+    revalidatePath(`/events/${eventId}`);
+    revalidatePath('/events');
+    return { success: true };
+  } catch (error) {
+    console.error("Error setting event to live:", error);
+    return { success: false, message: 'Database Error: Could not update event status.' };
+  }
+}

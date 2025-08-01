@@ -7,14 +7,44 @@ import { getEvents, getPlayers, getSeasons } from "@/lib/data-service";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import Link from "next/link";
-import { ArrowLeft, Edit, Users, DollarSign, CalendarDays, Trophy, Info, Tag, CheckCircle, XCircle, Trash2, Star, Gift, BarChart3, HelpCircle, PlayCircle, Repeat, AlertTriangle } from "lucide-react";
+import { ArrowLeft, Edit, Users, DollarSign, CalendarDays, Trophy, Info, Tag, CheckCircle, XCircle, Trash2, Star, Gift, BarChart3, HelpCircle, PlayCircle, Repeat, AlertTriangle, Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { cookies } from 'next/headers';
 import DeleteEventButton from "./DeleteEventButton";
 import EventCarousel from './EventCarousel';
 import { Skeleton } from '@/components/ui/skeleton';
 import { format, parseISO } from 'date-fns';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
+import { goLiveFromDetails } from '@/app/events/actions';
+import { useToast } from '@/hooks/use-toast';
+
+const GoLiveButton = ({ eventId, currentStatus }: { eventId: string, currentStatus: string }) => {
+    const [isPending, startTransition] = React.useTransition();
+    const router = useRouter();
+    const { toast } = useToast();
+
+    const handleGoLive = () => {
+        startTransition(async () => {
+            const result = await goLiveFromDetails(eventId);
+            if (result.success) {
+                toast({ title: 'Success', description: 'Event is now live!' });
+                router.push(`/events/${eventId}/live`);
+            } else {
+                toast({ title: 'Error', description: result.message, variant: 'destructive' });
+            }
+        });
+    };
+    
+    if (currentStatus !== 'draft') {
+        return null;
+    }
+
+    return (
+        <Button onClick={handleGoLive} disabled={isPending} size="sm" className="w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white">
+            {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <PlayCircle className="mr-2 h-4 w-4" />}
+            {isPending ? 'Going Live...' : 'Go Live'}
+        </Button>
+    );
+};
 
 
 const getPlayerDisplayName = (player: Player | undefined): string => {
@@ -170,6 +200,7 @@ export default function EventDetailsPage() {
                     </Link>
                   </Button>
                 )}
+                 <GoLiveButton eventId={event.id} currentStatus={event.status} />
                 <Button asChild size="sm" variant="outline" className="w-full sm:w-auto">
                   <Link href={`/events/${event.id}/edit`}>
                     <Edit className="mr-2 h-4 w-4" /> Edit Event
