@@ -139,11 +139,12 @@ export default function EventsPage() {
         const fetchData = async () => {
             setIsLoading(true);
 
-            // Fetch all data
+            // Client-side cookie check is the single source of truth for UI interactivity
             const authCookie = document.cookie.split('; ').find(row => row.startsWith('app_session_active='));
             const isAuth = authCookie ? authCookie.split('=')[1] === 'true' : false;
             setIsAuthenticated(isAuth);
 
+            // Fetch all data
             const events = (await getEvents()).sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
             const seasons = (await getSeasons()).sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime());
             const players = await getPlayers();
