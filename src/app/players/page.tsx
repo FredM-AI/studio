@@ -90,8 +90,12 @@ export default async function PlayersPage() {
                 <TableHeader>
                   <TableRow>
                     <TableHead className="py-1 px-4">Name</TableHead>
-                    <TableHead className="py-1 px-4">Full Name (for ref)</TableHead>
-                    <TableHead className="py-1 px-4">Email</TableHead>
+                    {isAuthenticated && (
+                      <>
+                        <TableHead className="py-1 px-4">Full Name (for ref)</TableHead>
+                        <TableHead className="py-1 px-4">Email</TableHead>
+                      </>
+                    )}
                     <TableHead className="py-1 px-4">Status</TableHead>
                     <TableHead className="text-right py-1 px-4">Actions</TableHead>
                   </TableRow>
@@ -100,8 +104,12 @@ export default async function PlayersPage() {
                   {sortedPlayers.map((player) => (
                     <TableRow key={player.id}>
                       <TableCell className="font-medium py-1 px-4">{getPlayerDisplayName(player)}</TableCell>
-                      <TableCell className="text-xs text-muted-foreground py-1 px-4">{player.firstName} {player.lastName}</TableCell>
-                      <TableCell className="py-1 px-4">{player.email}</TableCell>
+                      {isAuthenticated && (
+                        <>
+                          <TableCell className="text-xs text-muted-foreground py-1 px-4">{player.firstName} {player.lastName}</TableCell>
+                          <TableCell className="py-1 px-4">{player.email}</TableCell>
+                        </>
+                      )}
                       <TableCell className="py-1 px-4">
                          <div className="flex items-center gap-2">
                           <span className={`px-2 py-1 text-xs rounded-full ${
