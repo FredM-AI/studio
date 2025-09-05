@@ -1,20 +1,19 @@
 
 import * as React from 'react';
-import type { Event, Player, Season } from "@/lib/definitions";
-import { getEvents, getPlayers, getSeasons } from "@/lib/data-service";
+import type { Event, Player, Season, BlindStructureTemplate } from "@/lib/definitions";
+import { getEvents, getPlayers, getSeasons, getBlindStructures } from "@/lib/data-service";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import Link from "next/link";
-import { ArrowLeft, Edit, Users, DollarSign, CalendarDays, Trophy, Info, Tag, CheckCircle, XCircle, Trash2, Star, Gift, BarChart3, HelpCircle, PlayCircle, Repeat, AlertTriangle, Loader2 } from "lucide-react";
+import { ArrowLeft, Edit, Users, DollarSign, CalendarDays, Trophy, Info, Tag, CheckCircle, XCircle, Trash2, Star, Gift, BarChart3, HelpCircle, PlayCircle, Repeat, AlertTriangle, Loader2, Clock, Hash } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import DeleteEventButton from "./DeleteEventButton";
 import EventCarousel from './EventCarousel';
 import { Skeleton } from '@/components/ui/skeleton';
 import { format, parseISO } from 'date-fns';
-import { goLiveFromDetails } from '@/app/events/actions';
-import { useToast } from '@/hooks/use-toast';
 import { cookies } from 'next/headers';
 import GoLiveButtonWrapper from './GoLiveButtonWrapper';
+import BlindStructureDisplay from '@/components/BlindStructureDisplay';
 
 const AUTH_COOKIE_NAME = 'app_session_active';
 
@@ -33,12 +32,13 @@ const getPlayerDisplayName = (player: Player | undefined): string => {
 };
 
 // Server-side function to get the initial data for the page.
-async function getEventDetails(id: string): Promise<{ event: Event | undefined, players: Player[], seasons: Season[], events: Event[] }> {
+async function getEventDetails(id: string): Promise<{ event: Event | undefined, players: Player[], seasons: Season[], events: Event[], blindStructures: BlindStructureTemplate[] }> {
   const allEvents = await getEvents();
   const event = allEvents.find(e => e.id === id);
   const players = await getPlayers();
   const seasons = await getSeasons();
-  return { event, players, seasons, events: allEvents };
+  const blindStructures = await getBlindStructures();
+  return { event, players, seasons, events: allEvents, blindStructures };
 }
 
 export default async function EventDetailsPage({ params }: { params: { eventId: string } }) {
@@ -46,7 +46,7 @@ export default async function EventDetailsPage({ params }: { params: { eventId: 
     const cookieStore = cookies();
     const isAuthenticated = cookieStore.get(AUTH_COOKIE_NAME)?.value === 'true';
 
-    const { event, players: allPlayers, seasons, events: allEvents } = await getEventDetails(eventId);
+    const { event, players: allPlayers, seasons, events: allEvents, blindStructures } = await getEventDetails(eventId);
 
     if (!event) {
         return (
@@ -75,6 +75,8 @@ export default async function EventDetailsPage({ params }: { params: { eventId: 
     }
 
     const linkedSeason = event.seasonId ? seasons.find(s => s.id === event.seasonId) : undefined;
+    const linkedBlindStructure = event.blindStructureId ? blindStructures.find(bs => bs.id === event.blindStructureId) : undefined;
+
     const eventsInSameSeason = linkedSeason
         ? allEvents.filter(e => e.seasonId === linkedSeason.id).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
         : [];
@@ -178,11 +180,23 @@ export default async function EventDetailsPage({ params }: { params: { eventId: 
                       <span className="font-medium">€{event.mysteryKo}</span>
                   </div>
               )}
+               {event.startingStack && (
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground flex items-center"><Hash className="mr-2 h-4 w-4"/>Starting Stack:</span>
+                  <span className="font-medium">{event.startingStack.toLocaleString()}</span>
+                </div>
+              )}
               {event.maxPlayers && (
                 <div className="flex items-center justify-between">
                   <span className="text-muted-foreground flex items-center"><Tag className="mr-2 h-4 w-4"/>Max Players:</span>
                   <span className="font-medium">{event.maxPlayers}</span>
                 </div>
+              )}
+               {linkedBlindStructure && event.blindStructure && (
+                  <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground flex items-center"><Clock className="mr-2 h-4 w-4"/>Blind Structure:</span>
+                      <BlindStructureDisplay structure={linkedBlindStructure} />
+                  </div>
               )}
               <div className="flex items-center justify-between md:col-start-2">
                 <span className="text-muted-foreground flex items-center"><HelpCircle className="mr-2 h-4 w-4"/>Bounties in Net Calc:</span>
