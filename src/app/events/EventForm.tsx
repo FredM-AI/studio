@@ -364,6 +364,7 @@ export default function EventForm({ event, allPlayers, allSeasons, blindStructur
     });
   const resultsJson = JSON.stringify(finalResultsForJson);
 
+
   const isCreating = !event?.id;
 
   return (
