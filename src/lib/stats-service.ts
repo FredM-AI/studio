@@ -196,54 +196,48 @@ export async function calculateSeasonStats(
     progress: PlayerProgressPoint[];
   }> = new Map();
 
-  const allParticipantIdsInSeason = new Set<string>();
-  completedSeasonEvents.forEach(event => {
-    event.participants.forEach(pId => allParticipantIdsInSeason.add(pId));
-  });
-
-  allParticipantIdsInSeason.forEach(playerId => {
-    playerSeasonSummaries.set(playerId, {
-      eventResults: {},
-      totalFinalResult: 0,
-      eventsPlayed: 0,
-      progress: [],
-    });
-  });
-
   let cumulativeTotals: { [playerId: string]: number } = {};
-  allParticipantIdsInSeason.forEach(id => cumulativeTotals[id] = 0);
 
   for (const event of completedSeasonEvents) {
-    for (const playerId of allParticipantIdsInSeason) {
+    for (const playerId of event.participants) {
+      // Ensure a summary exists for the player if it's their first event
+      if (!playerSeasonSummaries.has(playerId)) {
+        playerSeasonSummaries.set(playerId, {
+          eventResults: {},
+          totalFinalResult: 0,
+          eventsPlayed: 0,
+          progress: [],
+        });
+        cumulativeTotals[playerId] = 0;
+      }
+      
       const summary = playerSeasonSummaries.get(playerId)!;
       let eventNetResult: number | undefined = undefined;
 
-      if (event.participants.includes(playerId)) {
-        summary.eventsPlayed++;
+      summary.eventsPlayed++;
 
-        const mainBuyInForEvent = event.buyIn || 0;
-        const eventBountyValue = event.bounties || 0;
-        const eventMysteryKoValue = event.mysteryKo || 0;
-        const rebuyPriceForEvent = event.rebuyPrice || 0;
-        const includeBountiesInNetCalc = event.includeBountiesInNet ?? true;
+      const mainBuyInForEvent = event.buyIn || 0;
+      const eventBountyValue = event.bounties || 0;
+      const eventMysteryKoValue = event.mysteryKo || 0;
+      const rebuyPriceForEvent = event.rebuyPrice || 0;
+      const includeBountiesInNetCalc = event.includeBountiesInNet ?? true;
 
-        const playerResultEntry = event.results.find(r => r.playerId === playerId);
-        const rebuysCount = playerResultEntry?.rebuys || 0;
-        const prizeWon = playerResultEntry?.prize || 0;
-        const bountiesWon = playerResultEntry?.bountiesWon || 0;
-        const mysteryKoWon = playerResultEntry?.mysteryKoWon || 0;
-        
-        const investmentInMainPot = mainBuyInForEvent + (rebuysCount * rebuyPriceForEvent);
-        
-        if (includeBountiesInNetCalc) {
-          const bountyAndMkoCostsPerEntry = eventBountyValue + eventMysteryKoValue;
-          const totalInvestmentInExtras = (1 + rebuysCount) * bountyAndMkoCostsPerEntry;
-          const totalInvestment = investmentInMainPot + totalInvestmentInExtras;
-          const totalWinnings = prizeWon + bountiesWon + mysteryKoWon;
-          eventNetResult = totalWinnings - totalInvestment;
-        } else {
-          eventNetResult = prizeWon - investmentInMainPot;
-        }
+      const playerResultEntry = event.results.find(r => r.playerId === playerId);
+      const rebuysCount = playerResultEntry?.rebuys || 0;
+      const prizeWon = playerResultEntry?.prize || 0;
+      const bountiesWon = playerResultEntry?.bountiesWon || 0;
+      const mysteryKoWon = playerResultEntry?.mysteryKoWon || 0;
+      
+      const investmentInMainPot = mainBuyInForEvent + (rebuysCount * rebuyPriceForEvent);
+      
+      if (includeBountiesInNetCalc) {
+        const bountyAndMkoCostsPerEntry = eventBountyValue + eventMysteryKoValue;
+        const totalInvestmentInExtras = (1 + rebuysCount) * bountyAndMkoCostsPerEntry;
+        const totalInvestment = investmentInMainPot + totalInvestmentInExtras;
+        const totalWinnings = prizeWon + bountiesWon + mysteryKoWon;
+        eventNetResult = totalWinnings - totalInvestment;
+      } else {
+        eventNetResult = prizeWon - investmentInMainPot;
       }
       
       summary.eventResults[event.id] = eventNetResult;
@@ -252,32 +246,26 @@ export async function calculateSeasonStats(
       cumulativeTotals[playerId] = newCumulativeTotal;
       summary.totalFinalResult = newCumulativeTotal;
 
-      // Only add a progress point if the player participated or had a previous balance
-      if (summary.eventsPlayed > 0) {
-        summary.progress.push({
-          eventDate: event.date,
-          eventName: event.name,
-          eventFinalResult: eventNetResult || 0,
-          cumulativeFinalResult: newCumulativeTotal,
-        });
-      }
+      summary.progress.push({
+        eventDate: event.date,
+        eventName: event.name,
+        eventFinalResult: eventNetResult || 0,
+        cumulativeFinalResult: newCumulativeTotal,
+      });
     }
   }
 
   const leaderboard: LeaderboardEntry[] = [];
   playerSeasonSummaries.forEach((summary, playerId) => {
-    // This is the key change: only add players to the leaderboard if they have played.
-    if (summary.eventsPlayed > 0) {
-      const player = allPlayers.find((p) => p.id === playerId);
-      if (player) { 
-          leaderboard.push({
-              playerId,
-              playerName: getPlayerDisplayName(player),
-              isGuest: player.isGuest || false,
-              eventResults: summary.eventResults,
-              totalFinalResult: summary.totalFinalResult,
-          });
-      }
+    const player = allPlayers.find((p) => p.id === playerId);
+    if (player) { 
+        leaderboard.push({
+            playerId,
+            playerName: getPlayerDisplayName(player),
+            isGuest: player.isGuest || false,
+            eventResults: summary.eventResults,
+            totalFinalResult: summary.totalFinalResult,
+        });
     }
   });
 
@@ -290,9 +278,9 @@ export async function calculateSeasonStats(
   
   const playerProgress: { [playerId: string]: PlayerProgressPoint[] } = {};
   playerSeasonSummaries.forEach((summary, playerId) => {
-      if (summary.eventsPlayed > 0) { 
-         playerProgress[playerId] = summary.progress;
-      }
+    if (summary.eventsPlayed > 0) { 
+       playerProgress[playerId] = summary.progress;
+    }
   });
 
   return { leaderboard, playerProgress, completedSeasonEvents };
@@ -447,5 +435,7 @@ export async function calculateHallOfFameStats(
 
 
 
+
+    
 
     
