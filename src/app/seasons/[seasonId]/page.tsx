@@ -15,12 +15,15 @@ import SeasonPlayerProgressChart from './SeasonPlayerProgressChart';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from '@/components/ui/skeleton';
 import { useParams } from 'next/navigation';
+import { format, parseISO } from 'date-fns';
 
 // Client-side data fetching function
 async function getSeasonData(seasonId: string): Promise<{ season?: Season; allPlayers: Player[]; seasonStats?: SeasonStats, seasonEvents: EventType[] }> {
-  const season = (await getSeasons()).find(s => s.id === seasonId);
-  const allEvents = await getEvents();
-  const allPlayers = await getPlayers();
+  const seasonPromise = getSeasons().then(seasons => seasons.find(s => s.id === seasonId));
+  const eventsPromise = getEvents();
+  const playersPromise = getPlayers();
+  
+  const [season, allEvents, allPlayers] = await Promise.all([seasonPromise, eventsPromise, playersPromise]);
   
   let seasonStats: SeasonStats | undefined = undefined;
   let seasonEventsForCalendar: EventType[] = [];
@@ -33,12 +36,11 @@ async function getSeasonData(seasonId: string): Promise<{ season?: Season; allPl
   return { season, allPlayers, seasonStats, seasonEvents: seasonEventsForCalendar };
 }
 
-// Server-side cookie check is no longer possible here, so we'll fetch it on the client
 const AUTH_COOKIE_NAME = 'app_session_active';
 
 export default function SeasonDetailsPage() {
   const params = useParams();
-  const seasonId = Array.isArray(params.playerId) ? params.playerId[0] : params.playerId;
+  const seasonId = Array.isArray(params.seasonId) ? params.seasonId[0] : params.seasonId;
 
   const [isLoading, setIsLoading] = React.useState(true);
   const [data, setData] = React.useState<{
@@ -50,19 +52,21 @@ export default function SeasonDetailsPage() {
   const [isAuthenticated, setIsAuthenticated] = React.useState(false);
 
    React.useEffect(() => {
-    // Client-side cookie check
     const authCookie = document.cookie.split('; ').find(row => row.startsWith(AUTH_COOKIE_NAME + '='));
     setIsAuthenticated(authCookie ? authCookie.split('=')[1] === 'true' : false);
 
     async function fetchData() {
-      if (!seasonId) return;
+      if (!seasonId) {
+          setIsLoading(false);
+          return;
+      };
       setIsLoading(true);
       try {
         const fetchedData = await getSeasonData(seasonId as string);
         setData(fetchedData);
       } catch (error) {
         console.error("Failed to fetch season data:", error);
-        setData(null); // Set to null or some error state
+        setData(null);
       } finally {
         setIsLoading(false);
       }
@@ -114,6 +118,16 @@ export default function SeasonDetailsPage() {
 
   const { season, allPlayers, seasonStats, seasonEvents: seasonEventsForCalendar } = data;
   const completedSeasonEvents = seasonStats?.completedSeasonEvents || [];
+  
+  const formatDate = (dateString: string | undefined): string => {
+    if (!dateString) return 'Ongoing';
+    try {
+      return format(parseISO(dateString), 'MMMM d, yyyy');
+    } catch {
+      return 'Invalid date';
+    }
+  };
+
 
   return (
     <div className="space-y-8">
@@ -126,8 +140,7 @@ export default function SeasonDetailsPage() {
           </Button>
           <h1 className="font-headline text-3xl font-bold mt-2">{season.name}</h1>
           <p className="text-muted-foreground">
-            {new Date(season.startDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })} - 
-            {season.endDate ? new Date(season.endDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : 'Ongoing'}
+            {formatDate(season.startDate)} - {formatDate(season.endDate)}
           </p>
         </div>
         {isAuthenticated && (
@@ -202,7 +215,7 @@ export default function SeasonDetailsPage() {
         </TabsContent>
       </Tabs>
       <CardFooter className="text-xs text-muted-foreground mt-4 border-t pt-4">
-        Season created: {new Date(season.createdAt).toLocaleDateString()} | Last updated: {new Date(season.updatedAt).toLocaleDateString()}
+        Season created: {formatDate(season.createdAt)} | Last updated: {formatDate(season.updatedAt)}
       </CardFooter>
     </div>
   );
