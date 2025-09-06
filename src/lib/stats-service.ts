@@ -189,78 +189,68 @@ export async function calculateSeasonStats(
     totalFinalResult: number;
     eventsPlayed: number;
     progress: PlayerProgressPoint[];
-    lastCumulative: number;
   }> = new Map();
+  
+  const allPlayerIdsInSeason = new Set<string>();
+  completedSeasonEvents.forEach(event => {
+    event.participants.forEach(pId => allPlayerIdsInSeason.add(pId));
+  });
 
-  allPlayers.forEach(player => {
-    playerSeasonSummaries.set(player.id, {
+  allPlayerIdsInSeason.forEach(playerId => {
+    playerSeasonSummaries.set(playerId, {
       eventResults: {},
       totalFinalResult: 0,
       eventsPlayed: 0,
       progress: [],
-      lastCumulative: 0,
     });
   });
+
+  let cumulativeProgress: { [playerId: string]: number } = {};
+  allPlayerIdsInSeason.forEach(pId => cumulativeProgress[pId] = 0);
 
   for (const event of completedSeasonEvents) {
     const mainBuyInForEvent = event.buyIn || 0;
     const eventBountyValue = event.bounties || 0;
     const eventMysteryKoValue = event.mysteryKo || 0;
     const rebuyPriceForEvent = event.rebuyPrice || 0;
-    const participantIdsInEvent = new Set(event.participants);
+    const includeBountiesInNetCalc = event.includeBountiesInNet ?? true;
 
-    for (const playerId of participantIdsInEvent) {
-      const summary = playerSeasonSummaries.get(playerId);
-      if (!summary) continue; 
-
-      if (summary.eventResults[event.id] === undefined) {
-           if(!Object.keys(summary.eventResults).length) summary.eventsPlayed = 0;
-           const eventsProcessedForPlayer = new Set(Object.keys(summary.eventResults));
-           if (!eventsProcessedForPlayer.has(event.id)) {
-             summary.eventsPlayed += 1;
-           }
-      }
-
-      const playerResultEntry = event.results.find(r => r.playerId === playerId);
-      const rebuysCount = playerResultEntry?.rebuys || 0;
-      const prizeWon = playerResultEntry?.prize || 0;
-      const bountiesWon = playerResultEntry?.bountiesWon || 0;
-      const mysteryKoWon = playerResultEntry?.mysteryKoWon || 0;
-      
-      const investmentInMainPot = mainBuyInForEvent + (rebuysCount * rebuyPriceForEvent);
-      const includeBountiesInNetCalc = event.includeBountiesInNet ?? true;
+    for (const playerId of allPlayerIdsInSeason) {
+      const summary = playerSeasonSummaries.get(playerId)!;
       let eventNetResult = 0;
 
-      if (includeBountiesInNetCalc) {
-        const bountyAndMkoCostsPerEntry = eventBountyValue + eventMysteryKoValue;
-        const totalInvestmentInExtras = (1 + rebuysCount) * bountyAndMkoCostsPerEntry;
-        const totalInvestment = investmentInMainPot + totalInvestmentInExtras;
-        const totalWinnings = prizeWon + bountiesWon + mysteryKoWon;
-        eventNetResult = totalWinnings - totalInvestment;
-      } else {
-        eventNetResult = prizeWon - investmentInMainPot;
+      if (event.participants.includes(playerId)) {
+        summary.eventsPlayed++;
+
+        const playerResultEntry = event.results.find(r => r.playerId === playerId);
+        const rebuysCount = playerResultEntry?.rebuys || 0;
+        const prizeWon = playerResultEntry?.prize || 0;
+        const bountiesWon = playerResultEntry?.bountiesWon || 0;
+        const mysteryKoWon = playerResultEntry?.mysteryKoWon || 0;
+        
+        const investmentInMainPot = mainBuyInForEvent + (rebuysCount * rebuyPriceForEvent);
+        
+        if (includeBountiesInNetCalc) {
+          const bountyAndMkoCostsPerEntry = eventBountyValue + eventMysteryKoValue;
+          const totalInvestmentInExtras = (1 + rebuysCount) * bountyAndMkoCostsPerEntry;
+          const totalInvestment = investmentInMainPot + totalInvestmentInExtras;
+          const totalWinnings = prizeWon + bountiesWon + mysteryKoWon;
+          eventNetResult = totalWinnings - totalInvestment;
+        } else {
+          eventNetResult = prizeWon - investmentInMainPot;
+        }
       }
       
-      if (summary.eventResults[event.id] !== undefined) { 
-        summary.totalFinalResult -= summary.eventResults[event.id]!; 
-        summary.lastCumulative -= summary.eventResults[event.id]!;
-      }
       summary.eventResults[event.id] = eventNetResult;
       summary.totalFinalResult += eventNetResult;
-      summary.lastCumulative += eventNetResult;
+      cumulativeProgress[playerId] += eventNetResult;
 
-      const progressPointIndex = summary.progress.findIndex(p => p.eventDate === event.date);
-      if (progressPointIndex > -1) {
-        summary.progress[progressPointIndex].eventFinalResult = eventNetResult; 
-        summary.progress[progressPointIndex].cumulativeFinalResult = summary.lastCumulative;
-      } else {
-        summary.progress.push({
-          eventDate: event.date,
-          eventName: event.name,
-          eventFinalResult: eventNetResult,
-          cumulativeFinalResult: summary.lastCumulative,
-        });
-      }
+      summary.progress.push({
+        eventDate: event.date,
+        eventName: event.name,
+        eventFinalResult: eventNetResult,
+        cumulativeFinalResult: cumulativeProgress[playerId],
+      });
     }
   }
 
@@ -279,18 +269,16 @@ export async function calculateSeasonStats(
   });
 
   leaderboard.sort((a, b) => {
-    // Sort guests to the bottom
     if (a.isGuest !== b.isGuest) {
       return a.isGuest ? 1 : -1;
     }
-    // Then sort by total final result
     return b.totalFinalResult - a.totalFinalResult;
   });
   
   const playerProgress: { [playerId: string]: PlayerProgressPoint[] } = {};
   playerSeasonSummaries.forEach((summary, playerId) => {
       if (summary.eventsPlayed > 0) { 
-         playerProgress[playerId] = summary.progress.sort((a,b) => new Date(a.eventDate).getTime() - new Date(b.eventDate).getTime());
+         playerProgress[playerId] = summary.progress.sort((a,b) => new Date(a.eventDate).getTime() - new Date(b.date).getTime());
       }
   });
 
