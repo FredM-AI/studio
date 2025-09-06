@@ -190,7 +190,7 @@ export async function calculateSeasonStats(
     eventsPlayed: number;
     progress: PlayerProgressPoint[];
   }> = new Map();
-  
+
   const allPlayerIdsInSeason = new Set<string>();
   completedSeasonEvents.forEach(event => {
     event.participants.forEach(pId => allPlayerIdsInSeason.add(pId));
@@ -205,22 +205,23 @@ export async function calculateSeasonStats(
     });
   });
 
-  let cumulativeProgress: { [playerId: string]: number } = {};
-  allPlayerIdsInSeason.forEach(pId => cumulativeProgress[pId] = 0);
-
   for (const event of completedSeasonEvents) {
-    const mainBuyInForEvent = event.buyIn || 0;
-    const eventBountyValue = event.bounties || 0;
-    const eventMysteryKoValue = event.mysteryKo || 0;
-    const rebuyPriceForEvent = event.rebuyPrice || 0;
-    const includeBountiesInNetCalc = event.includeBountiesInNet ?? true;
-
     for (const playerId of allPlayerIdsInSeason) {
       const summary = playerSeasonSummaries.get(playerId)!;
       let eventNetResult = 0;
 
       if (event.participants.includes(playerId)) {
-        summary.eventsPlayed++;
+        if(summary.eventsPlayed === 0) { // First event for this player in this season
+            summary.eventsPlayed = 1;
+        } else {
+            summary.eventsPlayed++;
+        }
+
+        const mainBuyInForEvent = event.buyIn || 0;
+        const eventBountyValue = event.bounties || 0;
+        const eventMysteryKoValue = event.mysteryKo || 0;
+        const rebuyPriceForEvent = event.rebuyPrice || 0;
+        const includeBountiesInNetCalc = event.includeBountiesInNet ?? true;
 
         const playerResultEntry = event.results.find(r => r.playerId === playerId);
         const rebuysCount = playerResultEntry?.rebuys || 0;
@@ -240,17 +241,21 @@ export async function calculateSeasonStats(
           eventNetResult = prizeWon - investmentInMainPot;
         }
       }
-      
-      cumulativeProgress[playerId] += eventNetResult;
-      
+
+      const previousCumulative = summary.progress.length > 0 
+        ? summary.progress[summary.progress.length - 1].cumulativeFinalResult 
+        : 0;
+
+      const currentCumulative = previousCumulative + eventNetResult;
+
       summary.eventResults[event.id] = eventNetResult;
-      summary.totalFinalResult = cumulativeProgress[playerId]; // Use cumulative for total
+      summary.totalFinalResult = currentCumulative;
 
       summary.progress.push({
         eventDate: event.date,
         eventName: event.name,
         eventFinalResult: eventNetResult,
-        cumulativeFinalResult: cumulativeProgress[playerId],
+        cumulativeFinalResult: currentCumulative,
       });
     }
   }
