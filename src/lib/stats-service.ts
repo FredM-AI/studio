@@ -200,17 +200,16 @@ export async function calculateSeasonStats(
   for (const event of completedSeasonEvents) {
     for (const playerId of event.participants) {
       
-      // If player is not in summary map, add them.
       if (!playerSeasonSummaries.has(playerId)) {
         playerSeasonSummaries.set(playerId, {
           eventResults: {},
-          totalFinalResult: cumulativeTotals[playerId] || 0,
+          totalFinalResult: 0,
           progress: [],
         });
       }
       
       const summary = playerSeasonSummaries.get(playerId)!;
-      let eventNetResult: number | undefined = undefined;
+      let eventNetResult: number = 0;
 
       const mainBuyInForEvent = event.buyIn || 0;
       const eventBountyValue = event.bounties || 0;
@@ -219,33 +218,36 @@ export async function calculateSeasonStats(
       const includeBountiesInNetCalc = event.includeBountiesInNet ?? true;
 
       const playerResultEntry = event.results.find(r => r.playerId === playerId);
-      const rebuysCount = playerResultEntry?.rebuys || 0;
-      const prizeWon = playerResultEntry?.prize || 0;
-      const bountiesWon = playerResultEntry?.bountiesWon || 0;
-      const mysteryKoWon = playerResultEntry?.mysteryKoWon || 0;
       
-      const investmentInMainPot = mainBuyInForEvent + (rebuysCount * rebuyPriceForEvent);
-      
-      if (includeBountiesInNetCalc) {
-        const bountyAndMkoCostsPerEntry = eventBountyValue + eventMysteryKoValue;
-        const totalInvestmentInExtras = (1 + rebuysCount) * bountyAndMkoCostsPerEntry;
-        const totalInvestment = investmentInMainPot + totalInvestmentInExtras;
-        const totalWinnings = prizeWon + bountiesWon + mysteryKoWon;
-        eventNetResult = totalWinnings - totalInvestment;
-      } else {
-        eventNetResult = prizeWon - investmentInMainPot;
+      if (playerResultEntry) {
+          const rebuysCount = playerResultEntry.rebuys || 0;
+          const prizeWon = playerResultEntry.prize || 0;
+          const bountiesWon = playerResultEntry.bountiesWon || 0;
+          const mysteryKoWon = playerResultEntry.mysteryKoWon || 0;
+          
+          const investmentInMainPot = mainBuyInForEvent + (rebuysCount * rebuyPriceForEvent);
+          
+          if (includeBountiesInNetCalc) {
+            const bountyAndMkoCostsPerEntry = eventBountyValue + eventMysteryKoValue;
+            const totalInvestmentInExtras = (1 + rebuysCount) * bountyAndMkoCostsPerEntry;
+            const totalInvestment = investmentInMainPot + totalInvestmentInExtras;
+            const totalWinnings = prizeWon + bountiesWon + mysteryKoWon;
+            eventNetResult = totalWinnings - totalInvestment;
+          } else {
+            eventNetResult = prizeWon - investmentInMainPot;
+          }
       }
       
       summary.eventResults[event.id] = eventNetResult;
       
-      const newCumulativeTotal = (cumulativeTotals[playerId] || 0) + (eventNetResult || 0);
+      const newCumulativeTotal = (cumulativeTotals[playerId] || 0) + eventNetResult;
       cumulativeTotals[playerId] = newCumulativeTotal;
       summary.totalFinalResult = newCumulativeTotal;
 
       summary.progress.push({
         eventDate: event.date,
         eventName: event.name,
-        eventFinalResult: eventNetResult || 0,
+        eventFinalResult: eventNetResult,
         cumulativeFinalResult: newCumulativeTotal,
       });
     }
