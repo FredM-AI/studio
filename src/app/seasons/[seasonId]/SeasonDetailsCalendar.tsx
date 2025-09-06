@@ -21,30 +21,23 @@ export default function SeasonDetailsCalendar({ events }: SeasonDetailsCalendarP
 
   const [currentBaseMonth, setCurrentBaseMonth] = React.useState<Date>(() => {
     const today = new Date();
-    let initialTargetMonth: Date;
+    // Default to today, then check for events.
+    let initialTargetMonth = today;
 
     const sortedEvents = [...events].sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-
+    
+    // If there are any events, base the calendar on the first event date.
+    // This is much safer than complex future/past logic.
     if (sortedEvents.length > 0) {
-      const futureOrTodayEvents = sortedEvents.filter(event => {
-        const eventDate = new Date(event.date);
-        return isFuture(eventDate) || isToday(eventDate);
-      });
-
-      if (futureOrTodayEvents.length > 0) {
-        initialTargetMonth = new Date(futureOrTodayEvents[0].date);
-      } else {
-        // Safe check for the last event if no future events exist
-        initialTargetMonth = new Date(sortedEvents[sortedEvents.length - 1].date);
+      const firstEventDate = new Date(sortedEvents[0].date);
+      // Ensure the date is valid before using it
+      if (!isNaN(firstEventDate.getTime())) {
+        initialTargetMonth = firstEventDate;
       }
-    } else {
-      // Fallback for seasons with no events
-      initialTargetMonth = today;
     }
-    // Final safe check in case date parsing resulted in an invalid date
-    if (isNaN(initialTargetMonth.getTime())) {
-        initialTargetMonth = today;
-    }
+    
+    // The calendar shows 2 months, so setting the month to 1 before the target
+    // ensures the target month is visible on the right.
     return subMonths(startOfMonth(initialTargetMonth), 1);
   });
   
