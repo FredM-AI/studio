@@ -191,7 +191,7 @@ export async function calculateSeasonStats(
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
   const playerSeasonSummaries: Map<string, {
-    eventResults: { [eventId: string]: number };
+    eventResults: { [eventId: string]: number }; // eventId -> netResultForPlayerInEvent
     totalFinalResult: number;
     eventsPlayed: number;
     progress: PlayerProgressPoint[];
@@ -438,6 +438,7 @@ export async function calculateHallOfFameStats(
     
 
     
+
 
 
 
