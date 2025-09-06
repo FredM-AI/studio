@@ -297,13 +297,13 @@ export async function calculateHallOfFameStats(
   const totalPrizePools = completedEvents.reduce((sum, event) => sum + (event.prizePool.total || 0), 0);
 
   if (nonGuestPlayers.length === 0 || completedEvents.length === 0) {
-    return { mostWins: null, mostPodiums: null, highestNet: null, lowestNet: null, mostGamesPlayed: null, mostSpent: null, biggestSingleWin: null, mostBountiesWon: null, mostConsistent: null, totalPrizePools };
+    return { mostWins: null, mostPodiums: null, highestNet: null, lowestNet: null, mostRebuys: null, mostSpent: null, biggestSingleWin: null, mostBountiesWon: null, mostConsistent: null, totalPrizePools };
   }
   
   const playerStatsMap = new Map<string, {
     wins: number;
     podiums: number;
-    gamesPlayed: number;
+    totalRebuys: number;
     totalNet: number;
     totalSpent: number;
     biggestWin: { event: Event, value: number } | null;
@@ -312,7 +312,7 @@ export async function calculateHallOfFameStats(
   }>();
 
   for (const player of nonGuestPlayers) {
-    playerStatsMap.set(player.id, { wins: 0, podiums: 0, gamesPlayed: 0, totalNet: 0, totalSpent: 0, biggestWin: null, totalBountiesWon: 0, positions: [] });
+    playerStatsMap.set(player.id, { wins: 0, podiums: 0, totalRebuys: 0, totalNet: 0, totalSpent: 0, biggestWin: null, totalBountiesWon: 0, positions: [] });
   }
 
   for (const event of completedEvents) {
@@ -320,11 +320,12 @@ export async function calculateHallOfFameStats(
       if(!playerStatsMap.has(participantId)) continue; // skip guests
 
       const stats = playerStatsMap.get(participantId)!;
-      stats.gamesPlayed += 1;
-
+      
       const result = event.results.find(r => r.playerId === participantId);
 
       const rebuys = result?.rebuys || 0;
+      stats.totalRebuys += rebuys;
+
       const prize = result?.prize || 0;
       const bountiesWon = result?.bountiesWon || 0;
       const mkoWon = result?.mysteryKoWon || 0;
@@ -367,7 +368,7 @@ export async function calculateHallOfFameStats(
   let mostPodiums: HofPlayerStat | null = null;
   let highestNet: HofPlayerStat | null = null;
   let lowestNet: HofPlayerStat | null = null;
-  let mostGamesPlayed: HofPlayerStat | null = null;
+  let mostRebuys: HofPlayerStat | null = null;
   let mostSpent: HofPlayerStat | null = null;
   let biggestSingleWin: HofEventStat | null = null;
   let mostBountiesWon: HofPlayerStat | null = null;
@@ -388,8 +389,8 @@ export async function calculateHallOfFameStats(
     if (!lowestNet || stats.totalNet < lowestNet.value) {
       lowestNet = { player, value: stats.totalNet };
     }
-    if (!mostGamesPlayed || stats.gamesPlayed > mostGamesPlayed.value) {
-      mostGamesPlayed = { player, value: stats.gamesPlayed };
+    if (!mostRebuys || stats.totalRebuys > mostRebuys.value) {
+        mostRebuys = { player, value: stats.totalRebuys };
     }
     if (!mostSpent || stats.totalSpent > mostSpent.value) {
       mostSpent = { player, value: stats.totalSpent };
@@ -401,8 +402,9 @@ export async function calculateHallOfFameStats(
       mostBountiesWon = { player, value: stats.totalBountiesWon };
     }
     const MIN_GAMES_FOR_CONSISTENCY = 3;
-    if (stats.positions.length > 0 && stats.gamesPlayed >= MIN_GAMES_FOR_CONSISTENCY) {
-      const averagePosition = stats.positions.reduce((a, b) => a + b, 0) / stats.positions.length;
+    const gamesPlayed = stats.positions.length;
+    if (gamesPlayed > 0 && gamesPlayed >= MIN_GAMES_FOR_CONSISTENCY) {
+      const averagePosition = stats.positions.reduce((a, b) => a + b, 0) / gamesPlayed;
       if (!mostConsistent || averagePosition < mostConsistent.value) {
         mostConsistent = { player, value: averagePosition };
       }
@@ -414,7 +416,7 @@ export async function calculateHallOfFameStats(
     mostPodiums: mostPodiums && mostPodiums.value > 0 ? mostPodiums : null,
     highestNet: highestNet && highestNet.value > 0 ? highestNet : null,
     lowestNet: lowestNet && lowestNet.value < 0 ? lowestNet : null,
-    mostGamesPlayed: mostGamesPlayed && mostGamesPlayed.value > 0 ? mostGamesPlayed : null,
+    mostRebuys: mostRebuys && mostRebuys.value > 0 ? mostRebuys : null,
     mostSpent: mostSpent && mostSpent.value > 0 ? mostSpent : null,
     biggestSingleWin: biggestSingleWin && biggestSingleWin.value > 0 ? biggestSingleWin : null,
     mostBountiesWon: mostBountiesWon && mostBountiesWon.value > 0 ? mostBountiesWon : null,
@@ -422,23 +424,3 @@ export async function calculateHallOfFameStats(
     totalPrizePools,
   };
 }
-
-    
-
-    
-
-    
-
-
-
-
-
-
-
-
-
-    
-
-    
-
-    

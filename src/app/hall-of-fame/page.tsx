@@ -1,4 +1,5 @@
 
+
 import { getPlayers, getEvents } from '@/lib/data-service';
 import { calculateHallOfFameStats } from '@/lib/stats-service';
 import type { HallOfFameStats, HofPlayerStat, HofEventStat, Player } from '@/lib/definitions';
@@ -188,11 +189,11 @@ export default async function HallOfFamePage() {
                             valueClassName="text-green-600"
                         />
                         <StatCard 
-                            icon={<Award className="h-10 w-10" />}
-                            title="The Iron Man"
-                            description="The player with the most games played."
-                            stat={stats.mostGamesPlayed}
-                            unit="games"
+                            icon={<Repeat className="h-10 w-10" />}
+                            title="Le plus opiniâtre"
+                            description="The player with the most rebuys."
+                            stat={stats.mostRebuys}
+                            unit="rebuys"
                             valueClassName="text-green-600"
                         />
                         <StatCard 

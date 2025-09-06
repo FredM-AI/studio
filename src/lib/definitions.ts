@@ -210,7 +210,7 @@ export interface HallOfFameStats {
   mostPodiums: HofPlayerStat | null;
   highestNet: HofPlayerStat | null;
   lowestNet: HofPlayerStat | null;
-  mostGamesPlayed: HofPlayerStat | null;
+  mostRebuys: HofPlayerStat | null;
   mostSpent: HofPlayerStat | null;
   biggestSingleWin: HofEventStat | null;
   mostBountiesWon: HofPlayerStat | null;
