@@ -8,7 +8,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import * as React from 'react';
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import { Button } from '@/components/ui/button';
 
 interface SeasonPlayerProgressChartProps {
@@ -91,8 +91,11 @@ export default function SeasonPlayerProgressChart({ playerProgressData, players,
     if (seasonEvents.length === 0 || selectedPlayerIds.length === 0) return [];
 
     const data: any[] = [];
+    const eventDate = seasonEvents[0]?.date ? parseISO(seasonEvents[0].date).getTime() : new Date().getTime();
+    
+    // Add a "Start of Season" point one day before the first event
     const initialDataPoint: any = {
-        date: seasonEvents.length > 0 ? new Date(seasonEvents[0].date).getTime() - 86400000 : new Date().getTime() - 86400000, 
+        date: eventDate - 86400000, 
         eventName: "Start of Season",
     };
     selectedPlayerIds.forEach(playerId => {
@@ -100,10 +103,10 @@ export default function SeasonPlayerProgressChart({ playerProgressData, players,
     });
     data.push(initialDataPoint);
 
-
+    // Add points for each completed event
     seasonEvents.forEach((event) => {
       const dataPoint: any = {
-        date: new Date(event.date).getTime(),
+        date: parseISO(event.date).getTime(),
         eventName: event.name, 
       };
 
@@ -111,12 +114,15 @@ export default function SeasonPlayerProgressChart({ playerProgressData, players,
         const progressForPlayer = playerProgressData[playerId];
         const eventPoint = progressForPlayer?.find(p => p.eventDate === event.date);
         
-        const previousPointForPlayer = data.length > 0 ? data[data.length-1][getPlayerNameForChart(playerId)] : 0;
+        // Find the cumulative total from the previous data point in our chart data
+        const previousDataPoint = data[data.length - 1];
+        const previousCumulative = previousDataPoint ? previousDataPoint[getPlayerNameForChart(playerId)] : 0;
 
         if (eventPoint) {
           dataPoint[getPlayerNameForChart(playerId)] = eventPoint.cumulativeFinalResult;
         } else {
-          dataPoint[getPlayerNameForChart(playerId)] = previousPointForPlayer;
+          // If player didn't play, their cumulative total remains the same as the previous point
+          dataPoint[getPlayerNameForChart(playerId)] = previousCumulative;
         }
       });
       data.push(dataPoint);
