@@ -212,6 +212,9 @@ export async function calculateSeasonStats(
     });
   });
 
+  let cumulativeTotals: { [playerId: string]: number } = {};
+  allParticipantIdsInSeason.forEach(id => cumulativeTotals[id] = 0);
+
   // Iterate through each event to build up progress and totals
   for (const event of completedSeasonEvents) {
     for (const playerId of allParticipantIdsInSeason) {
@@ -220,11 +223,7 @@ export async function calculateSeasonStats(
 
       // Only calculate if the player participated
       if (event.participants.includes(playerId)) {
-        if(summary.eventsPlayed === 0) { // First event for this player in the season
-             summary.eventsPlayed = 1;
-        } else {
-            summary.eventsPlayed++;
-        }
+        summary.eventsPlayed++;
 
         const mainBuyInForEvent = event.buyIn || 0;
         const eventBountyValue = event.bounties || 0;
@@ -251,15 +250,18 @@ export async function calculateSeasonStats(
         }
       }
       
-      const previousTotal = summary.totalFinalResult;
-      summary.totalFinalResult = previousTotal + eventNetResult;
       summary.eventResults[event.id] = eventNetResult;
+      
+      const newCumulativeTotal = (cumulativeTotals[playerId] || 0) + eventNetResult;
+      cumulativeTotals[playerId] = newCumulativeTotal;
+      summary.totalFinalResult = newCumulativeTotal;
+
 
       summary.progress.push({
         eventDate: event.date,
         eventName: event.name,
         eventFinalResult: eventNetResult,
-        cumulativeFinalResult: summary.totalFinalResult,
+        cumulativeFinalResult: newCumulativeTotal,
       });
     }
   }
@@ -267,7 +269,7 @@ export async function calculateSeasonStats(
   const leaderboard: LeaderboardEntry[] = [];
   playerSeasonSummaries.forEach((summary, playerId) => {
     const player = allPlayers.find((p) => p.id === playerId);
-    if (player) { // Ensure player exists before adding to leaderboard
+    if (player) { 
         leaderboard.push({
             playerId,
             playerName: getPlayerDisplayName(player),
@@ -436,6 +438,7 @@ export async function calculateHallOfFameStats(
     
 
     
+
 
 
 
