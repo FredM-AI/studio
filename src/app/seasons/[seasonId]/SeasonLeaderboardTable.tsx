@@ -18,10 +18,6 @@ export default function SeasonLeaderboardTable({ leaderboardData, seasonEvents }
     return <p className="text-muted-foreground text-center py-4">No leaderboard data available for this season yet.</p>;
   }
 
-  if (!seasonEvents || seasonEvents.length === 0) {
-    return <p className="text-muted-foreground text-center py-4">No completed events in this season to display results for.</p>;
-  }
-
   let regularPlayerRank = 0;
 
   const formatDateInUTC = (dateString: string) => {

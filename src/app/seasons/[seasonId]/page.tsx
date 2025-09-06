@@ -108,7 +108,7 @@ export default async function SeasonDetailsPage({ params }: { params: { seasonId
               <CardDescription>Ranking based on total net profit/loss from season events.</CardDescription>
             </CardHeader>
             <CardContent>
-              {seasonStats && seasonStats.leaderboard.length > 0 && completedSeasonEvents.length > 0 ? (
+              {seasonStats && seasonStats.leaderboard.length > 0 ? (
                 <SeasonLeaderboardTable 
                   leaderboardData={seasonStats.leaderboard} 
                   seasonEvents={completedSeasonEvents}
