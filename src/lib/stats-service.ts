@@ -192,7 +192,6 @@ export async function calculateSeasonStats(
   const playerSeasonSummaries: Map<string, {
     eventResults: { [eventId: string]: number | undefined };
     totalFinalResult: number;
-    eventsPlayed: number;
     progress: PlayerProgressPoint[];
   }> = new Map();
 
@@ -200,21 +199,18 @@ export async function calculateSeasonStats(
 
   for (const event of completedSeasonEvents) {
     for (const playerId of event.participants) {
-      // Ensure a summary exists for the player if it's their first event
+      
+      // If player is not in summary map, add them.
       if (!playerSeasonSummaries.has(playerId)) {
         playerSeasonSummaries.set(playerId, {
           eventResults: {},
-          totalFinalResult: 0,
-          eventsPlayed: 0,
+          totalFinalResult: cumulativeTotals[playerId] || 0,
           progress: [],
         });
-        cumulativeTotals[playerId] = 0;
       }
       
       const summary = playerSeasonSummaries.get(playerId)!;
       let eventNetResult: number | undefined = undefined;
-
-      summary.eventsPlayed++;
 
       const mainBuyInForEvent = event.buyIn || 0;
       const eventBountyValue = event.bounties || 0;
@@ -278,9 +274,7 @@ export async function calculateSeasonStats(
   
   const playerProgress: { [playerId: string]: PlayerProgressPoint[] } = {};
   playerSeasonSummaries.forEach((summary, playerId) => {
-    if (summary.eventsPlayed > 0) { 
-       playerProgress[playerId] = summary.progress;
-    }
+    playerProgress[playerId] = summary.progress;
   });
 
   return { leaderboard, playerProgress, completedSeasonEvents };
