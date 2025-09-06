@@ -9,9 +9,8 @@ export interface LeaderboardEntry {
   playerId: string;
   playerName: string;
   isGuest: boolean;
-  eventResults: { [eventId: string]: number }; // eventId -> netResultForPlayerInEvent
+  eventResults: { [eventId: string]: number | undefined }; // eventId -> netResultForPlayerInEvent | undefined
   totalFinalResult: number;
-  // eventsPlayed: number; // On peut le déduire de eventResults ou le calculer si besoin ailleurs
 }
 
 export interface PlayerProgressPoint {
@@ -191,13 +190,12 @@ export async function calculateSeasonStats(
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
   const playerSeasonSummaries: Map<string, {
-    eventResults: { [eventId: string]: number }; // eventId -> netResultForPlayerInEvent
+    eventResults: { [eventId: string]: number | undefined };
     totalFinalResult: number;
     eventsPlayed: number;
     progress: PlayerProgressPoint[];
   }> = new Map();
 
-  // Initialize summaries for all players who participated in at least one event of the season.
   const allParticipantIdsInSeason = new Set<string>();
   completedSeasonEvents.forEach(event => {
     event.participants.forEach(pId => allParticipantIdsInSeason.add(pId));
@@ -215,13 +213,11 @@ export async function calculateSeasonStats(
   let cumulativeTotals: { [playerId: string]: number } = {};
   allParticipantIdsInSeason.forEach(id => cumulativeTotals[id] = 0);
 
-  // Iterate through each event to build up progress and totals
   for (const event of completedSeasonEvents) {
     for (const playerId of allParticipantIdsInSeason) {
       const summary = playerSeasonSummaries.get(playerId)!;
-      let eventNetResult = 0;
+      let eventNetResult: number | undefined = undefined;
 
-      // Only calculate if the player participated
       if (event.participants.includes(playerId)) {
         summary.eventsPlayed++;
 
@@ -252,7 +248,7 @@ export async function calculateSeasonStats(
       
       summary.eventResults[event.id] = eventNetResult;
       
-      const newCumulativeTotal = (cumulativeTotals[playerId] || 0) + eventNetResult;
+      const newCumulativeTotal = (cumulativeTotals[playerId] || 0) + (eventNetResult || 0);
       cumulativeTotals[playerId] = newCumulativeTotal;
       summary.totalFinalResult = newCumulativeTotal;
 
@@ -260,7 +256,7 @@ export async function calculateSeasonStats(
       summary.progress.push({
         eventDate: event.date,
         eventName: event.name,
-        eventFinalResult: eventNetResult,
+        eventFinalResult: eventNetResult || 0,
         cumulativeFinalResult: newCumulativeTotal,
       });
     }
@@ -438,6 +434,7 @@ export async function calculateHallOfFameStats(
     
 
     
+
 
 
 
