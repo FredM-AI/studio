@@ -102,19 +102,12 @@ export type Event = {
   updatedAt: string; // ISO Date string
 };
 
-export type SeasonLeaderboardEntry = {
-  playerId: string;
-  points: number;
-  gamesPlayed: number;
-};
-
 export type Season = {
   id: string; // UUID
   name: string;
   startDate: string; // ISO Date string
   endDate?: string; // ISO Date string
   isActive: boolean;
-  leaderboard: SeasonLeaderboardEntry[];
   createdAt: string; // ISO Date string
   updatedAt: string; // ISO Date string
 };

@@ -117,15 +117,16 @@ export default async function SeasonsPage() {
 
   // Find the index of the last completed season
   let initialIndex = 0;
-  const completedSeasons = sortedSeasons.filter(s => s.endDate && isPast(parseISO(s.endDate)));
-  if (completedSeasons.length > 0) {
-      const lastCompletedSeason = completedSeasons[completedSeasons.length - 1];
-      initialIndex = sortedSeasons.findIndex(s => s.id === lastCompletedSeason.id);
-  } else {
-    // If no season is completed, find the first active one
+  if(sortedSeasons.length > 0) {
     const activeSeasonIndex = sortedSeasons.findIndex(s => s.isActive);
-    if(activeSeasonIndex !== -1) {
-      initialIndex = activeSeasonIndex;
+    if (activeSeasonIndex !== -1) {
+        initialIndex = activeSeasonIndex;
+    } else {
+        const completedSeasons = sortedSeasons.filter(s => s.endDate && isPast(parseISO(s.endDate)));
+        if (completedSeasons.length > 0) {
+            const lastCompletedSeason = completedSeasons[completedSeasons.length - 1];
+            initialIndex = sortedSeasons.findIndex(s => s.id === lastCompletedSeason.id);
+        }
     }
   }
 

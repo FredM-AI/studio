@@ -113,13 +113,13 @@ export async function calculatePlayerOverallStats(
       }
 
       const numParticipants = event.participants.length;
-      let finalTableThreshold = 3; 
-      if (numParticipants > 0 && numParticipants < 5) {
-          finalTableThreshold = numParticipants;
-      } else if (numParticipants >= 5 && numParticipants < 10) {
-          finalTableThreshold = 3;
-      } else if (numParticipants >= 10) {
+      let finalTableThreshold = 3; // Default for small games
+      if (numParticipants > 9) { // e.g., 30% for 10+ players
           finalTableThreshold = Math.ceil(numParticipants * 0.3);
+      } else if (numParticipants >= 5) { // e.g., Top 3 for 5-9 players
+          finalTableThreshold = 3;
+      } else { // Everyone is at the "final table" for < 5 players
+          finalTableThreshold = numParticipants;
       }
 
 
@@ -432,4 +432,5 @@ export async function calculateHallOfFameStats(
     
 
     
+
 

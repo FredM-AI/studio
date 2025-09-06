@@ -108,7 +108,6 @@ export async function getSeasons(): Promise<Season[]> {
       startDate: toISOString(data.startDate),
       endDate: data.endDate ? toISOString(data.endDate) : undefined,
       isActive: data.isActive,
-      leaderboard: data.leaderboard || [], // Ensure leaderboard is always an array
       createdAt: toISOString(data.createdAt),
       updatedAt: toISOString(data.updatedAt),
     } as Season;
