@@ -317,12 +317,13 @@ export async function deleteEvent(eventId: string): Promise<{ success: boolean; 
 }
 
 export async function saveLiveResults(
-  eventId: string, 
-  finalResults: EventResult[], 
+  eventId: string,
+  finalResults: EventResult[],
+  finalParticipantIds: string[],
   finalPrizePool: number
 ): Promise<{ success: boolean; message?: string }> {
-  if (!eventId || !finalResults) {
-    return { success: false, message: 'Event ID and final results are required.' };
+  if (!eventId || !finalResults || !finalParticipantIds) {
+    return { success: false, message: 'Event ID, final results, and participant list are required.' };
   }
 
   try {
@@ -330,14 +331,14 @@ export async function saveLiveResults(
     const eventSnap = await eventRef.get();
 
     if (!eventSnap.exists) {
-        return { success: false, message: 'Event not found.' };
+      return { success: false, message: 'Event not found.' };
     }
 
     const eventData = eventSnap.data() as Event;
     
-    // Update the event with final data
     const updatedData = {
       status: 'completed' as EventStatus,
+      participants: finalParticipantIds,
       results: finalResults,
       prizePool: {
         ...eventData.prizePool,
@@ -348,7 +349,6 @@ export async function saveLiveResults(
 
     await eventRef.update(updatedData);
 
-    // Revalidate paths to reflect changes
     revalidatePath('/events');
     revalidatePath(`/events/${eventId}`);
     revalidatePath(`/events/${eventId}/live`);
@@ -362,6 +362,7 @@ export async function saveLiveResults(
     return { success: false, message: 'Database Error: Failed to save final results.' };
   }
 }
+
 
 export async function goLiveFromDetails(eventId: string): Promise<{ success: boolean; message?: string }> {
   if (!eventId) {

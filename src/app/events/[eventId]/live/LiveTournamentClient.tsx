@@ -256,37 +256,54 @@ export default function LiveTournamentClient({ event: initialEvent, players: all
   const isTournamentFinished = activeParticipantsCount <= 1 && participants.length > 0;
 
   const handleSaveResults = async () => {
-      if (!isTournamentFinished) return;
-      setIsSaving(true);
-      
-      const winner = participants.find(p => p.eliminatedPosition === null);
-      
-      const finalResults: EventResult[] = participants.map(p => {
-          const prizeInfo = payoutStructure.find(ps => ps.position === p.eliminatedPosition);
-          return {
-              playerId: p.id,
-              position: p.id === winner?.id ? 1 : (p.eliminatedPosition as number),
-              prize: p.id === winner?.id ? (payoutStructure.find(ps => ps.position === 1)?.prize || 0) : (prizeInfo?.prize || 0),
-              rebuys: p.rebuys,
-              bountiesWon: p.bountiesWon,
-              mysteryKoWon: p.mysteryKoWon,
-          };
-      }).sort((a,b) => a.position - b.position);
+    if (!isTournamentFinished) return;
+    setIsSaving(true);
 
-      const result = await saveLiveResults(initialEvent.id, finalResults, totalPrizePool);
+    const winner = participants.find(p => p.eliminatedPosition === null);
+    
+    // Create the final results array
+    const finalResults: EventResult[] = participants.map(p => {
+        let finalPosition: number;
+        if (p.id === winner?.id) {
+            finalPosition = 1;
+        } else if (p.eliminatedPosition) {
+            // Adjust position for the winner; everyone else moves down one spot
+            finalPosition = p.eliminatedPosition + (winner ? 0 : -1);
+        } else {
+            // This case should ideally not happen if tournament is finished
+            finalPosition = participants.length;
+        }
+        
+        const prizeInfo = payoutStructure.find(ps => ps.position === finalPosition);
+        
+        return {
+            playerId: p.id,
+            position: finalPosition,
+            prize: prizeInfo?.prize || 0,
+            rebuys: p.rebuys,
+            bountiesWon: p.bountiesWon,
+            mysteryKoWon: p.mysteryKoWon,
+        };
+    }).sort((a, b) => a.position - b.position);
+
+    // Get the final list of participant IDs
+    const finalParticipantIds = participants.map(p => p.id);
+
+    const result = await saveLiveResults(initialEvent.id, finalResults, finalParticipantIds, totalPrizePool);
       
-      setIsSaving(false);
+    setIsSaving(false);
       
-      if(result.success) {
-          toast({ title: 'Success', description: 'Event results have been saved successfully.'});
-          if (typeof window !== 'undefined') {
+    if(result.success) {
+        toast({ title: 'Success', description: 'Event results have been saved successfully.'});
+        if (typeof window !== 'undefined') {
             window.localStorage.removeItem(storageKey);
-          }
-          router.push(`/events/${initialEvent.id}`);
-      } else {
-          toast({ title: 'Error', description: result.message || 'Failed to save event results.', variant: 'destructive'});
-      }
+        }
+        router.push(`/events/${initialEvent.id}`);
+    } else {
+        toast({ title: 'Error', description: result.message || 'Failed to save event results.', variant: 'destructive'});
+    }
   };
+
 
   const refreshBlindStructures = async () => {
     toast({ title: 'Refreshing...', description: 'Fetching latest blind structures.' });
