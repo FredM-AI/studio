@@ -115,7 +115,7 @@ export default function SeasonPlayerProgressChart({ playerProgressData, players,
         const eventPoint = progressForPlayer?.find(p => p.eventDate === event.date);
         
         // Find the cumulative total from the previous data point in our chart data
-        const previousDataPoint = data[data.length - 1];
+        const previousDataPoint = data.length > 0 ? data[data.length - 1] : null;
         const previousCumulative = previousDataPoint ? previousDataPoint[getPlayerNameForChart(playerId)] : 0;
 
         if (eventPoint) {
