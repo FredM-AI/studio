@@ -195,11 +195,8 @@ export async function calculateSeasonStats(
     progress: PlayerProgressPoint[];
   }> = new Map();
 
-  let cumulativeTotals: { [playerId: string]: number } = {};
-
   for (const event of completedSeasonEvents) {
     for (const playerId of event.participants) {
-      
       if (!playerSeasonSummaries.has(playerId)) {
         playerSeasonSummaries.set(playerId, {
           eventResults: {},
@@ -207,19 +204,26 @@ export async function calculateSeasonStats(
           progress: [],
         });
       }
+    }
+  }
+  
+  let cumulativeTotals: { [playerId: string]: number } = {};
+
+  for (const event of completedSeasonEvents) {
+    for (const playerId of event.participants) {
       
       const summary = playerSeasonSummaries.get(playerId)!;
       let eventNetResult: number = 0;
 
-      const mainBuyInForEvent = event.buyIn || 0;
-      const eventBountyValue = event.bounties || 0;
-      const eventMysteryKoValue = event.mysteryKo || 0;
-      const rebuyPriceForEvent = event.rebuyPrice || 0;
-      const includeBountiesInNetCalc = event.includeBountiesInNet ?? true;
-
       const playerResultEntry = event.results.find(r => r.playerId === playerId);
       
       if (playerResultEntry) {
+          const mainBuyInForEvent = event.buyIn || 0;
+          const eventBountyValue = event.bounties || 0;
+          const eventMysteryKoValue = event.mysteryKo || 0;
+          const rebuyPriceForEvent = event.rebuyPrice || 0;
+          const includeBountiesInNetCalc = event.includeBountiesInNet ?? true;
+          
           const rebuysCount = playerResultEntry.rebuys || 0;
           const prizeWon = playerResultEntry.prize || 0;
           const bountiesWon = playerResultEntry.bountiesWon || 0;
@@ -230,9 +234,9 @@ export async function calculateSeasonStats(
           if (includeBountiesInNetCalc) {
             const bountyAndMkoCostsPerEntry = eventBountyValue + eventMysteryKoValue;
             const totalInvestmentInExtras = (1 + rebuysCount) * bountyAndMkoCostsPerEntry;
-            const totalInvestment = investmentInMainPot + totalInvestmentInExtras;
+            const totalInvestmentForSpending = investmentInMainPot + totalInvestmentInExtras;
             const totalWinnings = prizeWon + bountiesWon + mysteryKoWon;
-            eventNetResult = totalWinnings - totalInvestment;
+            eventNetResult = totalWinnings - totalInvestmentForSpending;
           } else {
             eventNetResult = prizeWon - investmentInMainPot;
           }
@@ -431,6 +435,8 @@ export async function calculateHallOfFameStats(
 
 
 
+
+    
 
     
 
