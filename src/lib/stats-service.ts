@@ -1,4 +1,5 @@
 
+
 'use server';
 
 import type { Season, Event, Player, PlayerStats, EventResult, HallOfFameStats, HofPlayerStat, HofEventStat } from './definitions';
@@ -211,51 +212,46 @@ export async function calculateSeasonStats(
       let eventNetResult = 0;
 
       if (event.participants.includes(playerId)) {
-        if(summary.eventsPlayed === 0) { // First event for this player in this season
-            summary.eventsPlayed = 1;
-        } else {
-            summary.eventsPlayed++;
-        }
+          if(summary.eventsPlayed === 0) {
+              summary.eventsPlayed = 1;
+          } else {
+              summary.eventsPlayed++;
+          }
 
-        const mainBuyInForEvent = event.buyIn || 0;
-        const eventBountyValue = event.bounties || 0;
-        const eventMysteryKoValue = event.mysteryKo || 0;
-        const rebuyPriceForEvent = event.rebuyPrice || 0;
-        const includeBountiesInNetCalc = event.includeBountiesInNet ?? true;
+          const mainBuyInForEvent = event.buyIn || 0;
+          const eventBountyValue = event.bounties || 0;
+          const eventMysteryKoValue = event.mysteryKo || 0;
+          const rebuyPriceForEvent = event.rebuyPrice || 0;
+          const includeBountiesInNetCalc = event.includeBountiesInNet ?? true;
 
-        const playerResultEntry = event.results.find(r => r.playerId === playerId);
-        const rebuysCount = playerResultEntry?.rebuys || 0;
-        const prizeWon = playerResultEntry?.prize || 0;
-        const bountiesWon = playerResultEntry?.bountiesWon || 0;
-        const mysteryKoWon = playerResultEntry?.mysteryKoWon || 0;
-        
-        const investmentInMainPot = mainBuyInForEvent + (rebuysCount * rebuyPriceForEvent);
-        
-        if (includeBountiesInNetCalc) {
-          const bountyAndMkoCostsPerEntry = eventBountyValue + eventMysteryKoValue;
-          const totalInvestmentInExtras = (1 + rebuysCount) * bountyAndMkoCostsPerEntry;
-          const totalInvestment = investmentInMainPot + totalInvestmentInExtras;
-          const totalWinnings = prizeWon + bountiesWon + mysteryKoWon;
-          eventNetResult = totalWinnings - totalInvestment;
-        } else {
-          eventNetResult = prizeWon - investmentInMainPot;
-        }
+          const playerResultEntry = event.results.find(r => r.playerId === playerId);
+          const rebuysCount = playerResultEntry?.rebuys || 0;
+          const prizeWon = playerResultEntry?.prize || 0;
+          const bountiesWon = playerResultEntry?.bountiesWon || 0;
+          const mysteryKoWon = playerResultEntry?.mysteryKoWon || 0;
+          
+          const investmentInMainPot = mainBuyInForEvent + (rebuysCount * rebuyPriceForEvent);
+          
+          if (includeBountiesInNetCalc) {
+            const bountyAndMkoCostsPerEntry = eventBountyValue + eventMysteryKoValue;
+            const totalInvestmentInExtras = (1 + rebuysCount) * bountyAndMkoCostsPerEntry;
+            const totalInvestment = investmentInMainPot + totalInvestmentInExtras;
+            const totalWinnings = prizeWon + bountiesWon + mysteryKoWon;
+            eventNetResult = totalWinnings - totalInvestment;
+          } else {
+            eventNetResult = prizeWon - investmentInMainPot;
+          }
       }
-
-      const previousCumulative = summary.progress.length > 0 
-        ? summary.progress[summary.progress.length - 1].cumulativeFinalResult 
-        : 0;
-
-      const currentCumulative = previousCumulative + eventNetResult;
-
+      
+      // Correct cumulative calculation
+      summary.totalFinalResult += eventNetResult;
       summary.eventResults[event.id] = eventNetResult;
-      summary.totalFinalResult = currentCumulative;
 
       summary.progress.push({
         eventDate: event.date,
         eventName: event.name,
         eventFinalResult: eventNetResult,
-        cumulativeFinalResult: currentCumulative,
+        cumulativeFinalResult: summary.totalFinalResult,
       });
     }
   }
@@ -426,5 +422,7 @@ export async function calculateHallOfFameStats(
     totalPrizePools,
   };
 }
+
+    
 
     
