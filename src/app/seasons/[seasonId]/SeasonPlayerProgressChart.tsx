@@ -89,45 +89,52 @@ export default function SeasonPlayerProgressChart({ playerProgressData, players,
 
   const chartData = React.useMemo(() => {
     if (seasonEvents.length === 0 || selectedPlayerIds.length === 0) return [];
-
-    const data: any[] = [];
-    const eventDate = seasonEvents[0]?.date ? parseISO(seasonEvents[0].date).getTime() : new Date().getTime();
-    
-    // Add a "Start of Season" point one day before the first event
-    const initialDataPoint: any = {
-        date: eventDate - 86400000, 
-        eventName: "Start of Season",
-    };
+  
+    // Create a set of all unique dates from events
+    const dateSet = new Set<string>();
+    seasonEvents.forEach(event => dateSet.add(event.date));
+    const sortedDates = Array.from(dateSet).sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
+  
+    // Create a map of player progress for quick lookup
+    const progressMap: { [playerId: string]: { [date: string]: number } } = {};
     selectedPlayerIds.forEach(playerId => {
-        initialDataPoint[getPlayerNameForChart(playerId)] = 0;
-    });
-    data.push(initialDataPoint);
-
-    // Add points for each completed event
-    seasonEvents.forEach((event) => {
-      const dataPoint: any = {
-        date: parseISO(event.date).getTime(),
-        eventName: event.name, 
-      };
-
-      selectedPlayerIds.forEach(playerId => {
-        const progressForPlayer = playerProgressData[playerId];
-        const eventPoint = progressForPlayer?.find(p => p.eventDate === event.date);
-        
-        // Find the cumulative total from the previous data point in our chart data
-        const previousDataPoint = data.length > 0 ? data[data.length - 1] : null;
-        const previousCumulative = previousDataPoint ? previousDataPoint[getPlayerNameForChart(playerId)] : 0;
-
-        if (eventPoint) {
-          dataPoint[getPlayerNameForChart(playerId)] = eventPoint.cumulativeFinalResult;
-        } else {
-          // If player didn't play, their cumulative total remains the same as the previous point
-          dataPoint[getPlayerNameForChart(playerId)] = previousCumulative;
-        }
+      progressMap[playerId] = {};
+      playerProgressData[playerId]?.forEach(point => {
+        progressMap[playerId][point.eventDate] = point.cumulativeFinalResult;
       });
+    });
+  
+    // Build the data for the chart
+    let data: any[] = [];
+  
+    // Add "Start of Season" data point
+    const startDataPoint: any = { eventName: "Début de saison" };
+    selectedPlayerIds.forEach(playerId => {
+      startDataPoint[getPlayerNameForChart(playerId)] = 0;
+    });
+    data.push(startDataPoint);
+  
+    // Add a data point for each event date
+    let lastKnownCumulative: { [playerId: string]: number } = {};
+    selectedPlayerIds.forEach(playerId => lastKnownCumulative[playerId] = 0);
+  
+    sortedDates.forEach(date => {
+      const event = seasonEvents.find(e => e.date === date)!; // We know it exists
+      const dataPoint: any = { eventName: event.name };
+  
+      selectedPlayerIds.forEach(playerId => {
+        if (progressMap[playerId] && progressMap[playerId][date] !== undefined) {
+          lastKnownCumulative[playerId] = progressMap[playerId][date];
+        }
+        dataPoint[getPlayerNameForChart(playerId)] = lastKnownCumulative[playerId];
+      });
+  
       data.push(dataPoint);
     });
-    return data.sort((a,b) => a.date - b.date);
+  
+    // Add index for X-axis
+    return data.map((d, i) => ({ ...d, index: i }));
+  
   }, [playerProgressData, selectedPlayerIds, players, seasonEvents]);
 
 
@@ -170,8 +177,7 @@ export default function SeasonPlayerProgressChart({ playerProgressData, players,
           <LineChart data={chartData} margin={{ top: 5, right: 20, left: -20, bottom: 40 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
             <XAxis 
-              dataKey="date" 
-              tickFormatter={(unixTime) => format(new Date(unixTime), 'dd/MM')}
+              dataKey="eventName" 
               stroke="hsl(var(--muted-foreground))"
               fontSize={11}
               tickMargin={10}
@@ -196,7 +202,7 @@ export default function SeasonPlayerProgressChart({ playerProgressData, players,
               }}
               labelFormatter={(label, payload) => {
                  const point = payload?.[0]?.payload;
-                 return point ? `${format(new Date(label), 'EEE, MMM d, yyyy')} - ${point.eventName}` : format(new Date(label), 'PPP');
+                 return point?.eventName || label;
               }}
               formatter={(value: number, name: string, props) => {
                  const formattedValue = `€${value}`;
