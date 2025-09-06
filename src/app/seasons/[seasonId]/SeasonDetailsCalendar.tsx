@@ -34,10 +34,16 @@ export default function SeasonDetailsCalendar({ events }: SeasonDetailsCalendarP
       if (futureOrTodayEvents.length > 0) {
         initialTargetMonth = new Date(futureOrTodayEvents[0].date);
       } else {
+        // Safe check for the last event if no future events exist
         initialTargetMonth = new Date(sortedEvents[sortedEvents.length - 1].date);
       }
     } else {
+      // Fallback for seasons with no events
       initialTargetMonth = today;
+    }
+    // Final safe check in case date parsing resulted in an invalid date
+    if (isNaN(initialTargetMonth.getTime())) {
+        initialTargetMonth = today;
     }
     return subMonths(startOfMonth(initialTargetMonth), 1);
   });
@@ -128,7 +134,7 @@ export default function SeasonDetailsCalendar({ events }: SeasonDetailsCalendarP
                         {event.name}
                     </Link>
                     <p className="text-xs text-muted-foreground">Status: {event.status.charAt(0).toUpperCase() + event.status.slice(1)}</p>
-                    <p className="text-xs text-muted-foreground">Buy-in: €{event.buyIn.toFixed(2)}</p>
+                    <p className="text-xs text-muted-foreground">Buy-in: €{event.buyIn}</p>
                   </div>
                 </div>
               ))}
