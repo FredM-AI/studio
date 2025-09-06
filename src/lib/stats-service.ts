@@ -220,7 +220,11 @@ export async function calculateSeasonStats(
 
       // Only calculate if the player participated
       if (event.participants.includes(playerId)) {
-        summary.eventsPlayed++;
+        if(summary.eventsPlayed === 0) { // First event for this player in the season
+             summary.eventsPlayed = 1;
+        } else {
+            summary.eventsPlayed++;
+        }
 
         const mainBuyInForEvent = event.buyIn || 0;
         const eventBountyValue = event.bounties || 0;
@@ -432,5 +436,6 @@ export async function calculateHallOfFameStats(
     
 
     
+
 
 
