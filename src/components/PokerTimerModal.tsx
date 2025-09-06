@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
@@ -27,6 +26,8 @@ interface PokerTimerModalProps {
   onAddParticipant: (player: Player) => void;
   onRemoveParticipant: (playerId: string) => void;
   onRebuyChange: (playerId: string, delta: number) => void;
+  onBountyChange: (playerId: string, value: number) => void;
+  onMysteryKoChange: (playerId: string, value: number) => void;
   onEliminatePlayer: (playerId: string) => void;
   onUndoLastElimination: () => void;
   onStructureUpdate: (newStructure: BlindLevel[]) => void;
@@ -73,6 +74,8 @@ export default function PokerTimerModal({
     onAddParticipant,
     onRemoveParticipant,
     onRebuyChange,
+    onBountyChange,
+    onMysteryKoChange,
     onEliminatePlayer,
     onUndoLastElimination,
     onStructureUpdate,
@@ -417,12 +420,13 @@ export default function PokerTimerModal({
             <div className="mt-4 border-t pt-4" style={{ borderColor: 'var(--stats-border)'}}>
                 <h3 className="font-bold text-lg mb-2 flex items-center gap-2"><Users/> Player Tracking</h3>
                 <LivePlayerTracking
-                  allPlayers={allPlayers}
                   participants={participants}
                   availablePlayers={availablePlayers}
                   onAddParticipant={onAddParticipant}
                   onRemoveParticipant={onRemoveParticipant}
                   onRebuyChange={onRebuyChange}
+                  onBountyChange={onBountyChange}
+                  onMysteryKoChange={onMysteryKoChange}
                   onEliminatePlayer={onEliminatePlayer}
                   onUndoLastElimination={onUndoLastElimination}
                   isModalLayout={true}

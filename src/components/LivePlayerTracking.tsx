@@ -1,34 +1,36 @@
-
 'use client';
 
 import * as React from 'react';
 import type { Player } from '@/lib/definitions';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, MinusCircle, UserPlus, Search, UserX, UserCheck, Trash2, Undo } from 'lucide-react';
+import { PlusCircle, MinusCircle, UserPlus, Search, UserX, UserCheck, Trash2, Undo, Star, Gift } from 'lucide-react';
 import { ScrollArea } from './ui/scroll-area';
 import { Badge } from './ui/badge';
 import { Input } from './ui/input';
 import { cn } from '@/lib/utils';
+import { Label } from './ui/label';
 
 export interface ParticipantState {
     id: string;
     name: string;
     isGuest: boolean;
     rebuys: number;
+    bountiesWon: number; // Ajouté
+    mysteryKoWon: number; // Ajouté
     eliminatedPosition: number | null;
 }
 
 interface LivePlayerTrackingProps {
-    allPlayers: Player[];
     participants: ParticipantState[];
     availablePlayers: Player[];
     onAddParticipant: (player: Player) => void;
     onRemoveParticipant: (playerId: string) => void;
     onRebuyChange: (playerId: string, delta: number) => void;
+    onBountyChange: (playerId: string, value: number) => void; // Ajouté
+    onMysteryKoChange: (playerId: string, value: number) => void; // Ajouté
     onEliminatePlayer: (playerId: string) => void;
     onUndoLastElimination: () => void;
-    // Optional prop to adjust layout for modal use
     isModalLayout?: boolean;
 }
 
@@ -41,12 +43,13 @@ const getPlayerDisplayName = (player: Player | undefined): string => {
 };
 
 export default function LivePlayerTracking({ 
-    allPlayers,
     participants, 
     availablePlayers,
     onAddParticipant,
     onRemoveParticipant,
     onRebuyChange,
+    onBountyChange,
+    onMysteryKoChange,
     onEliminatePlayer,
     onUndoLastElimination,
     isModalLayout = false,
@@ -122,7 +125,7 @@ export default function LivePlayerTracking({
                          <TableHeader>
                             <TableRow>
                                 <TableHead className="p-2">Player</TableHead>
-                                <TableHead className="w-[110px] text-center p-2">Rebuys</TableHead>
+                                <TableHead className="w-[180px] text-center p-2">Extras</TableHead>
                                 <TableHead className="w-[80px] text-right p-2">Actions</TableHead>
                             </TableRow>
                         </TableHeader>
@@ -134,14 +137,23 @@ export default function LivePlayerTracking({
                                         {p.isGuest && <Badge variant="secondary" className="ml-2 text-xs">Guest</Badge>}
                                     </TableCell>
                                     <TableCell className="p-2">
-                                        <div className="flex items-center justify-center gap-1">
-                                            <Button size="icon" className="h-6 w-6 timer-rebuy-button" onClick={() => onRebuyChange(p.id, -1)}>
-                                                <MinusCircle className="h-3 w-3" />
-                                            </Button>
-                                            <span className="font-bold text-sm w-5 text-center">{p.rebuys}</span>
-                                            <Button size="icon" className="h-6 w-6 timer-rebuy-button" onClick={() => onRebuyChange(p.id, 1)}>
-                                                <PlusCircle className="h-3 w-3" />
-                                            </Button>
+                                        <div className="flex items-center justify-center gap-2">
+                                            <div className="flex flex-col items-center gap-1">
+                                                <Label htmlFor={`bounty-${p.id}`} className="flex items-center text-xs"><Star className="h-3 w-3 mr-1 text-yellow-500"/> B</Label>
+                                                <Input id={`bounty-${p.id}`} type="number" min="0" value={p.bountiesWon} onChange={e => onBountyChange(p.id, parseInt(e.target.value) || 0)} className="h-7 w-14 text-center"/>
+                                            </div>
+                                            <div className="flex flex-col items-center gap-1">
+                                                <Label htmlFor={`mko-${p.id}`} className="flex items-center text-xs"><Gift className="h-3 w-3 mr-1 text-purple-500"/> M</Label>
+                                                <Input id={`mko-${p.id}`} type="number" min="0" value={p.mysteryKoWon} onChange={e => onMysteryKoChange(p.id, parseInt(e.target.value) || 0)} className="h-7 w-14 text-center"/>
+                                            </div>
+                                             <div className="flex flex-col items-center gap-1">
+                                                <Label className="text-xs">R</Label>
+                                                <div className="flex items-center gap-0.5">
+                                                    <Button size="icon" className="h-6 w-6 timer-rebuy-button" onClick={() => onRebuyChange(p.id, -1)}><MinusCircle className="h-3 w-3" /></Button>
+                                                    <span className="font-bold text-sm w-5 text-center">{p.rebuys}</span>
+                                                    <Button size="icon" className="h-6 w-6 timer-rebuy-button" onClick={() => onRebuyChange(p.id, 1)}><PlusCircle className="h-3 w-3" /></Button>
+                                                </div>
+                                            </div>
                                         </div>
                                     </TableCell>
                                     <TableCell className="text-right space-x-1 p-2">

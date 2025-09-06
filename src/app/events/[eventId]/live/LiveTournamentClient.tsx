@@ -59,6 +59,8 @@ const getInitialParticipants = (initialEvent: Event, allPlayers: Player[]): Part
             name: getPlayerDisplayName(player),
             isGuest: player?.isGuest || false,
             rebuys: result?.rebuys || 0,
+            bountiesWon: result?.bountiesWon || 0,
+            mysteryKoWon: result?.mysteryKoWon || 0,
             eliminatedPosition: null, // Initially not eliminated
         };
     }).sort((a,b) => a.name.localeCompare(b.name));
@@ -161,12 +163,22 @@ export default function LiveTournamentClient({ event: initialEvent, players: all
       );
   };
   
+  const handleBountyChange = (playerId: string, value: number) => {
+      setParticipants(prev => prev.map(p => p.id === playerId ? { ...p, bountiesWon: value } : p));
+  };
+  
+  const handleMysteryKoChange = (playerId: string, value: number) => {
+      setParticipants(prev => prev.map(p => p.id === playerId ? { ...p, mysteryKoWon: value } : p));
+  };
+
   const addParticipant = (player: Player) => {
       setParticipants(prev => [...prev, {
           id: player.id,
           name: getPlayerDisplayName(player),
           isGuest: player.isGuest || false,
           rebuys: 0,
+          bountiesWon: 0,
+          mysteryKoWon: 0,
           eliminatedPosition: null,
       }].sort((a,b) => a.name.localeCompare(b.name)));
   };
@@ -256,6 +268,8 @@ export default function LiveTournamentClient({ event: initialEvent, players: all
               position: p.id === winner?.id ? 1 : (p.eliminatedPosition as number),
               prize: p.id === winner?.id ? (payoutStructure.find(ps => ps.position === 1)?.prize || 0) : (prizeInfo?.prize || 0),
               rebuys: p.rebuys,
+              bountiesWon: p.bountiesWon,
+              mysteryKoWon: p.mysteryKoWon,
           };
       }).sort((a,b) => a.position - b.position);
 
@@ -305,6 +319,8 @@ export default function LiveTournamentClient({ event: initialEvent, players: all
             onAddParticipant={addParticipant}
             onRemoveParticipant={removeParticipant}
             onRebuyChange={handleRebuyChange}
+            onBountyChange={handleBountyChange}
+            onMysteryKoChange={handleMysteryKoChange}
             onEliminatePlayer={handleEliminatePlayer}
             onUndoLastElimination={handleUndoLastElimination}
             refreshBlindStructures={refreshBlindStructures}
@@ -445,12 +461,13 @@ export default function LiveTournamentClient({ event: initialEvent, players: all
             </CardHeader>
             <CardContent>
                 <LivePlayerTracking 
-                    allPlayers={allPlayers}
                     participants={participants}
                     availablePlayers={availablePlayers}
                     onAddParticipant={addParticipant}
                     onRemoveParticipant={removeParticipant}
                     onRebuyChange={handleRebuyChange}
+                    onBountyChange={handleBountyChange}
+                    onMysteryKoChange={handleMysteryKoChange}
                     onEliminatePlayer={handleEliminatePlayer}
                     onUndoLastElimination={handleUndoLastElimination}
                 />
