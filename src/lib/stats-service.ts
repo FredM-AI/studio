@@ -252,27 +252,32 @@ export async function calculateSeasonStats(
       cumulativeTotals[playerId] = newCumulativeTotal;
       summary.totalFinalResult = newCumulativeTotal;
 
-
-      summary.progress.push({
-        eventDate: event.date,
-        eventName: event.name,
-        eventFinalResult: eventNetResult || 0,
-        cumulativeFinalResult: newCumulativeTotal,
-      });
+      // Only add a progress point if the player participated or had a previous balance
+      if (summary.eventsPlayed > 0) {
+        summary.progress.push({
+          eventDate: event.date,
+          eventName: event.name,
+          eventFinalResult: eventNetResult || 0,
+          cumulativeFinalResult: newCumulativeTotal,
+        });
+      }
     }
   }
 
   const leaderboard: LeaderboardEntry[] = [];
   playerSeasonSummaries.forEach((summary, playerId) => {
-    const player = allPlayers.find((p) => p.id === playerId);
-    if (player) { 
-        leaderboard.push({
-            playerId,
-            playerName: getPlayerDisplayName(player),
-            isGuest: player.isGuest || false,
-            eventResults: summary.eventResults,
-            totalFinalResult: summary.totalFinalResult,
-        });
+    // This is the key change: only add players to the leaderboard if they have played.
+    if (summary.eventsPlayed > 0) {
+      const player = allPlayers.find((p) => p.id === playerId);
+      if (player) { 
+          leaderboard.push({
+              playerId,
+              playerName: getPlayerDisplayName(player),
+              isGuest: player.isGuest || false,
+              eventResults: summary.eventResults,
+              totalFinalResult: summary.totalFinalResult,
+          });
+      }
     }
   });
 
@@ -441,3 +446,6 @@ export async function calculateHallOfFameStats(
 
 
 
+
+
+    
