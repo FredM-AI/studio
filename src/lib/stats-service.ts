@@ -56,6 +56,7 @@ export async function calculatePlayerOverallStats(
     itmRate: 0,
     totalWinnings: 0,
     totalBuyIns: 0,
+    totalRebuys: 0,
     bestPosition: null,
     averagePosition: null,
     seasonStats: {},
@@ -71,6 +72,7 @@ export async function calculatePlayerOverallStats(
   let finalTables = 0;
   let totalWinnings = 0;
   let totalBuyInsCalculated = 0; 
+  let totalRebuys = 0;
   const positions: number[] = [];
   const profitEvolution: { eventName: string, eventDate: string, cumulativeProfit: number }[] = [];
   const seasonStats: { [seasonId: string]: { seasonName: string, gamesPlayed: number, netProfit: number } } = {};
@@ -105,6 +107,7 @@ export async function calculatePlayerOverallStats(
 
     if (playerResultEntry) {
       playerRebuysInEvent = playerResultEntry.rebuys || 0;
+      totalRebuys += playerRebuysInEvent;
       positions.push(playerResultEntry.position);
 
       if (playerResultEntry.position === 1) {
@@ -172,6 +175,7 @@ export async function calculatePlayerOverallStats(
     itmRate,
     totalWinnings,
     totalBuyIns: totalBuyInsCalculated,
+    totalRebuys,
     bestPosition,
     averagePosition,
     seasonStats,
@@ -195,22 +199,18 @@ export async function calculateSeasonStats(
     progress: PlayerProgressPoint[];
   }> = new Map();
 
-  for (const event of completedSeasonEvents) {
-    for (const playerId of event.participants) {
-      if (!playerSeasonSummaries.has(playerId)) {
-        playerSeasonSummaries.set(playerId, {
-          eventResults: {},
-          totalFinalResult: 0,
-          progress: [],
-        });
-      }
-    }
-  }
-  
   let cumulativeTotals: { [playerId: string]: number } = {};
 
   for (const event of completedSeasonEvents) {
     for (const playerId of event.participants) {
+      
+      if (!playerSeasonSummaries.has(playerId)) {
+        playerSeasonSummaries.set(playerId, {
+          eventResults: {},
+          totalFinalResult: cumulativeTotals[playerId] || 0, // Initialize with previous total if any
+          progress: [],
+        });
+      }
       
       const summary = playerSeasonSummaries.get(playerId)!;
       let eventNetResult: number = 0;
@@ -230,16 +230,17 @@ export async function calculateSeasonStats(
           const mysteryKoWon = playerResultEntry.mysteryKoWon || 0;
           
           const investmentInMainPot = mainBuyInForEvent + (rebuysCount * rebuyPriceForEvent);
+          let totalInvestmentForSpending = investmentInMainPot;
           
           if (includeBountiesInNetCalc) {
             const bountyAndMkoCostsPerEntry = eventBountyValue + eventMysteryKoValue;
             const totalInvestmentInExtras = (1 + rebuysCount) * bountyAndMkoCostsPerEntry;
-            const totalInvestmentForSpending = investmentInMainPot + totalInvestmentInExtras;
-            const totalWinnings = prizeWon + bountiesWon + mysteryKoWon;
-            eventNetResult = totalWinnings - totalInvestmentForSpending;
-          } else {
-            eventNetResult = prizeWon - investmentInMainPot;
+            totalInvestmentForSpending += totalInvestmentInExtras;
           }
+          
+          const totalWinnings = prizeWon + bountiesWon + mysteryKoWon;
+          eventNetResult = totalWinnings - totalInvestmentForSpending;
+
       }
       
       summary.eventResults[event.id] = eventNetResult;

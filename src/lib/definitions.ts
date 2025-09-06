@@ -10,6 +10,7 @@ export type PlayerStats = {
   itmRate: number; // Taux de tables finales
   totalWinnings: number;
   totalBuyIns: number;
+  totalRebuys: number;
   bestPosition: number | null;
   averagePosition: number | null;
   seasonStats: {

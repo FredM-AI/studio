@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { getPlayers, getEvents, getSeasons } from "@/lib/data-service";
@@ -8,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { ArrowLeft, Edit, Mail, Phone, CheckCircle, XCircle, TrendingUp, TrendingDown, Minus, UserCheck, Target, Trophy, Percent, BarChartHorizontal, LineChart as LineChartIcon, AlertTriangle, Hash } from "lucide-react";
+import { ArrowLeft, Edit, Mail, Phone, CheckCircle, XCircle, TrendingUp, TrendingDown, Minus, UserCheck, Target, Trophy, Percent, BarChartHorizontal, LineChart as LineChartIcon, AlertTriangle, Hash, Repeat } from "lucide-react";
 import Image from "next/image";
 import { cookies } from 'next/headers';
 import React, { useEffect, useState } from "react";
@@ -184,6 +185,7 @@ export default function PlayerDetailPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <StatCard icon={<Hash className="h-5 w-5" />} title="Games Played" value={calculatedStats.gamesPlayed} />
                     <StatCard icon={<Trophy className="h-5 w-5" />} title="Wins" value={calculatedStats.wins} />
+                    <StatCard icon={<Repeat className="h-5 w-5" />} title="Total Rebuys" value={calculatedStats.totalRebuys} />
                     <StatCard icon={<TrendingUp className="h-5 w-5 text-green-600" />} title="Total Winnings" value={`€${calculatedStats.totalWinnings}`} valueClassName="text-green-600" />
                     <StatCard icon={<TrendingDown className="h-5 w-5 text-red-600"/>} title="Total Investment" value={`€${calculatedStats.totalBuyIns}`} valueClassName="text-red-600" />
                     <StatCard 
