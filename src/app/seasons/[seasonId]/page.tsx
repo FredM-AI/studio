@@ -1,47 +1,91 @@
+'use client';
 
+import * as React from 'react';
 import { getSeasons, getEvents, getPlayers } from '@/lib/data-service';
 import type { Season, Event as EventType, Player } from '@/lib/definitions';
 import { calculateSeasonStats, type SeasonStats } from '@/lib/stats-service';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import Link from 'next/link';
-import { ArrowLeft, CalendarDays, BarChart3, TrendingUp, AlertTriangle, Edit } from 'lucide-react';
+import { ArrowLeft, CalendarDays, BarChart3, TrendingUp, AlertTriangle, Edit, Loader2 } from 'lucide-react';
 import SeasonDetailsCalendar from './SeasonDetailsCalendar';
 import SeasonLeaderboardTable from './SeasonLeaderboardTable';
 import SeasonPlayerProgressChart from './SeasonPlayerProgressChart';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { cookies } from 'next/headers';
-import { format } from 'date-fns';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useParams } from 'next/navigation';
 
-const AUTH_COOKIE_NAME = 'app_session_active';
-
-// Modifié pour retourner aussi les événements de la saison (tous statuts)
-async function getSeasonData(seasonId: string): Promise<{ season?: Season; allEvents: EventType[]; allPlayers: Player[]; seasonStats?: SeasonStats, seasonEvents: EventType[] }> {
+// Client-side data fetching function
+async function getSeasonData(seasonId: string): Promise<{ season?: Season; allPlayers: Player[]; seasonStats?: SeasonStats, seasonEvents: EventType[] }> {
   const season = (await getSeasons()).find(s => s.id === seasonId);
   const allEvents = await getEvents();
   const allPlayers = await getPlayers();
   
   let seasonStats: SeasonStats | undefined = undefined;
-  let seasonEventsForCalendar: EventType[] = []; // Tous les événements associés à la saison
+  let seasonEventsForCalendar: EventType[] = [];
 
   if (season) {
     seasonStats = await calculateSeasonStats(season, allEvents, allPlayers);
-    // Pour le calendrier, on prend tous les événements de la saison
     seasonEventsForCalendar = allEvents.filter(event => event.seasonId === season.id).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
   }
   
-  return { season, allEvents, allPlayers, seasonStats, seasonEvents: seasonEventsForCalendar };
+  return { season, allPlayers, seasonStats, seasonEvents: seasonEventsForCalendar };
 }
 
+// Server-side cookie check is no longer possible here, so we'll fetch it on the client
+const AUTH_COOKIE_NAME = 'app_session_active';
 
-export default async function SeasonDetailsPage({ params }: { params: { seasonId: string } }) {
-  const cookieStore = cookies();
-  const isAuthenticated = cookieStore.get(AUTH_COOKIE_NAME)?.value === 'true';
-  const { seasonId } = params;
-  // seasonEvents ici contient tous les événements de la saison pour le calendrier
-  const { season, allPlayers, seasonStats, seasonEvents: seasonEventsForCalendar } = await getSeasonData(seasonId);
+export default function SeasonDetailsPage() {
+  const params = useParams();
+  const seasonId = Array.isArray(params.playerId) ? params.playerId[0] : params.playerId;
 
-  if (!season) {
+  const [isLoading, setIsLoading] = React.useState(true);
+  const [data, setData] = React.useState<{
+    season?: Season;
+    allPlayers: Player[];
+    seasonStats?: SeasonStats;
+    seasonEvents: EventType[];
+  } | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = React.useState(false);
+
+   React.useEffect(() => {
+    // Client-side cookie check
+    const authCookie = document.cookie.split('; ').find(row => row.startsWith(AUTH_COOKIE_NAME + '='));
+    setIsAuthenticated(authCookie ? authCookie.split('=')[1] === 'true' : false);
+
+    async function fetchData() {
+      if (!seasonId) return;
+      setIsLoading(true);
+      try {
+        const fetchedData = await getSeasonData(seasonId as string);
+        setData(fetchedData);
+      } catch (error) {
+        console.error("Failed to fetch season data:", error);
+        setData(null); // Set to null or some error state
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    fetchData();
+  }, [seasonId]);
+
+  if (isLoading) {
+    return (
+       <div className="space-y-8">
+        <div className="flex justify-between items-center">
+            <Skeleton className="h-10 w-40" />
+            <Skeleton className="h-10 w-32" />
+        </div>
+        <Skeleton className="h-10 w-full" />
+        <Card>
+            <CardHeader><Skeleton className="h-8 w-1/2" /></CardHeader>
+            <CardContent><Skeleton className="h-64 w-full" /></CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (!data || !data.season) {
     return (
       <div className="space-y-6 text-center">
         <Button variant="outline" asChild className="mb-6 mr-auto">
@@ -67,7 +111,7 @@ export default async function SeasonDetailsPage({ params }: { params: { seasonId
     );
   }
 
-  // completedSeasonEvents sera utilisé pour le Leaderboard et le ProgressChart
+  const { season, allPlayers, seasonStats, seasonEvents: seasonEventsForCalendar } = data;
   const completedSeasonEvents = seasonStats?.completedSeasonEvents || [];
 
   return (
@@ -127,7 +171,7 @@ export default async function SeasonDetailsPage({ params }: { params: { seasonId
               <CardDescription>Overview of all events scheduled for this season (includes draft, active, completed).</CardDescription>
             </CardHeader>
             <CardContent>
-                <SeasonDetailsCalendar events={seasonEventsForCalendar} /> {/* Utilise tous les événements pour le calendrier */}
+                <SeasonDetailsCalendar events={seasonEventsForCalendar} />
             </CardContent>
           </Card>
         </TabsContent>
@@ -146,7 +190,11 @@ export default async function SeasonDetailsPage({ params }: { params: { seasonId
                   seasonEvents={completedSeasonEvents} 
                 />
               ) : (
-                <p className="text-muted-foreground text-center py-8">Player progress chart is available after two or more events have been completed.</p>
+                 <div className="h-[400px] flex items-center justify-center bg-muted/30 rounded-md border border-dashed">
+                    <p className="text-muted-foreground text-center">
+                        Player progress chart is available after two or more events have been completed.
+                    </p>
+                 </div>
               )}
             </CardContent>
           </Card>
