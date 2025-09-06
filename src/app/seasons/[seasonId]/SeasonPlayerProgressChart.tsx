@@ -89,52 +89,34 @@ export default function SeasonPlayerProgressChart({ playerProgressData, players,
 
   const chartData = React.useMemo(() => {
     if (seasonEvents.length === 0 || selectedPlayerIds.length === 0) return [];
-  
-    // Create a set of all unique dates from events
-    const dateSet = new Set<string>();
-    seasonEvents.forEach(event => dateSet.add(event.date));
-    const sortedDates = Array.from(dateSet).sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
-  
-    // Create a map of player progress for quick lookup
-    const progressMap: { [playerId: string]: { [date: string]: number } } = {};
-    selectedPlayerIds.forEach(playerId => {
-      progressMap[playerId] = {};
-      playerProgressData[playerId]?.forEach(point => {
-        progressMap[playerId][point.eventDate] = point.cumulativeFinalResult;
-      });
-    });
-  
-    // Build the data for the chart
-    let data: any[] = [];
-  
-    // Add "Start of Season" data point
-    const startDataPoint: any = { eventName: "Début de saison" };
+
+    const data: any[] = [];
+    const startDataPoint: any = { eventName: "Start" };
     selectedPlayerIds.forEach(playerId => {
       startDataPoint[getPlayerNameForChart(playerId)] = 0;
     });
     data.push(startDataPoint);
   
-    // Add a data point for each event date
-    let lastKnownCumulative: { [playerId: string]: number } = {};
-    selectedPlayerIds.forEach(playerId => lastKnownCumulative[playerId] = 0);
-  
-    sortedDates.forEach(date => {
-      const event = seasonEvents.find(e => e.date === date)!; // We know it exists
-      const dataPoint: any = { eventName: event.name };
-  
-      selectedPlayerIds.forEach(playerId => {
-        if (progressMap[playerId] && progressMap[playerId][date] !== undefined) {
-          lastKnownCumulative[playerId] = progressMap[playerId][date];
-        }
-        dataPoint[getPlayerNameForChart(playerId)] = lastKnownCumulative[playerId];
-      });
-  
-      data.push(dataPoint);
+    const progressMapByPlayer: { [playerId: string]: { [eventDate: string]: number } } = {};
+    selectedPlayerIds.forEach(playerId => {
+        progressMapByPlayer[playerId] = {};
+        playerProgressData[playerId]?.forEach(point => {
+            progressMapByPlayer[playerId][point.eventDate] = point.cumulativeFinalResult;
+        });
     });
-  
-    // Add index for X-axis
-    return data.map((d, i) => ({ ...d, index: i }));
-  
+
+    seasonEvents.forEach(event => {
+        const dataPoint: any = { eventName: event.name, eventDate: event.date };
+        selectedPlayerIds.forEach(playerId => {
+            const progressForPlayer = progressMapByPlayer[playerId];
+            if (progressForPlayer && progressForPlayer[event.date] !== undefined) {
+                dataPoint[getPlayerNameForChart(playerId)] = progressForPlayer[event.date];
+            }
+        });
+        data.push(dataPoint);
+    });
+
+    return data.map((d, index) => ({ ...d, index }));
   }, [playerProgressData, selectedPlayerIds, players, seasonEvents]);
 
 
