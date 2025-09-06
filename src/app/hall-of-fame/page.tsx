@@ -190,7 +190,7 @@ export default async function HallOfFamePage() {
                         />
                         <StatCard 
                             icon={<Repeat className="h-10 w-10" />}
-                            title="Le plus opiniâtre"
+                            title="The Most Tenacious"
                             description="The player with the most rebuys."
                             stat={stats.mostRebuys}
                             unit="rebuys"
