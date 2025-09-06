@@ -241,9 +241,10 @@ export async function calculateSeasonStats(
         }
       }
       
-      summary.eventResults[event.id] = eventNetResult;
-      summary.totalFinalResult += eventNetResult;
       cumulativeProgress[playerId] += eventNetResult;
+      
+      summary.eventResults[event.id] = eventNetResult;
+      summary.totalFinalResult = cumulativeProgress[playerId]; // Use cumulative for total
 
       summary.progress.push({
         eventDate: event.date,
@@ -420,3 +421,5 @@ export async function calculateHallOfFameStats(
     totalPrizePools,
   };
 }
+
+    
