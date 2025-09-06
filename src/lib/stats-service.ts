@@ -243,8 +243,9 @@ export async function calculateSeasonStats(
           }
       }
       
-      // Correct cumulative calculation
-      summary.totalFinalResult += eventNetResult;
+      const previousTotal = summary.totalFinalResult;
+      summary.totalFinalResult = previousTotal + eventNetResult;
+
       summary.eventResults[event.id] = eventNetResult;
 
       summary.progress.push({
@@ -422,6 +423,8 @@ export async function calculateHallOfFameStats(
     totalPrizePools,
   };
 }
+
+    
 
     
 
