@@ -139,14 +139,14 @@ export default async function SeasonDetailsPage({ params }: { params: { seasonId
               <CardDescription>Cumulative net profit/loss over the season's completed events.</CardDescription>
             </CardHeader>
             <CardContent>
-              {seasonStats && Object.keys(seasonStats.playerProgress).length > 0 && completedSeasonEvents.length > 0 ? (
+              {seasonStats && completedSeasonEvents.length > 1 ? (
                 <SeasonPlayerProgressChart
                   playerProgressData={seasonStats.playerProgress}
                   players={allPlayers}
                   seasonEvents={completedSeasonEvents} 
                 />
               ) : (
-                <p className="text-muted-foreground text-center py-8">No player progress data available. This appears after completed events with results.</p>
+                <p className="text-muted-foreground text-center py-8">Player progress chart is available after two or more events have been completed.</p>
               )}
             </CardContent>
           </Card>
