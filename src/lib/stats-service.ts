@@ -114,9 +114,14 @@ export async function calculatePlayerOverallStats(
 
       const numParticipants = event.participants.length;
       let finalTableThreshold = 3; 
-      if (numParticipants >= 10) finalTableThreshold = Math.ceil(numParticipants * 0.3);
-      else if (numParticipants >= 5) finalTableThreshold = 3;
-      else finalTableThreshold = numParticipants > 0 ? numParticipants : 1;
+      if (numParticipants > 0 && numParticipants < 5) {
+          finalTableThreshold = numParticipants;
+      } else if (numParticipants >= 5 && numParticipants < 10) {
+          finalTableThreshold = 3;
+      } else if (numParticipants >= 10) {
+          finalTableThreshold = Math.ceil(numParticipants * 0.3);
+      }
+
 
       if (playerResultEntry.position <= finalTableThreshold) {
         finalTables++;
@@ -427,3 +432,4 @@ export async function calculateHallOfFameStats(
     
 
     
+
