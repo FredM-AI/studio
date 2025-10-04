@@ -283,35 +283,40 @@ export default function PokerTimerModal({
     const numParticipants = participants.length;
     const calculatedPrizePool = (numParticipants * (event.buyIn || 0)) + (totalRebuys * (event.rebuyPrice || 0));
     
-    const structure: { position: number, prize: number }[] = [];
-    if (numParticipants > 0 && calculatedPrizePool > 0) {
-        if (numParticipants < 15) { // Changed from 14 to 15
-            if (numParticipants >= 3) {
-                structure.push({ position: 1, prize: Math.round((calculatedPrizePool * 0.50) / 10) * 10 });
-                structure.push({ position: 2, prize: Math.round((calculatedPrizePool * 0.30) / 10) * 10 });
-                structure.push({ position: 3, prize: Math.round((calculatedPrizePool * 0.20) / 10) * 10 });
-            } else if (numParticipants === 2) {
-                structure.push({ position: 1, prize: Math.round((calculatedPrizePool * 0.65) / 10) * 10 });
-                structure.push({ position: 2, prize: Math.round((calculatedPrizePool * 0.35) / 10) * 10 });
-            } else {
-                structure.push({ position: 1, prize: calculatedPrizePool });
-            }
+    let prizes: { [key: number]: number } = {};
+    if (calculatedPrizePool > 0 && numParticipants > 0) {
+      if (numParticipants >= 15) {
+        const fourthPrize = Math.round((calculatedPrizePool * 0.10) / 10) * 10;
+        const remainingForTop3 = calculatedPrizePool - fourthPrize;
+        if (remainingForTop3 > 0) {
+          const thirdPrize = Math.round((remainingForTop3 * 0.20) / 10) * 10;
+          const secondPrize = Math.round((remainingForTop3 * 0.30) / 10) * 10;
+          const firstPrize = remainingForTop3 - secondPrize - thirdPrize;
+          prizes = { 1: firstPrize, 2: secondPrize, 3: thirdPrize, 4: fourthPrize };
         } else {
-            const fourthPrize = Math.round((event.buyIn || 0) / 10) * 10;
-            if (calculatedPrizePool > fourthPrize) {
-                const remainingPool = calculatedPrizePool - fourthPrize;
-                structure.push({ position: 1, prize: Math.round((remainingPool * 0.50) / 10) * 10 });
-                structure.push({ position: 2, prize: Math.round((remainingPool * 0.30) / 10) * 10 });
-                structure.push({ position: 3, prize: Math.round((remainingPool * 0.20) / 10) * 10 });
-                structure.push({ position: 4, prize: fourthPrize });
-            } else {
-                structure.push({ position: 1, prize: Math.round((calculatedPrizePool * 0.50) / 10) * 10 });
-                structure.push({ position: 2, prize: Math.round((calculatedPrizePool * 0.30) / 10) * 10 });
-                structure.push({ position: 3, prize: Math.round((calculatedPrizePool * 0.20) / 10) * 10 });
-            }
+            const thirdPrize = Math.round((calculatedPrizePool * 0.20) / 10) * 10;
+            const secondPrize = Math.round((calculatedPrizePool * 0.30) / 10) * 10;
+            prizes = { 1: calculatedPrizePool - secondPrize - thirdPrize, 2: secondPrize, 3: thirdPrize };
         }
+      } else if (numParticipants >= 3) {
+        const thirdPrize = Math.round((calculatedPrizePool * 0.20) / 10) * 10;
+        const secondPrize = Math.round((calculatedPrizePool * 0.30) / 10) * 10;
+        const firstPrize = calculatedPrizePool - secondPrize - thirdPrize;
+        prizes = { 1: firstPrize, 2: secondPrize, 3: thirdPrize };
+      } else if (numParticipants === 2) {
+        const secondPrize = Math.round((calculatedPrizePool * 0.35) / 10) * 10;
+        prizes = { 1: calculatedPrizePool - secondPrize, 2: secondPrize };
+      } else if (numParticipants === 1) {
+        prizes = { 1: calculatedPrizePool };
+      }
     }
-    return { totalPrizePool: calculatedPrizePool, payoutStructure: structure.sort((a,b) => a.position - b.position) };
+    
+    const structure: {position: number, prize: number}[] = Object.keys(prizes).map(key => ({
+      position: parseInt(key),
+      prize: prizes[parseInt(key)],
+    })).sort((a,b) => a.position - b.position);
+
+    return { totalPrizePool: calculatedPrizePool, payoutStructure: structure };
   }, [participants, totalRebuys, event.buyIn, event.rebuyPrice]);
 
 
@@ -456,7 +461,7 @@ export default function PokerTimerModal({
                                 </div>
                             ))
                         ) : (
-                            <p className="text-center text-xs opacity-70 pt-2">Not enough players.</p>
+                            <p className="text-center text-xs opacity-70">Not enough players.</p>
                         )}
                     </div>
                 </div>
@@ -466,7 +471,7 @@ export default function PokerTimerModal({
           
 
           <div className="timer-main-content">
-            <h3 className="font-bold text-lg mb-2 flex items-center gap-2"><Users/> Player Tracking</h3>
+            <h3 className="font-bold text-lg flex items-center gap-2"><Users/> Player Tracking</h3>
             <LivePlayerTracking
               participants={participants}
               availablePlayers={availablePlayers}
