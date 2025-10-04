@@ -189,8 +189,9 @@ export default function LiveTournamentClient({ event: initialEvent, players: all
   
   const handleEliminatePlayer = (playerId: string) => {
     setParticipants(prev => {
-      const activePlayersCount = prev.filter(p => p.eliminatedPosition === null).length;
-      const finishingPosition = activePlayersCount;
+      const eliminatedCount = prev.filter(p => p.eliminatedPosition !== null).length;
+      const totalParticipants = prev.length;
+      const finishingPosition = totalParticipants - eliminatedCount;
       return prev.map(p => p.id === playerId ? { ...p, eliminatedPosition: finishingPosition } : p);
     });
   };
@@ -266,11 +267,10 @@ export default function LiveTournamentClient({ event: initialEvent, players: all
         let finalPosition: number;
         if (p.id === winner?.id) {
             finalPosition = 1;
-        } else if (p.eliminatedPosition) {
-            // Adjust position for the winner; everyone else moves down one spot
-            finalPosition = p.eliminatedPosition + (winner ? 0 : -1);
+        } else if (p.eliminatedPosition !== null) {
+            finalPosition = p.eliminatedPosition;
         } else {
-            // This case should ideally not happen if tournament is finished
+            // This case should not happen if tournament is finished
             finalPosition = participants.length;
         }
         
