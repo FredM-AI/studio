@@ -254,55 +254,50 @@ export default function EventForm({ event, allPlayers, allSeasons, blindStructur
         return newDistributedResults;
       }
 
-      let firstPrize = 0;
-      let secondPrize = 0;
-      let thirdPrize = 0;
-      let fourthPrize = 0;
+      let prizes: { [key: number]: number } = {};
 
       if (numParticipants >= 15) {
-        const mainPoolForDistribution = prizePoolNum;
-        fourthPrize = Math.round((buyInNum > 0 ? buyInNum : mainPoolForDistribution * 0.1) / 10) * 10;
-        const remainingPool = mainPoolForDistribution - fourthPrize;
+        // 4 places payées
+        const fourthPrize = Math.round((buyInNum > 0 ? buyInNum : prizePoolNum * 0.1) / 10) * 10;
+        const remainingPool = prizePoolNum - fourthPrize;
 
         if (remainingPool > 0) {
-            firstPrize = Math.round((remainingPool * 0.50) / 10) * 10;
-            secondPrize = Math.round((remainingPool * 0.30) / 10) * 10;
-            thirdPrize = Math.round((remainingPool * 0.20) / 10) * 10;
+            prizes[2] = Math.round((remainingPool * 0.30) / 10) * 10;
+            prizes[3] = Math.round((remainingPool * 0.20) / 10) * 10;
+            prizes[4] = fourthPrize;
+            const sumOfLowerPrizes = prizes[2] + prizes[3] + prizes[4];
+            prizes[1] = prizePoolNum - sumOfLowerPrizes;
         } else {
-            // Fallback if fourth prize is greater than pool
-            firstPrize = Math.round((mainPoolForDistribution * 0.50) / 10) * 10;
-            secondPrize = Math.round((mainPoolForDistribution * 0.30) / 10) * 10;
-            thirdPrize = Math.round((mainPoolForDistribution * 0.20) / 10) * 10;
-            fourthPrize = 0;
+             // Fallback si 4ème prix > prizepool
+             prizes[2] = Math.round((prizePoolNum * 0.30) / 10) * 10;
+             prizes[3] = Math.round((prizePoolNum * 0.20) / 10) * 10;
+             prizes[1] = prizePoolNum - (prizes[2] + prizes[3]);
         }
       } else {
-        if (numParticipants >= 1) firstPrize = Math.round((prizePoolNum * 0.50) / 10) * 10;
-        if (numParticipants >= 2) secondPrize = Math.round((prizePoolNum * 0.30) / 10) * 10;
-        if (numParticipants >= 3) thirdPrize = Math.round((prizePoolNum * 0.20) / 10) * 10;
-      }
-
-      const assignPrize = (pos: number, amount: number) => {
-        const index = newDistributedResults.findIndex(r => r.position === pos);
-        if (index !== -1 && amount > 0) {
-          newDistributedResults[index].prize = amount.toString();
-        } else if (index !== -1) {
-          newDistributedResults[index].prize = '0';
+         // 3 places payées ou moins
+        if (numParticipants >= 3) {
+            prizes[2] = Math.round((prizePoolNum * 0.30) / 10) * 10;
+            prizes[3] = Math.round((prizePoolNum * 0.20) / 10) * 10;
+            prizes[1] = prizePoolNum - (prizes[2] + prizes[3]);
+        } else if (numParticipants === 2) {
+            prizes[2] = Math.round((prizePoolNum * 0.35) / 10) * 10;
+            prizes[1] = prizePoolNum - prizes[2];
+        } else if (numParticipants === 1) {
+            prizes[1] = prizePoolNum;
         }
-      };
-      
-      assignPrize(1, firstPrize);
-      assignPrize(2, secondPrize);
-      assignPrize(3, thirdPrize);
-      assignPrize(4, fourthPrize);
-
-      // Make sure all other positions have a prize of 0
-      for (let i = 5; i <= newDistributedResults.length; i++) {
-        assignPrize(i, 0);
       }
+
+      // Assign prizes to the results table
+      const finalResults = newDistributedResults.map(row => {
+          if (prizes[row.position]) {
+              return { ...row, prize: prizes[row.position].toString() };
+          }
+          return row; // Prize remains '0'
+      });
       
-      return newDistributedResults;
+      return finalResults;
     });
-  }, [totalPrizePoolValue, enrichedParticipants.length, buyInValue]);
+}, [totalPrizePoolValue, enrichedParticipants.length, buyInValue]);
 
   // Effect to update starting stack when a blind structure is selected
   React.useEffect(() => {
@@ -786,3 +781,4 @@ export default function EventForm({ event, allPlayers, allSeasons, blindStructur
     </Card>
   );
 }
+
