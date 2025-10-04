@@ -219,8 +219,9 @@ export default function EventForm({ event, allPlayers, allSeasons, blindStructur
       }
       return newTableData;
     });
-    setIsDistributionCalculated(false); // Reset when participants change
-  }, [enrichedParticipants, event?.results, event?.id]);
+    // This is the crucial part: reset the calculation lock whenever participants change
+    setIsDistributionCalculated(false); 
+  }, [enrichedParticipants.length, event?.results, event?.id]); // Note: dependency on enrichedParticipants.length to re-trigger on count change
 
   React.useEffect(() => {
     const numParticipants = enrichedParticipants.length;
@@ -247,8 +248,9 @@ export default function EventForm({ event, allPlayers, allSeasons, blindStructur
   React.useEffect(() => {
     if (isDistributionCalculated) return;
 
+    // Check if the event already has results with prizes. If so, use them and lock.
     const hasExistingPrizes = event?.results?.some(r => r.prize > 0) || false;
-    if (hasExistingPrizes) {
+    if (hasExistingPrizes && event) {
         setPositionalResults(prevResults => {
             return prevResults.map(row => {
                 const savedResult = event.results.find(r => r.position === row.position);
@@ -267,7 +269,7 @@ export default function EventForm({ event, allPlayers, allSeasons, blindStructur
     const numParticipants = enrichedParticipants.length;
     
     if (prizePoolNum <= 0 || numParticipants === 0) {
-      setIsDistributionCalculated(true);
+      setIsDistributionCalculated(true); // Lock even if nothing to calculate
       return;
     }
 
@@ -283,6 +285,7 @@ export default function EventForm({ event, allPlayers, allSeasons, blindStructur
             const firstPrize = remainingPoolForTop3 - secondPrize - thirdPrize;
             prizes = { 1: firstPrize, 2: secondPrize, 3: thirdPrize, 4: fourthPrize };
         } else {
+             // Fallback for very small prize pools with 15+ players
              const thirdPrize = Math.round((prizePoolNum * 0.20) / 10) * 10;
              const secondPrize = Math.round((prizePoolNum * 0.30) / 10) * 10;
              const firstPrize = prizePoolNum - secondPrize - thirdPrize;
@@ -307,7 +310,7 @@ export default function EventForm({ event, allPlayers, allSeasons, blindStructur
         prize: prizes[row.position]?.toString() || '0'
     })));
     
-    setIsDistributionCalculated(true);
+    setIsDistributionCalculated(true); // Lock after calculation
 
 }, [totalPrizePoolValue, enrichedParticipants.length, buyInValue, event?.results, isDistributionCalculated]);
 
