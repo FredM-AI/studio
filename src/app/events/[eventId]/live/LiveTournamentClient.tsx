@@ -215,37 +215,40 @@ export default function LiveTournamentClient({ event: initialEvent, players: all
 
     const calculatedPrizePool = (numParticipants * (event.buyIn || 0)) + (totalRebuys * (event.rebuyPrice || 0));
     
-    const structure: {position: number, prize: number}[] = [];
-
-    if (numParticipants > 0 && calculatedPrizePool > 0) {
-        if (numParticipants < 14) {
-            if (numParticipants >= 3) {
-                structure.push({ position: 1, prize: Math.round(calculatedPrizePool * 0.50) });
-                structure.push({ position: 2, prize: Math.round(calculatedPrizePool * 0.30) });
-                structure.push({ position: 3, prize: Math.round(calculatedPrizePool * 0.20) });
-            } else if (numParticipants === 2) {
-                structure.push({ position: 1, prize: Math.round(calculatedPrizePool * 0.65) });
-                structure.push({ position: 2, prize: Math.round(calculatedPrizePool * 0.35) });
-            } else {
-                structure.push({ position: 1, prize: calculatedPrizePool });
-            }
+    let prizes: { [key: number]: number } = {};
+    if (calculatedPrizePool > 0 && numParticipants > 0) {
+      if (numParticipants >= 15) {
+        const fourthPrize = Math.round((calculatedPrizePool * 0.10) / 10) * 10;
+        const remainingForTop3 = calculatedPrizePool - fourthPrize;
+        if (remainingForTop3 > 0) {
+          const thirdPrize = Math.round((remainingForTop3 * 0.20) / 10) * 10;
+          const secondPrize = Math.round((remainingForTop3 * 0.30) / 10) * 10;
+          const firstPrize = remainingForTop3 - secondPrize - thirdPrize;
+          prizes = { 1: firstPrize, 2: secondPrize, 3: thirdPrize, 4: fourthPrize };
         } else {
-            const fourthPrize = event.buyIn || 0;
-            if (calculatedPrizePool > fourthPrize) {
-                const remainingPool = calculatedPrizePool - fourthPrize;
-                structure.push({ position: 1, prize: Math.round(remainingPool * 0.50) });
-                structure.push({ position: 2, prize: Math.round(remainingPool * 0.30) });
-                structure.push({ position: 3, prize: Math.round(remainingPool * 0.20) });
-                structure.push({ position: 4, prize: fourthPrize });
-            } else {
-                structure.push({ position: 1, prize: Math.round(calculatedPrizePool * 0.50) });
-                structure.push({ position: 2, prize: Math.round(calculatedPrizePool * 0.30) });
-                structure.push({ position: 3, prize: Math.round(calculatedPrizePool * 0.20) });
-            }
+            const thirdPrize = Math.round((calculatedPrizePool * 0.20) / 10) * 10;
+            const secondPrize = Math.round((calculatedPrizePool * 0.30) / 10) * 10;
+            prizes = { 1: calculatedPrizePool - secondPrize - thirdPrize, 2: secondPrize, 3: thirdPrize };
         }
+      } else if (numParticipants >= 3) {
+        const thirdPrize = Math.round((calculatedPrizePool * 0.20) / 10) * 10;
+        const secondPrize = Math.round((calculatedPrizePool * 0.30) / 10) * 10;
+        const firstPrize = calculatedPrizePool - secondPrize - thirdPrize;
+        prizes = { 1: firstPrize, 2: secondPrize, 3: thirdPrize };
+      } else if (numParticipants === 2) {
+        const secondPrize = Math.round((calculatedPrizePool * 0.35) / 10) * 10;
+        prizes = { 1: calculatedPrizePool - secondPrize, 2: secondPrize };
+      } else if (numParticipants === 1) {
+        prizes = { 1: calculatedPrizePool };
+      }
     }
     
-    return { totalPrizePool: calculatedPrizePool, payoutStructure: structure.sort((a,b) => a.position - b.position) };
+    const structure: {position: number, prize: number}[] = Object.keys(prizes).map(key => ({
+      position: parseInt(key),
+      prize: prizes[parseInt(key)],
+    })).sort((a,b) => a.position - b.position);
+
+    return { totalPrizePool: calculatedPrizePool, payoutStructure: structure };
   }, [participants, event.buyIn, event.rebuyPrice]);
 
 
@@ -349,6 +352,8 @@ export default function LiveTournamentClient({ event: initialEvent, players: all
             onEliminatePlayer={handleEliminatePlayer}
             onUndoLastElimination={handleUndoLastElimination}
             refreshBlindStructures={refreshBlindStructures}
+            totalPrizePool={totalPrizePool}
+            payoutStructure={payoutStructure}
         />
         {isStructureManagerOpen && (
             <BlindStructureManager
@@ -449,8 +454,8 @@ export default function LiveTournamentClient({ event: initialEvent, players: all
                 <CardContent className="pt-2">
                     <LivePrizePool 
                         participants={participants}
-                        buyIn={event.buyIn || 0}
-                        rebuyPrice={event.rebuyPrice}
+                        totalPrizePool={totalPrizePool}
+                        payoutStructure={payoutStructure}
                     />
                 </CardContent>
             </Card>
@@ -507,3 +512,4 @@ export default function LiveTournamentClient({ event: initialEvent, players: all
     
 
     
+

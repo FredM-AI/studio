@@ -14,6 +14,7 @@ import { Label } from './ui/label';
 import { RadioGroup, RadioGroupItem } from './ui/radio-group';
 import LivePlayerTracking from './LivePlayerTracking';
 import '@/app/poker-timer.css';
+import LivePrizePool from './LivePrizePool';
 
 interface PokerTimerModalProps {
   isOpen: boolean;
@@ -32,6 +33,8 @@ interface PokerTimerModalProps {
   onUndoLastElimination: () => void;
   onStructureUpdate: (newStructure: BlindLevel[]) => void;
   refreshBlindStructures: () => Promise<void>;
+  totalPrizePool: number;
+  payoutStructure: { position: number, prize: number }[];
 }
 
 // --- Sound Bank ---
@@ -80,6 +83,8 @@ export default function PokerTimerModal({
     onUndoLastElimination,
     onStructureUpdate,
     refreshBlindStructures,
+    totalPrizePool,
+    payoutStructure,
 }: PokerTimerModalProps) {
   const modalRef = useRef<HTMLDivElement>(null);
   const timerStorageKey = `poker-timer-state-${event.id}`;
@@ -279,47 +284,6 @@ export default function PokerTimerModal({
   
   const timerProgress = currentLevel.duration > 0 ? ((currentLevel.duration * 60 - timeLeft) / (currentLevel.duration * 60)) * 100 : 0;
   
-  const { totalPrizePool, payoutStructure } = React.useMemo(() => {
-    const numParticipants = participants.length;
-    const calculatedPrizePool = (numParticipants * (event.buyIn || 0)) + (totalRebuys * (event.rebuyPrice || 0));
-    
-    let prizes: { [key: number]: number } = {};
-    if (calculatedPrizePool > 0 && numParticipants > 0) {
-      if (numParticipants >= 15) {
-        const fourthPrize = Math.round((calculatedPrizePool * 0.10) / 10) * 10;
-        const remainingForTop3 = calculatedPrizePool - fourthPrize;
-        if (remainingForTop3 > 0) {
-          const thirdPrize = Math.round((remainingForTop3 * 0.20) / 10) * 10;
-          const secondPrize = Math.round((remainingForTop3 * 0.30) / 10) * 10;
-          const firstPrize = remainingForTop3 - secondPrize - thirdPrize;
-          prizes = { 1: firstPrize, 2: secondPrize, 3: thirdPrize, 4: fourthPrize };
-        } else {
-            const thirdPrize = Math.round((calculatedPrizePool * 0.20) / 10) * 10;
-            const secondPrize = Math.round((calculatedPrizePool * 0.30) / 10) * 10;
-            prizes = { 1: calculatedPrizePool - secondPrize - thirdPrize, 2: secondPrize, 3: thirdPrize };
-        }
-      } else if (numParticipants >= 3) {
-        const thirdPrize = Math.round((calculatedPrizePool * 0.20) / 10) * 10;
-        const secondPrize = Math.round((calculatedPrizePool * 0.30) / 10) * 10;
-        const firstPrize = calculatedPrizePool - secondPrize - thirdPrize;
-        prizes = { 1: firstPrize, 2: secondPrize, 3: thirdPrize };
-      } else if (numParticipants === 2) {
-        const secondPrize = Math.round((calculatedPrizePool * 0.35) / 10) * 10;
-        prizes = { 1: calculatedPrizePool - secondPrize, 2: secondPrize };
-      } else if (numParticipants === 1) {
-        prizes = { 1: calculatedPrizePool };
-      }
-    }
-    
-    const structure: {position: number, prize: number}[] = Object.keys(prizes).map(key => ({
-      position: parseInt(key),
-      prize: prizes[parseInt(key)],
-    })).sort((a,b) => a.position - b.position);
-
-    return { totalPrizePool: calculatedPrizePool, payoutStructure: structure };
-  }, [participants, totalRebuys, event.buyIn, event.rebuyPrice]);
-
-
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent 
@@ -445,25 +409,11 @@ export default function PokerTimerModal({
                     <div className="timer-stats-row"><span>Total chips:</span> <span>{totalChips.toLocaleString()}</span></div>
                 </div>
                  <div className="timer-stats-box">
-                    <div className="timer-stats-title flex justify-between items-baseline">
-                        <h4>Prize Pool</h4>
-                        <span className="font-bold text-lg">€{totalPrizePool.toLocaleString()}</span>
-                    </div>
-                    <div className="space-y-1">
-                        {payoutStructure.length > 0 ? (
-                            payoutStructure.map(({ position, prize }) => (
-                                <div key={position} className="timer-stats-row text-xs">
-                                    <span className="font-semibold flex items-center">
-                                    {position === 1 && <Crown className="h-4 w-4 mr-1 text-yellow-400" />}
-                                    {position} :
-                                    </span>
-                                    <span className="font-bold">€{prize.toLocaleString()}</span>
-                                </div>
-                            ))
-                        ) : (
-                            <p className="text-center text-xs opacity-70">Not enough players.</p>
-                        )}
-                    </div>
+                    <LivePrizePool
+                      participants={participants}
+                      totalPrizePool={totalPrizePool}
+                      payoutStructure={payoutStructure}
+                    />
                 </div>
               </div>
             </div>
@@ -471,7 +421,7 @@ export default function PokerTimerModal({
           
 
           <div className="timer-main-content">
-            <h3 className="font-bold text-lg flex items-center gap-2"><Users/> Player Tracking</h3>
+            <h3 className="font-bold text-lg flex items-center gap-2 mb-2"><Users/> Player Tracking</h3>
             <LivePlayerTracking
               participants={participants}
               availablePlayers={availablePlayers}
