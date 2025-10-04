@@ -397,16 +397,13 @@ export default function PokerTimerModal({
           
 
           <div className="timer-main-content">
-            <div className="timer-stats-grid">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
                 <div className="timer-stats-box">
-                    <h4 className="timer-stats-title">Status</h4>
+                    <h4 className="timer-stats-title">Status & Stats</h4>
                     <div className="timer-stats-row"><span>Players:</span> <span>{activeParticipants.length} / {participants.length}</span></div>
                     <div className="timer-stats-row"><span>Rebuys:</span> <span>{totalRebuys}</span></div>
                     <div className="timer-stats-row"><span>Addons:</span> <span>0</span></div>
-                </div>
-                  <div className="timer-stats-box">
-                    <h4 className="timer-stats-title">Statistics</h4>
-                    <div className="timer-stats-row"><span>Avg. stack:</span> <span>{avgStack.toLocaleString()}</span></div>
+                    <div className="timer-stats-row mt-2 pt-2 border-t" style={{ borderColor: 'var(--stats-border)'}}><span>Avg. stack:</span> <span>{avgStack.toLocaleString()}</span></div>
                     <div className="timer-stats-row"><span>Total chips:</span> <span>{totalChips.toLocaleString()}</span></div>
                 </div>
                   <div className="timer-stats-box">
@@ -471,5 +468,3 @@ export default function PokerTimerModal({
     </Dialog>
   );
 }
-
-    
