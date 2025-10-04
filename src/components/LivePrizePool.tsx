@@ -59,22 +59,29 @@ export default function LivePrizePool({ participants, buyIn, rebuyPrice }: LiveP
     }, []);
 
     const findPlacingPlayerName = (position: number) => {
-        // Special case for winner (has not been eliminated)
+        // Find the player who finished at this exact position
+        const eliminatedPlayer = participants.find(p => p.eliminatedPosition === position);
+        if (eliminatedPlayer) return eliminatedPlayer.name;
+
+        // Special case for winner (has not been eliminated yet)
         if (position === 1) {
              const activePlayers = participants.filter(p => p.eliminatedPosition === null);
-             if (activePlayers.length === 1 && participants.filter(p => p.eliminatedPosition !== null).length === participants.length -1) {
+             const eliminatedCount = participants.length - activePlayers.length;
+             // If there's only one active player left, they are the winner.
+             if (activePlayers.length === 1 && eliminatedCount === participants.length - 1) {
                  return activePlayers[0].name;
              }
         }
-        const player = participants.find(p => p.eliminatedPosition === position);
-        return player?.name;
+        
+        return '...';
     };
+
 
     return (
         <div className="space-y-4">
             <div className="text-center bg-muted/50 p-2 rounded-lg">
-                <p className="text-xs text-white uppercase tracking-wider">Total Prize Pool</p>
-                <p className="text-xl font-bold font-headline text-primary">
+                <p className="text-xs text-muted-foreground uppercase tracking-wider">Total Prize Pool</p>
+                <p className="text-2xl font-bold font-headline text-primary">
                     €{hydrated ? totalPrizePool.toLocaleString() : '...'}
                 </p>
             </div>
@@ -90,8 +97,8 @@ export default function LivePrizePool({ participants, buyIn, rebuyPrice }: LiveP
                                       {position === 1 && <Crown className="h-4 w-4 mr-1 text-yellow-400" />}
                                       {position}.
                                     </span>
-                                    <span className="text-xs font-medium truncate text-right flex-1 mx-2">{playerName || '...'}</span>
-                                    <span className="font-bold text-xs">€{hydrated ? prize.toLocaleString() : '...'}</span>
+                                    <span className="text-xs font-medium truncate text-right flex-1 mx-2">{playerName}</span>
+                                    <span className="font-bold text-sm">€{hydrated ? prize.toLocaleString() : '...'}</span>
                                 </li>
                             );
                         })}
@@ -105,5 +112,3 @@ export default function LivePrizePool({ participants, buyIn, rebuyPrice }: LiveP
         </div>
     );
 }
-
-    
