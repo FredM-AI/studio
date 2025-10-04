@@ -440,30 +440,25 @@ export default function PokerTimerModal({
                     <div className="timer-stats-row"><span>Total chips:</span> <span>{totalChips.toLocaleString()}</span></div>
                 </div>
                  <div className="timer-stats-box">
-                      <h4 className="timer-stats-title">Prize Pool</h4>
-                       <div className="space-y-2">
-                            <div className="text-center bg-black/20 p-2 rounded-lg">
-                                <p className="text-xs opacity-70 uppercase tracking-wider">Total Prize Pool</p>
-                                <p className="text-2xl font-bold">€{totalPrizePool.toLocaleString()}</p>
-                            </div>
-                            <div>
-                                {payoutStructure.length > 0 ? (
-                                    <ul className="space-y-1 text-xs">
-                                        {payoutStructure.map(({ position, prize }) => (
-                                            <li key={position} className="flex justify-between items-center p-1 rounded">
-                                                <span className="font-semibold flex items-center">
-                                                  {position === 1 && <Crown className="h-4 w-4 mr-1 text-yellow-400" />}
-                                                  {position}.
-                                                </span>
-                                                <span className="font-bold text-sm">€{prize.toLocaleString()}</span>
-                                            </li>
-                                        ))}
-                                    </ul>
-                                ) : (
-                                    <p className="text-center text-xs opacity-70 pt-2">Not enough players.</p>
-                                )}
-                            </div>
-                        </div>
+                      <div className="timer-stats-title flex justify-between items-baseline">
+                        <h4>Prize Pool</h4>
+                        <span className="font-bold text-lg">€{totalPrizePool.toLocaleString()}</span>
+                      </div>
+                      <div className="space-y-1">
+                          {payoutStructure.length > 0 ? (
+                              payoutStructure.map(({ position, prize }) => (
+                                  <div key={position} className="timer-stats-row text-xs">
+                                      <span className="font-semibold flex items-center">
+                                        {position === 1 && <Crown className="h-4 w-4 mr-1 text-yellow-400" />}
+                                        {position} :
+                                      </span>
+                                      <span className="font-bold">€{prize.toLocaleString()}</span>
+                                  </div>
+                              ))
+                          ) : (
+                              <p className="text-center text-xs opacity-70 pt-2">Not enough players.</p>
+                          )}
+                      </div>
                 </div>
               </div>
             </div>
