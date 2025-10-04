@@ -285,31 +285,31 @@ export default function PokerTimerModal({
     
     const structure: { position: number, prize: number }[] = [];
     if (numParticipants > 0 && calculatedPrizePool > 0) {
-      if (numParticipants < 14) {
-        if (numParticipants >= 3) {
-          structure.push({ position: 1, prize: Math.round(calculatedPrizePool * 0.50) });
-          structure.push({ position: 2, prize: Math.round(calculatedPrizePool * 0.30) });
-          structure.push({ position: 3, prize: Math.round(calculatedPrizePool * 0.20) });
-        } else if (numParticipants === 2) {
-          structure.push({ position: 1, prize: Math.round(calculatedPrizePool * 0.65) });
-          structure.push({ position: 2, prize: Math.round(calculatedPrizePool * 0.35) });
+        if (numParticipants < 15) { // Changed from 14 to 15
+            if (numParticipants >= 3) {
+                structure.push({ position: 1, prize: Math.round((calculatedPrizePool * 0.50) / 10) * 10 });
+                structure.push({ position: 2, prize: Math.round((calculatedPrizePool * 0.30) / 10) * 10 });
+                structure.push({ position: 3, prize: Math.round((calculatedPrizePool * 0.20) / 10) * 10 });
+            } else if (numParticipants === 2) {
+                structure.push({ position: 1, prize: Math.round((calculatedPrizePool * 0.65) / 10) * 10 });
+                structure.push({ position: 2, prize: Math.round((calculatedPrizePool * 0.35) / 10) * 10 });
+            } else {
+                structure.push({ position: 1, prize: calculatedPrizePool });
+            }
         } else {
-          structure.push({ position: 1, prize: calculatedPrizePool });
+            const fourthPrize = Math.round((event.buyIn || 0) / 10) * 10;
+            if (calculatedPrizePool > fourthPrize) {
+                const remainingPool = calculatedPrizePool - fourthPrize;
+                structure.push({ position: 1, prize: Math.round((remainingPool * 0.50) / 10) * 10 });
+                structure.push({ position: 2, prize: Math.round((remainingPool * 0.30) / 10) * 10 });
+                structure.push({ position: 3, prize: Math.round((remainingPool * 0.20) / 10) * 10 });
+                structure.push({ position: 4, prize: fourthPrize });
+            } else {
+                structure.push({ position: 1, prize: Math.round((calculatedPrizePool * 0.50) / 10) * 10 });
+                structure.push({ position: 2, prize: Math.round((calculatedPrizePool * 0.30) / 10) * 10 });
+                structure.push({ position: 3, prize: Math.round((calculatedPrizePool * 0.20) / 10) * 10 });
+            }
         }
-      } else {
-        const fourthPrize = event.buyIn || 0;
-        if (calculatedPrizePool > fourthPrize) {
-          const remainingPool = calculatedPrizePool - fourthPrize;
-          structure.push({ position: 1, prize: Math.round(remainingPool * 0.50) });
-          structure.push({ position: 2, prize: Math.round(remainingPool * 0.30) });
-          structure.push({ position: 3, prize: Math.round(remainingPool * 0.20) });
-          structure.push({ position: 4, prize: fourthPrize });
-        } else {
-          structure.push({ position: 1, prize: Math.round(calculatedPrizePool * 0.50) });
-          structure.push({ position: 2, prize: Math.round(calculatedPrizePool * 0.30) });
-          structure.push({ position: 3, prize: Math.round(calculatedPrizePool * 0.20) });
-        }
-      }
     }
     return { totalPrizePool: calculatedPrizePool, payoutStructure: structure.sort((a,b) => a.position - b.position) };
   }, [participants, totalRebuys, event.buyIn, event.rebuyPrice]);
@@ -466,23 +466,21 @@ export default function PokerTimerModal({
           
 
           <div className="timer-main-content">
-            <div className="border-t pt-4" style={{ borderColor: 'var(--stats-border)'}}>
-                <h3 className="font-bold text-lg mb-2 flex items-center gap-2"><Users/> Player Tracking</h3>
-                <LivePlayerTracking
-                  participants={participants}
-                  availablePlayers={availablePlayers}
-                  onAddParticipant={onAddParticipant}
-                  onRemoveParticipant={onRemoveParticipant}
-                  onRebuyChange={onRebuyChange}
-                  onBountyChange={onBountyChange}
-                  onMysteryKoChange={onMysteryKoChange}
-                  onEliminatePlayer={onEliminatePlayer}
-                  onUndoLastElimination={onUndoLastElimination}
-                  isModalLayout={true}
-                  eventBountyValue={event.bounties}
-                  eventMysteryKoValue={event.mysteryKo}
-                />
-            </div>
+            <h3 className="font-bold text-lg mb-2 flex items-center gap-2"><Users/> Player Tracking</h3>
+            <LivePlayerTracking
+              participants={participants}
+              availablePlayers={availablePlayers}
+              onAddParticipant={onAddParticipant}
+              onRemoveParticipant={onRemoveParticipant}
+              onRebuyChange={onRebuyChange}
+              onBountyChange={onBountyChange}
+              onMysteryKoChange={onMysteryKoChange}
+              onEliminatePlayer={onEliminatePlayer}
+              onUndoLastElimination={onUndoLastElimination}
+              isModalLayout={true}
+              eventBountyValue={event.bounties}
+              eventMysteryKoValue={event.mysteryKo}
+            />
           </div>
 
           <footer className="timer-footer no-drag">

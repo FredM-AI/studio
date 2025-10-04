@@ -24,29 +24,29 @@ export default function LivePrizePool({ participants, buyIn, rebuyPrice }: LiveP
         const structure: { position: number, prize: number }[] = [];
 
         if (numParticipants > 0 && calculatedPrizePool > 0) {
-            if (numParticipants < 14) {
+            if (numParticipants < 15) { // Changed from 14 to 15
                 if (numParticipants >= 3) {
-                    structure.push({ position: 1, prize: Math.round(calculatedPrizePool * 0.50) });
-                    structure.push({ position: 2, prize: Math.round(calculatedPrizePool * 0.30) });
-                    structure.push({ position: 3, prize: Math.round(calculatedPrizePool * 0.20) });
+                    structure.push({ position: 1, prize: Math.round((calculatedPrizePool * 0.50)/10) * 10 });
+                    structure.push({ position: 2, prize: Math.round((calculatedPrizePool * 0.30)/10) * 10 });
+                    structure.push({ position: 3, prize: Math.round((calculatedPrizePool * 0.20)/10) * 10 });
                 } else if (numParticipants === 2) {
-                    structure.push({ position: 1, prize: Math.round(calculatedPrizePool * 0.65) });
-                    structure.push({ position: 2, prize: Math.round(calculatedPrizePool * 0.35) });
+                    structure.push({ position: 1, prize: Math.round((calculatedPrizePool * 0.65)/10) * 10 });
+                    structure.push({ position: 2, prize: Math.round((calculatedPrizePool * 0.35)/10) * 10 });
                 } else {
                     structure.push({ position: 1, prize: calculatedPrizePool });
                 }
             } else {
-                const fourthPrize = buyIn || 0;
+                const fourthPrize = Math.round((buyIn || 0) / 10) * 10;
                 if (calculatedPrizePool > fourthPrize) {
                     const remainingPool = calculatedPrizePool - fourthPrize;
-                    structure.push({ position: 1, prize: Math.round(remainingPool * 0.50) });
-                    structure.push({ position: 2, prize: Math.round(remainingPool * 0.30) });
-                    structure.push({ position: 3, prize: Math.round(remainingPool * 0.20) });
+                    structure.push({ position: 1, prize: Math.round((remainingPool * 0.50)/10) * 10 });
+                    structure.push({ position: 2, prize: Math.round((remainingPool * 0.30)/10) * 10 });
+                    structure.push({ position: 3, prize: Math.round((remainingPool * 0.20)/10) * 10 });
                     structure.push({ position: 4, prize: fourthPrize });
                 } else {
-                    structure.push({ position: 1, prize: Math.round(calculatedPrizePool * 0.50) });
-                    structure.push({ position: 2, prize: Math.round(calculatedPrizePool * 0.30) });
-                    structure.push({ position: 3, prize: Math.round(calculatedPrizePool * 0.20) });
+                    structure.push({ position: 1, prize: Math.round((calculatedPrizePool * 0.50)/10) * 10 });
+                    structure.push({ position: 2, prize: Math.round((calculatedPrizePool * 0.30)/10) * 10 });
+                    structure.push({ position: 3, prize: Math.round((calculatedPrizePool * 0.20)/10) * 10 });
                 }
             }
         }

@@ -259,27 +259,27 @@ export default function EventForm({ event, allPlayers, allSeasons, blindStructur
       let thirdPrize = 0;
       let fourthPrize = 0;
 
-      if (numParticipants < 14) {
-        if (numParticipants >= 1) firstPrize = Math.round(prizePoolNum * 0.50);
-        if (numParticipants >= 2) secondPrize = Math.round(prizePoolNum * 0.30);
-        if (numParticipants >= 3) thirdPrize = Math.round(prizePoolNum * 0.20);
+      if (numParticipants < 15) { // Changed from 14 to 15
+        if (numParticipants >= 1) firstPrize = Math.round((prizePoolNum * 0.50) / 10) * 10;
+        if (numParticipants >= 2) secondPrize = Math.round((prizePoolNum * 0.30) / 10) * 10;
+        if (numParticipants >= 3) thirdPrize = Math.round((prizePoolNum * 0.20) / 10) * 10;
       } else {
         if (buyInNum > 0) {
           if (prizePoolNum >= buyInNum) {
-            fourthPrize = buyInNum;
+            fourthPrize = Math.round(buyInNum / 10) * 10;
             const remainingPool = prizePoolNum - fourthPrize;
             if (remainingPool > 0) {
-              firstPrize = Math.round(remainingPool * 0.50);
-              secondPrize = Math.round(remainingPool * 0.30);
-              thirdPrize = Math.round(remainingPool * 0.20);
+              firstPrize = Math.round((remainingPool * 0.50) / 10) * 10;
+              secondPrize = Math.round((remainingPool * 0.30) / 10) * 10;
+              thirdPrize = Math.round((remainingPool * 0.20) / 10) * 10;
             }
           } else {
             fourthPrize = prizePoolNum;
           }
         } else {
-          if (numParticipants >= 1) firstPrize = Math.round(prizePoolNum * 0.50);
-          if (numParticipants >= 2) secondPrize = Math.round(prizePoolNum * 0.30);
-          if (numParticipants >= 3) thirdPrize = Math.round(prizePoolNum * 0.20);
+          if (numParticipants >= 1) firstPrize = Math.round((prizePoolNum * 0.50) / 10) * 10;
+          if (numParticipants >= 2) secondPrize = Math.round((prizePoolNum * 0.30) / 10) * 10;
+          if (numParticipants >= 3) thirdPrize = Math.round((prizePoolNum * 0.20) / 10) * 10;
         }
       }
 
