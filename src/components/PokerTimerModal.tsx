@@ -152,7 +152,7 @@ export default function PokerTimerModal({
         setTimeLeft(newDuration);
     }
 
-  }, [initialActiveStructure]);
+  }, [initialActiveStructure, timerStorageKey]);
 
 
   useEffect(() => {
@@ -365,7 +365,9 @@ export default function PokerTimerModal({
           </header>
           
           <div className="timer-sticky-content">
-              <div className="w-[70%] mx-auto flex flex-col h-full justify-center">
+            <div className="w-full h-full flex flex-row items-center gap-8">
+              {/* Left Column: Timer */}
+              <div className="flex-grow flex flex-col justify-center h-full">
                   <div className="timer-display-area">
                       <div className="timer-countdown">
                       {formatTime(timeLeft)}
@@ -393,11 +395,8 @@ export default function PokerTimerModal({
                       </div>
                   </div>
               </div>
-          </div>
-          
-
-          <div className="timer-main-content">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
+              {/* Right Column: Stats & Prize Pool */}
+              <div className="flex-shrink-0 w-[350px] grid grid-cols-1 gap-4 h-full">
                 <div className="timer-stats-box">
                     <h4 className="timer-stats-title">Status & Stats</h4>
                     <div className="timer-stats-row"><span>Players:</span> <span>{activeParticipants.length} / {participants.length}</span></div>
@@ -406,15 +405,19 @@ export default function PokerTimerModal({
                     <div className="timer-stats-row mt-2 pt-2 border-t" style={{ borderColor: 'var(--stats-border)'}}><span>Avg. stack:</span> <span>{avgStack.toLocaleString()}</span></div>
                     <div className="timer-stats-row"><span>Total chips:</span> <span>{totalChips.toLocaleString()}</span></div>
                 </div>
-                  <div className="timer-stats-box">
+                 <div className="timer-stats-box">
                      <LivePrizePool 
                         participants={participants}
                         buyIn={event.buyIn || 0}
                         rebuyPrice={event.rebuyPrice}
                     />
                 </div>
+              </div>
             </div>
-            
+          </div>
+          
+
+          <div className="timer-main-content">
             <div className="mt-4 border-t pt-4" style={{ borderColor: 'var(--stats-border)'}}>
                 <h3 className="font-bold text-lg mb-2 flex items-center gap-2"><Users/> Player Tracking</h3>
                 <LivePlayerTracking
@@ -432,7 +435,6 @@ export default function PokerTimerModal({
                   eventMysteryKoValue={event.mysteryKo}
                 />
             </div>
-
           </div>
 
           <footer className="timer-footer no-drag">
@@ -468,3 +470,5 @@ export default function PokerTimerModal({
     </Dialog>
   );
 }
+
+    
