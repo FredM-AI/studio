@@ -109,13 +109,13 @@
 .timer-sticky-content {
     @apply p-6 flex-shrink-0 flex flex-col justify-center;
     background-color: var(--sticky-bg);
-    height: 35%; 
+    height: 45%; 
 }
 
 .timer-main-content {
     @apply p-6 flex-grow overflow-y-auto;
     background-color: var(--main-bg);
-    height: 65%;
+    height: 55%;
 }
 
 .timer-display-area {
@@ -137,7 +137,7 @@
 .timer-next-level-blinds { @apply text-right w-2/3; }
 
 
-.timer-stats-grid { @apply grid grid-cols-1 md:grid-cols-3 gap-6 text-sm; }
+.timer-stats-grid { @apply grid grid-cols-1 md:grid-cols-2 gap-4 text-sm; }
 .timer-stats-box {
     @apply p-3 rounded;
     background-color: var(--stats-bg);
