@@ -245,11 +245,8 @@ export default function EventForm({ event, allPlayers, allSeasons, blindStructur
   }, [enrichedParticipants, buyInValue, rebuyPrice]);
 
   React.useEffect(() => {
-    // This effect should only run once after initial data is set,
-    // or if the participant count changes (handled by isDistributionCalculated state).
     if (isDistributionCalculated) return;
 
-    // Check if prizes are already defined from a previous save (e.g., from live mode)
     const hasExistingPrizes = event?.results?.some(r => r.prize > 0) || false;
     if (hasExistingPrizes) {
         setPositionalResults(prevResults => {
@@ -262,16 +259,14 @@ export default function EventForm({ event, allPlayers, allSeasons, blindStructur
             });
         });
         setIsDistributionCalculated(true);
-        return; // Stop the effect here
+        return;
     }
 
-    // --- Automatic prize distribution logic ---
     const prizePoolNum = parseInt(totalPrizePoolValue) || 0;
     const buyInNum = parseInt(buyInValue) || 0;
     const numParticipants = enrichedParticipants.length;
     
     if (prizePoolNum <= 0 || numParticipants === 0) {
-      // No need to calculate if there's no prize pool or participants
       setIsDistributionCalculated(true);
       return;
     }
@@ -288,9 +283,10 @@ export default function EventForm({ event, allPlayers, allSeasons, blindStructur
             const firstPrize = remainingPoolForTop3 - secondPrize - thirdPrize;
             prizes = { 1: firstPrize, 2: secondPrize, 3: thirdPrize, 4: fourthPrize };
         } else {
-             prizes[2] = Math.round((prizePoolNum * 0.30) / 10) * 10;
-             prizes[3] = Math.round((prizePoolNum * 0.20) / 10) * 10;
-             prizes[1] = prizePoolNum - (prizes[2] + prizes[3]);
+             const thirdPrize = Math.round((prizePoolNum * 0.20) / 10) * 10;
+             const secondPrize = Math.round((prizePoolNum * 0.30) / 10) * 10;
+             const firstPrize = prizePoolNum - secondPrize - thirdPrize;
+             prizes = { 1: firstPrize, 2: secondPrize, 3: thirdPrize };
         }
     } else { // Less than 15 players
         if (numParticipants >= 3) {
@@ -311,7 +307,7 @@ export default function EventForm({ event, allPlayers, allSeasons, blindStructur
         prize: prizes[row.position]?.toString() || '0'
     })));
     
-    setIsDistributionCalculated(true); // Mark as calculated
+    setIsDistributionCalculated(true);
 
 }, [totalPrizePoolValue, enrichedParticipants.length, buyInValue, event?.results, isDistributionCalculated]);
 
