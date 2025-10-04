@@ -259,26 +259,26 @@ export default function EventForm({ event, allPlayers, allSeasons, blindStructur
       let thirdPrize = 0;
       let fourthPrize = 0;
 
-      if (numParticipants < 15) {
+      if (numParticipants >= 15) {
+        const mainPoolForDistribution = prizePoolNum;
+        fourthPrize = Math.round((buyInNum > 0 ? buyInNum : mainPoolForDistribution * 0.1) / 10) * 10;
+        const remainingPool = mainPoolForDistribution - fourthPrize;
+
+        if (remainingPool > 0) {
+            firstPrize = Math.round((remainingPool * 0.50) / 10) * 10;
+            secondPrize = Math.round((remainingPool * 0.30) / 10) * 10;
+            thirdPrize = Math.round((remainingPool * 0.20) / 10) * 10;
+        } else {
+            // Fallback if fourth prize is greater than pool
+            firstPrize = Math.round((mainPoolForDistribution * 0.50) / 10) * 10;
+            secondPrize = Math.round((mainPoolForDistribution * 0.30) / 10) * 10;
+            thirdPrize = Math.round((mainPoolForDistribution * 0.20) / 10) * 10;
+            fourthPrize = 0;
+        }
+      } else {
         if (numParticipants >= 1) firstPrize = Math.round((prizePoolNum * 0.50) / 10) * 10;
         if (numParticipants >= 2) secondPrize = Math.round((prizePoolNum * 0.30) / 10) * 10;
         if (numParticipants >= 3) thirdPrize = Math.round((prizePoolNum * 0.20) / 10) * 10;
-      } else {
-          const mainPoolForDistribution = prizePoolNum;
-          fourthPrize = Math.round((buyInNum > 0 ? buyInNum : mainPoolForDistribution * 0.1) / 10) * 10;
-          const remainingPool = mainPoolForDistribution - fourthPrize;
-
-          if (remainingPool > 0) {
-              firstPrize = Math.round((remainingPool * 0.50) / 10) * 10;
-              secondPrize = Math.round((remainingPool * 0.30) / 10) * 10;
-              thirdPrize = Math.round((remainingPool * 0.20) / 10) * 10;
-          } else {
-              // Fallback if fourth prize is greater than pool
-              firstPrize = Math.round((mainPoolForDistribution * 0.50) / 10) * 10;
-              secondPrize = Math.round((mainPoolForDistribution * 0.30) / 10) * 10;
-              thirdPrize = Math.round((mainPoolForDistribution * 0.20) / 10) * 10;
-              fourthPrize = 0;
-          }
       }
 
       const assignPrize = (pos: number, amount: number) => {
@@ -289,13 +289,17 @@ export default function EventForm({ event, allPlayers, allSeasons, blindStructur
           newDistributedResults[index].prize = '0';
         }
       };
+      
+      assignPrize(1, firstPrize);
+      assignPrize(2, secondPrize);
+      assignPrize(3, thirdPrize);
+      assignPrize(4, fourthPrize);
 
-      if (numParticipants >= 1) assignPrize(1, firstPrize); else assignPrize(1,0);
-      if (numParticipants >= 2) assignPrize(2, secondPrize); else assignPrize(2,0);
-      if (numParticipants >= 3) assignPrize(3, thirdPrize); else assignPrize(3,0);
-      if (numParticipants >= 4 && fourthPrize > 0) assignPrize(4, fourthPrize); else assignPrize(4,0);
-
-
+      // Make sure all other positions have a prize of 0
+      for (let i = 5; i <= newDistributedResults.length; i++) {
+        assignPrize(i, 0);
+      }
+      
       return newDistributedResults;
     });
   }, [totalPrizePoolValue, enrichedParticipants.length, buyInValue]);
