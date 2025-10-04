@@ -6,14 +6,13 @@ import type { Event, BlindLevel, Player } from '@/lib/definitions';
 import type { ParticipantState } from './LivePlayerTracking';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogClose, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { X, Play, Pause, FastForward, Rewind, Settings, Expand, Shrink, Volume2, VolumeX, Sun, Moon, Users, RefreshCw } from 'lucide-react';
+import { X, Play, Pause, FastForward, Rewind, Settings, Expand, Shrink, Volume2, VolumeX, Sun, Moon, Users, RefreshCw, Crown } from 'lucide-react';
 import { Slider } from '@/components/ui/slider';
 import { cn } from '@/lib/utils';
 import { Switch } from './ui/switch';
 import { Label } from './ui/label';
 import { RadioGroup, RadioGroupItem } from './ui/radio-group';
 import LivePlayerTracking from './LivePlayerTracking';
-import LivePrizePool from './LivePrizePool';
 import '@/app/poker-timer.css';
 
 interface PokerTimerModalProps {
@@ -279,6 +278,42 @@ export default function PokerTimerModal({
   };
   
   const timerProgress = currentLevel.duration > 0 ? ((currentLevel.duration * 60 - timeLeft) / (currentLevel.duration * 60)) * 100 : 0;
+  
+  const { totalPrizePool, payoutStructure } = React.useMemo(() => {
+    const numParticipants = participants.length;
+    const calculatedPrizePool = (numParticipants * (event.buyIn || 0)) + (totalRebuys * (event.rebuyPrice || 0));
+    
+    const structure: { position: number, prize: number }[] = [];
+    if (numParticipants > 0 && calculatedPrizePool > 0) {
+      if (numParticipants < 14) {
+        if (numParticipants >= 3) {
+          structure.push({ position: 1, prize: Math.round(calculatedPrizePool * 0.50) });
+          structure.push({ position: 2, prize: Math.round(calculatedPrizePool * 0.30) });
+          structure.push({ position: 3, prize: Math.round(calculatedPrizePool * 0.20) });
+        } else if (numParticipants === 2) {
+          structure.push({ position: 1, prize: Math.round(calculatedPrizePool * 0.65) });
+          structure.push({ position: 2, prize: Math.round(calculatedPrizePool * 0.35) });
+        } else {
+          structure.push({ position: 1, prize: calculatedPrizePool });
+        }
+      } else {
+        const fourthPrize = event.buyIn || 0;
+        if (calculatedPrizePool > fourthPrize) {
+          const remainingPool = calculatedPrizePool - fourthPrize;
+          structure.push({ position: 1, prize: Math.round(remainingPool * 0.50) });
+          structure.push({ position: 2, prize: Math.round(remainingPool * 0.30) });
+          structure.push({ position: 3, prize: Math.round(remainingPool * 0.20) });
+          structure.push({ position: 4, prize: fourthPrize });
+        } else {
+          structure.push({ position: 1, prize: Math.round(calculatedPrizePool * 0.50) });
+          structure.push({ position: 2, prize: Math.round(calculatedPrizePool * 0.30) });
+          structure.push({ position: 3, prize: Math.round(calculatedPrizePool * 0.20) });
+        }
+      }
+    }
+    return { totalPrizePool: calculatedPrizePool, payoutStructure: structure.sort((a,b) => a.position - b.position) };
+  }, [participants, totalRebuys, event.buyIn, event.rebuyPrice]);
+
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -405,11 +440,30 @@ export default function PokerTimerModal({
                     <div className="timer-stats-row"><span>Total chips:</span> <span>{totalChips.toLocaleString()}</span></div>
                 </div>
                  <div className="timer-stats-box">
-                     <LivePrizePool 
-                        participants={participants}
-                        buyIn={event.buyIn || 0}
-                        rebuyPrice={event.rebuyPrice}
-                    />
+                      <h4 className="timer-stats-title">Prize Pool</h4>
+                       <div className="space-y-2">
+                            <div className="text-center bg-black/20 p-2 rounded-lg">
+                                <p className="text-xs opacity-70 uppercase tracking-wider">Total Prize Pool</p>
+                                <p className="text-2xl font-bold">€{totalPrizePool.toLocaleString()}</p>
+                            </div>
+                            <div>
+                                {payoutStructure.length > 0 ? (
+                                    <ul className="space-y-1 text-xs">
+                                        {payoutStructure.map(({ position, prize }) => (
+                                            <li key={position} className="flex justify-between items-center p-1 rounded">
+                                                <span className="font-semibold flex items-center">
+                                                  {position === 1 && <Crown className="h-4 w-4 mr-1 text-yellow-400" />}
+                                                  {position}.
+                                                </span>
+                                                <span className="font-bold text-sm">€{prize.toLocaleString()}</span>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                ) : (
+                                    <p className="text-center text-xs opacity-70 pt-2">Not enough players.</p>
+                                )}
+                            </div>
+                        </div>
                 </div>
               </div>
             </div>
