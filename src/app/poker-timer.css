@@ -109,13 +109,13 @@
 .timer-sticky-content {
     @apply p-6 flex-shrink-0 flex flex-col justify-center;
     background-color: var(--sticky-bg);
-    height: 45%; 
+    height: 40%; 
 }
 
 .timer-main-content {
     @apply p-6 flex-grow overflow-y-auto;
     background-color: var(--main-bg);
-    height: 55%;
+    height: 60%;
 }
 
 .timer-display-area {
