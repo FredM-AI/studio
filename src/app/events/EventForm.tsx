@@ -169,59 +169,42 @@ export default function EventForm({ event, allPlayers, allSeasons, blindStructur
     const numPositions = enrichedParticipants.length;
     const participantIdsSet = new Set(enrichedParticipants.map(p => p.player.id));
 
-    setPositionalResults(prevPositionalResults => {
-      const newTableData: PositionalResultEntry[] = [];
-      for (let i = 1; i <= numPositions; i++) {
-        const existingRowInPrevState = prevPositionalResults.find(row => row.position === i);
-        // Correctly find the saved result for the current position
-        const savedResultFromEventProp = event?.results.find(r => r.position === i);
-
-        let playerIdToSet: string | null = null;
-        let prizeToSet = '0';
-        let bountiesWonToSet = '0';
-        let mysteryKoWonToSet = '0';
-
-        if (existingRowInPrevState) {
-          if (existingRowInPrevState.playerId && participantIdsSet.has(existingRowInPrevState.playerId)) {
-            playerIdToSet = existingRowInPrevState.playerId;
-          } else {
-            playerIdToSet = null;
-          }
-          prizeToSet = existingRowInPrevState.prize || '0';
-          bountiesWonToSet = existingRowInPrevState.bountiesWon || '0';
-          mysteryKoWonToSet = existingRowInPrevState.mysteryKoWon || '0';
-        } else if (savedResultFromEventProp) {
-          if (participantIdsSet.has(savedResultFromEventProp.playerId)) {
-            playerIdToSet = savedResultFromEventProp.playerId;
-            prizeToSet = savedResultFromEventProp.prize?.toString() || '0';
-            bountiesWonToSet = savedResultFromEventProp.bountiesWon?.toString() || '0';
-            mysteryKoWonToSet = savedResultFromEventProp.mysteryKoWon?.toString() || '0';
-          }
-        }
-
-        if (playerIdToSet && !participantIdsSet.has(playerIdToSet)) {
-            playerIdToSet = null;
-        }
-
-        if (playerIdToSet === null) {
-            prizeToSet = '0';
-            bountiesWonToSet = '0';
-            mysteryKoWonToSet = '0';
-        }
-
+    // Reset positionalResults completely whenever participants change.
+    const newTableData: PositionalResultEntry[] = [];
+    for (let i = 1; i <= numPositions; i++) {
         newTableData.push({
-          position: i,
-          playerId: playerIdToSet,
-          prize: prizeToSet,
-          bountiesWon: bountiesWonToSet,
-          mysteryKoWon: mysteryKoWonToSet,
+            position: i,
+            playerId: null,
+            prize: '0',
+            bountiesWon: '0',
+            mysteryKoWon: '0',
         });
-      }
-      return newTableData;
-    });
-    // This is the crucial part: reset the calculation lock whenever participants change
+    }
+
+    // If it's an existing event and the number of participants hasn't changed from the initial load,
+    // try to populate with saved data.
+    if (event?.results && numPositions === event.participants.length) {
+        event.results.forEach(savedResult => {
+            const index = savedResult.position - 1;
+            if (index >= 0 && index < newTableData.length) {
+                if (participantIdsSet.has(savedResult.playerId)) {
+                    newTableData[index] = {
+                        position: savedResult.position,
+                        playerId: savedResult.playerId,
+                        prize: savedResult.prize.toString(),
+                        bountiesWon: (savedResult.bountiesWon || 0).toString(),
+                        mysteryKoWon: (savedResult.mysteryKoWon || 0).toString(),
+                    };
+                }
+            }
+        });
+    }
+    
+    setPositionalResults(newTableData);
+    // Crucially, unlock the calculation whenever participants change.
     setIsDistributionCalculated(false); 
-  }, [enrichedParticipants.length, event?.results, event?.id]); // Note: dependency on enrichedParticipants.length to re-trigger on count change
+  }, [enrichedParticipants.length, event?.participants, event?.results]); 
+
 
   React.useEffect(() => {
     const numParticipants = enrichedParticipants.length;
@@ -245,38 +228,31 @@ export default function EventForm({ event, allPlayers, allSeasons, blindStructur
     setTotalPrizePoolValue(calculatedTotal.toString());
   }, [enrichedParticipants, buyInValue, rebuyPrice]);
 
+
   React.useEffect(() => {
     if (isDistributionCalculated) return;
 
-    // Check if the event already has results with prizes. If so, use them and lock.
-    const hasExistingPrizes = event?.results?.some(r => r.prize > 0) || false;
-    if (hasExistingPrizes && event) {
-        setPositionalResults(prevResults => {
-            return prevResults.map(row => {
-                const savedResult = event.results.find(r => r.position === row.position);
-                if (savedResult && (row.playerId === null || row.playerId === savedResult.playerId)) {
-                    return { ...row, prize: savedResult.prize.toString() };
-                }
-                return row;
-            });
-        });
+    const prizePoolNum = parseInt(totalPrizePoolValue) || 0;
+    const numParticipants = enrichedParticipants.length;
+    
+    // Check if there are existing manually entered prizes, and if so, lock calculation.
+    const hasManualPrizes = positionalResults.some(r => (parseInt(r.prize) || 0) > 0);
+    if(hasManualPrizes) {
         setIsDistributionCalculated(true);
         return;
     }
 
-    const prizePoolNum = parseInt(totalPrizePoolValue) || 0;
-    const buyInNum = parseInt(buyInValue) || 0;
-    const numParticipants = enrichedParticipants.length;
-    
     if (prizePoolNum <= 0 || numParticipants === 0) {
-      setIsDistributionCalculated(true); // Lock even if nothing to calculate
+      setPositionalResults(prev => prev.map(row => ({ ...row, prize: '0' })));
+      setIsDistributionCalculated(true);
       return;
     }
 
     let prizes: { [key: number]: number } = {};
+    let totalDistributed = 0;
 
     if (numParticipants >= 15) {
-        const fourthPrize = Math.round((buyInNum > 0 ? buyInNum : prizePoolNum * 0.1) / 10) * 10;
+        const fourthPrize = Math.round((prizePoolNum * 0.1) / 10) * 10;
         const remainingPoolForTop3 = prizePoolNum - fourthPrize;
 
         if (remainingPoolForTop3 > 0) {
@@ -285,34 +261,31 @@ export default function EventForm({ event, allPlayers, allSeasons, blindStructur
             const firstPrize = remainingPoolForTop3 - secondPrize - thirdPrize;
             prizes = { 1: firstPrize, 2: secondPrize, 3: thirdPrize, 4: fourthPrize };
         } else {
-             // Fallback for very small prize pools with 15+ players
              const thirdPrize = Math.round((prizePoolNum * 0.20) / 10) * 10;
              const secondPrize = Math.round((prizePoolNum * 0.30) / 10) * 10;
-             const firstPrize = prizePoolNum - secondPrize - thirdPrize;
-             prizes = { 1: firstPrize, 2: secondPrize, 3: thirdPrize };
+             prizes = { 1: prizePoolNum - secondPrize - thirdPrize, 2: secondPrize, 3: thirdPrize };
         }
-    } else { // Less than 15 players
-        if (numParticipants >= 3) {
-            const thirdPrize = Math.round((prizePoolNum * 0.20) / 10) * 10;
-            const secondPrize = Math.round((prizePoolNum * 0.30) / 10) * 10;
-            const firstPrize = prizePoolNum - secondPrize - thirdPrize;
-            prizes = { 1: firstPrize, 2: secondPrize, 3: thirdPrize };
-        } else if (numParticipants === 2) {
-            const secondPrize = Math.round((prizePoolNum * 0.35) / 10) * 10;
-            prizes = { 1: prizePoolNum - secondPrize, 2: secondPrize };
-        } else if (numParticipants === 1) {
-            prizes = { 1: prizePoolNum };
-        }
+    } else if (numParticipants >= 3) {
+        const thirdPrize = Math.round((prizePoolNum * 0.20) / 10) * 10;
+        const secondPrize = Math.round((prizePoolNum * 0.30) / 10) * 10;
+        const firstPrize = prizePoolNum - secondPrize - thirdPrize;
+        prizes = { 1: firstPrize, 2: secondPrize, 3: thirdPrize };
+    } else if (numParticipants === 2) {
+        const secondPrize = Math.round((prizePoolNum * 0.35) / 10) * 10;
+        prizes = { 1: prizePoolNum - secondPrize, 2: secondPrize };
+    } else if (numParticipants === 1) {
+        prizes = { 1: prizePoolNum };
     }
+
 
     setPositionalResults(prevResults => prevResults.map(row => ({
         ...row,
         prize: prizes[row.position]?.toString() || '0'
     })));
     
-    setIsDistributionCalculated(true); // Lock after calculation
+    setIsDistributionCalculated(true);
 
-}, [totalPrizePoolValue, enrichedParticipants.length, buyInValue, event?.results, isDistributionCalculated]);
+  }, [totalPrizePoolValue, enrichedParticipants.length, buyInValue, isDistributionCalculated, positionalResults]);
 
 
   // Effect to update starting stack when a blind structure is selected
