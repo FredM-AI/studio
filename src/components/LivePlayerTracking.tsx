@@ -161,7 +161,6 @@ export default function LivePlayerTracking({
                                                 </div>
                                             )}
                                              <div className="flex flex-col items-center gap-1">
-                                                <Label className="text-xs">Rebuys</Label>
                                                 <div className="flex items-center gap-0.5">
                                                     <Button size="icon" className="h-6 w-6 timer-rebuy-button" onClick={() => onRebuyChange(p.id, -1)}><MinusCircle className="h-3 w-3" /></Button>
                                                     <span className="font-bold text-sm w-5 text-center">{p.rebuys}</span>
@@ -231,5 +230,7 @@ export default function LivePlayerTracking({
         </div>
     );
 }
+
+    
 
     
