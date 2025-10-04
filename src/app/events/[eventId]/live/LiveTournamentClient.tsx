@@ -189,8 +189,8 @@ export default function LiveTournamentClient({ event: initialEvent, players: all
   
   const handleEliminatePlayer = (playerId: string) => {
     setParticipants(prev => {
-      const eliminatedCount = prev.filter(p => p.eliminatedPosition !== null).length;
       const totalParticipants = prev.length;
+      const eliminatedCount = prev.filter(p => p.eliminatedPosition !== null).length;
       const finishingPosition = totalParticipants - eliminatedCount;
       return prev.map(p => p.id === playerId ? { ...p, eliminatedPosition: finishingPosition } : p);
     });
@@ -487,9 +487,13 @@ export default function LiveTournamentClient({ event: initialEvent, players: all
                     onMysteryKoChange={handleMysteryKoChange}
                     onEliminatePlayer={handleEliminatePlayer}
                     onUndoLastElimination={handleUndoLastElimination}
+                    eventBountyValue={event.bounties}
+                    eventMysteryKoValue={event.mysteryKo}
                 />
             </CardContent>
         </Card>
     </div>
   );
 }
+
+    

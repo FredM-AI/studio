@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -16,8 +17,8 @@ export interface ParticipantState {
     name: string;
     isGuest: boolean;
     rebuys: number;
-    bountiesWon: number; // Ajouté
-    mysteryKoWon: number; // Ajouté
+    bountiesWon: number; 
+    mysteryKoWon: number; 
     eliminatedPosition: number | null;
 }
 
@@ -27,11 +28,13 @@ interface LivePlayerTrackingProps {
     onAddParticipant: (player: Player) => void;
     onRemoveParticipant: (playerId: string) => void;
     onRebuyChange: (playerId: string, delta: number) => void;
-    onBountyChange: (playerId: string, value: number) => void; // Ajouté
-    onMysteryKoChange: (playerId: string, value: number) => void; // Ajouté
+    onBountyChange: (playerId: string, value: number) => void; 
+    onMysteryKoChange: (playerId: string, value: number) => void; 
     onEliminatePlayer: (playerId: string) => void;
     onUndoLastElimination: () => void;
     isModalLayout?: boolean;
+    eventBountyValue?: number;
+    eventMysteryKoValue?: number;
 }
 
 const getPlayerDisplayName = (player: Player | undefined): string => {
@@ -53,6 +56,8 @@ export default function LivePlayerTracking({
     onEliminatePlayer,
     onUndoLastElimination,
     isModalLayout = false,
+    eventBountyValue = 0,
+    eventMysteryKoValue = 0,
 }: LivePlayerTrackingProps) {
     const [searchTerm, setSearchTerm] = React.useState('');
     
@@ -72,6 +77,11 @@ export default function LivePlayerTracking({
         );
         return lastEliminated.id;
     }, [eliminatedParticipants]);
+
+
+    const showBounties = eventBountyValue > 0;
+    const showMysteryKo = eventMysteryKoValue > 0;
+    const showExtras = showBounties || showMysteryKo;
 
 
     return (
@@ -125,7 +135,7 @@ export default function LivePlayerTracking({
                          <TableHeader>
                             <TableRow>
                                 <TableHead className="p-2">Player</TableHead>
-                                <TableHead className="w-[180px] text-center p-2">Extras</TableHead>
+                                <TableHead className={cn("text-center p-2", showExtras ? "w-[180px]" : "w-[90px]")}>Rebuys {showExtras && '& Extras'}</TableHead>
                                 <TableHead className="w-[80px] text-right p-2">Actions</TableHead>
                             </TableRow>
                         </TableHeader>
@@ -138,16 +148,20 @@ export default function LivePlayerTracking({
                                     </TableCell>
                                     <TableCell className="p-2">
                                         <div className="flex items-center justify-center gap-2">
-                                            <div className="flex flex-col items-center gap-1">
-                                                <Label htmlFor={`bounty-${p.id}`} className="flex items-center text-xs"><Star className="h-3 w-3 mr-1 text-yellow-500"/> B</Label>
-                                                <Input id={`bounty-${p.id}`} type="number" min="0" value={p.bountiesWon} onChange={e => onBountyChange(p.id, parseInt(e.target.value) || 0)} className="h-7 w-14 text-center"/>
-                                            </div>
-                                            <div className="flex flex-col items-center gap-1">
-                                                <Label htmlFor={`mko-${p.id}`} className="flex items-center text-xs"><Gift className="h-3 w-3 mr-1 text-purple-500"/> M</Label>
-                                                <Input id={`mko-${p.id}`} type="number" min="0" value={p.mysteryKoWon} onChange={e => onMysteryKoChange(p.id, parseInt(e.target.value) || 0)} className="h-7 w-14 text-center"/>
-                                            </div>
+                                            {showBounties && (
+                                                <div className="flex flex-col items-center gap-1">
+                                                    <Label htmlFor={`bounty-${p.id}`} className="flex items-center text-xs"><Star className="h-3 w-3 mr-1 text-yellow-500"/> B</Label>
+                                                    <Input id={`bounty-${p.id}`} type="number" min="0" value={p.bountiesWon} onChange={e => onBountyChange(p.id, parseInt(e.target.value) || 0)} className="h-7 w-14 text-center"/>
+                                                </div>
+                                            )}
+                                            {showMysteryKo && (
+                                                <div className="flex flex-col items-center gap-1">
+                                                    <Label htmlFor={`mko-${p.id}`} className="flex items-center text-xs"><Gift className="h-3 w-3 mr-1 text-purple-500"/> M</Label>
+                                                    <Input id={`mko-${p.id}`} type="number" min="0" value={p.mysteryKoWon} onChange={e => onMysteryKoChange(p.id, parseInt(e.target.value) || 0)} className="h-7 w-14 text-center"/>
+                                                </div>
+                                            )}
                                              <div className="flex flex-col items-center gap-1">
-                                                <Label className="text-xs">R</Label>
+                                                <Label className="text-xs">Rebuys</Label>
                                                 <div className="flex items-center gap-0.5">
                                                     <Button size="icon" className="h-6 w-6 timer-rebuy-button" onClick={() => onRebuyChange(p.id, -1)}><MinusCircle className="h-3 w-3" /></Button>
                                                     <span className="font-bold text-sm w-5 text-center">{p.rebuys}</span>
@@ -217,3 +231,5 @@ export default function LivePlayerTracking({
         </div>
     );
 }
+
+    

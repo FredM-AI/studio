@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
@@ -430,6 +431,8 @@ export default function PokerTimerModal({
                   onEliminatePlayer={onEliminatePlayer}
                   onUndoLastElimination={onUndoLastElimination}
                   isModalLayout={true}
+                  eventBountyValue={event.bounties}
+                  eventMysteryKoValue={event.mysteryKo}
                 />
             </div>
 
@@ -468,3 +471,5 @@ export default function PokerTimerModal({
     </Dialog>
   );
 }
+
+    
