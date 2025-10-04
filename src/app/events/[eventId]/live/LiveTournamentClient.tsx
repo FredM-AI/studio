@@ -254,6 +254,14 @@ export default function LiveTournamentClient({ event: initialEvent, players: all
   const activeParticipantsCount = participants.filter(p => p.eliminatedPosition === null).length;
   const avgStack = activeParticipantsCount > 0 ? Math.floor(totalChips / activeParticipantsCount) : 0;
   
+  const [formattedTotalChips, setFormattedTotalChips] = React.useState(totalChips.toString());
+  const [formattedAvgStack, setFormattedAvgStack] = React.useState(avgStack.toString());
+
+  React.useEffect(() => {
+    setFormattedTotalChips(totalChips.toLocaleString());
+    setFormattedAvgStack(avgStack.toLocaleString());
+  }, [totalChips, avgStack]);
+
   const isTournamentFinished = activeParticipantsCount <= 1 && participants.length > 0;
 
   const handleSaveResults = async () => {
@@ -458,13 +466,13 @@ export default function LiveTournamentClient({ event: initialEvent, players: all
                         <div className="text-center bg-muted/50 p-3 rounded-lg">
                             <p className="text-xs text-muted-foreground uppercase tracking-wider">Total Chips in Play</p>
                             <p className="text-2xl font-bold font-headline text-primary">
-                                {totalChips.toLocaleString()}
+                                {hydrated ? formattedTotalChips : '...'}
                             </p>
                         </div>
                         <div className="text-center bg-muted/50 p-3 rounded-lg">
                             <p className="text-xs text-muted-foreground uppercase tracking-wider">Average Stack</p>
                             <p className="text-2xl font-bold font-headline text-primary">
-                                {avgStack.toLocaleString()}
+                                {hydrated ? formattedAvgStack : '...'}
                             </p>
                         </div>
                     </div>
@@ -495,5 +503,7 @@ export default function LiveTournamentClient({ event: initialEvent, players: all
     </div>
   );
 }
+
+    
 
     

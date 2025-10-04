@@ -13,6 +13,8 @@ interface LivePrizePoolProps {
 }
 
 export default function LivePrizePool({ participants, buyIn, rebuyPrice }: LivePrizePoolProps) {
+    const [hydrated, setHydrated] = React.useState(false);
+
     const { totalPrizePool, payoutStructure } = React.useMemo(() => {
         const numParticipants = participants.length;
         const totalRebuys = participants.reduce((sum, p) => sum + p.rebuys, 0);
@@ -52,6 +54,10 @@ export default function LivePrizePool({ participants, buyIn, rebuyPrice }: LiveP
         return { totalPrizePool: calculatedPrizePool, payoutStructure: structure.sort((a,b) => a.position - b.position) };
     }, [participants, buyIn, rebuyPrice]);
 
+    React.useEffect(() => {
+        setHydrated(true);
+    }, []);
+
     const findPlacingPlayerName = (position: number) => {
         // Special case for winner (has not been eliminated)
         if (position === 1) {
@@ -69,7 +75,7 @@ export default function LivePrizePool({ participants, buyIn, rebuyPrice }: LiveP
             <div className="text-center bg-muted/50 p-2 rounded-lg">
                 <p className="text-xs text-white uppercase tracking-wider">Total Prize Pool</p>
                 <p className="text-xl font-bold font-headline text-primary">
-                    €{totalPrizePool.toLocaleString()}
+                    €{hydrated ? totalPrizePool.toLocaleString() : '...'}
                 </p>
             </div>
             <div>
@@ -85,7 +91,7 @@ export default function LivePrizePool({ participants, buyIn, rebuyPrice }: LiveP
                                       {position}.
                                     </span>
                                     <span className="text-xs font-medium truncate text-right flex-1 mx-2">{playerName || '...'}</span>
-                                    <span className="font-bold text-xs">€{prize.toLocaleString()}</span>
+                                    <span className="font-bold text-xs">€{hydrated ? prize.toLocaleString() : '...'}</span>
                                 </li>
                             );
                         })}
@@ -99,3 +105,5 @@ export default function LivePrizePool({ participants, buyIn, rebuyPrice }: LiveP
         </div>
     );
 }
+
+    
