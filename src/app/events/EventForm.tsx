@@ -243,61 +243,77 @@ export default function EventForm({ event, allPlayers, allSeasons, blindStructur
   }, [enrichedParticipants, buyInValue, rebuyPrice]);
 
   React.useEffect(() => {
+    const hasExistingPrizes = event?.results?.some(r => r.prize > 0) || false;
+    if (hasExistingPrizes) {
+        // If prizes are already defined in the event data, load them and don't recalculate.
+        setPositionalResults(prevResults => {
+            return prevResults.map(row => {
+                const savedResult = event.results.find(r => r.position === row.position);
+                if (savedResult && (row.playerId === savedResult.playerId)) {
+                    return { ...row, prize: savedResult.prize.toString() };
+                }
+                return row;
+            });
+        });
+        return; // Stop the effect here
+    }
+
+    // --- Automatic prize distribution logic starts here ---
     const prizePoolNum = parseInt(totalPrizePoolValue) || 0;
     const buyInNum = parseInt(buyInValue) || 0;
     const numParticipants = enrichedParticipants.length;
-
+    
     setPositionalResults(prevResults => {
-      const newDistributedResults = prevResults.map(pr => ({ ...pr, prize: '0' }));
+        const newDistributedResults = prevResults.map(pr => ({ ...pr, prize: '0' }));
 
-      if (prizePoolNum <= 0 || numParticipants === 0) {
-        return newDistributedResults;
-      }
+        if (prizePoolNum <= 0 || numParticipants === 0) {
+            return newDistributedResults;
+        }
 
-      let prizes: { [key: number]: number } = {};
+        let prizes: { [key: number]: number } = {};
 
-      if (numParticipants >= 15) {
-        // 4 places payées
-        const fourthPrize = Math.round((buyInNum > 0 ? buyInNum : prizePoolNum * 0.1) / 10) * 10;
-        const remainingPool = prizePoolNum - fourthPrize;
+        if (numParticipants >= 15) {
+            const fourthPrize = Math.round((buyInNum > 0 ? buyInNum : prizePoolNum * 0.1) / 10) * 10;
+            const remainingPoolForTop3 = prizePoolNum - fourthPrize;
 
-        if (remainingPool > 0) {
-            prizes[2] = Math.round((remainingPool * 0.30) / 10) * 10;
-            prizes[3] = Math.round((remainingPool * 0.20) / 10) * 10;
-            prizes[4] = fourthPrize;
-            const sumOfLowerPrizes = prizes[2] + prizes[3] + prizes[4];
-            prizes[1] = prizePoolNum - sumOfLowerPrizes;
+            if (remainingPoolForTop3 > 0) {
+                const thirdPrize = Math.round((remainingPoolForTop3 * 0.20) / 10) * 10;
+                const secondPrize = Math.round((remainingPoolForTop3 * 0.30) / 10) * 10;
+                const firstPrize = remainingPoolForTop3 - secondPrize - thirdPrize;
+                
+                prizes = { 1: firstPrize, 2: secondPrize, 3: thirdPrize, 4: fourthPrize };
+            } else {
+                 // Fallback if 4th prize is greater than total pool (should not happen with sane buy-ins)
+                 prizes[2] = Math.round((prizePoolNum * 0.30) / 10) * 10;
+                 prizes[3] = Math.round((prizePoolNum * 0.20) / 10) * 10;
+                 prizes[1] = prizePoolNum - (prizes[2] + prizes[3]);
+            }
         } else {
-             // Fallback si 4ème prix > prizepool
-             prizes[2] = Math.round((prizePoolNum * 0.30) / 10) * 10;
-             prizes[3] = Math.round((prizePoolNum * 0.20) / 10) * 10;
-             prizes[1] = prizePoolNum - (prizes[2] + prizes[3]);
+            if (numParticipants >= 3) {
+                const thirdPrize = Math.round((prizePoolNum * 0.20) / 10) * 10;
+                const secondPrize = Math.round((prizePoolNum * 0.30) / 10) * 10;
+                const firstPrize = prizePoolNum - secondPrize - thirdPrize;
+                prizes = { 1: firstPrize, 2: secondPrize, 3: thirdPrize };
+            } else if (numParticipants === 2) {
+                const secondPrize = Math.round((prizePoolNum * 0.35) / 10) * 10;
+                const firstPrize = prizePoolNum - secondPrize;
+                prizes = { 1: firstPrize, 2: secondPrize };
+            } else if (numParticipants === 1) {
+                prizes = { 1: prizePoolNum };
+            }
         }
-      } else {
-         // 3 places payées ou moins
-        if (numParticipants >= 3) {
-            prizes[2] = Math.round((prizePoolNum * 0.30) / 10) * 10;
-            prizes[3] = Math.round((prizePoolNum * 0.20) / 10) * 10;
-            prizes[1] = prizePoolNum - (prizes[2] + prizes[3]);
-        } else if (numParticipants === 2) {
-            prizes[2] = Math.round((prizePoolNum * 0.35) / 10) * 10;
-            prizes[1] = prizePoolNum - prizes[2];
-        } else if (numParticipants === 1) {
-            prizes[1] = prizePoolNum;
-        }
-      }
 
-      // Assign prizes to the results table
-      const finalResults = newDistributedResults.map(row => {
-          if (prizes[row.position]) {
-              return { ...row, prize: prizes[row.position].toString() };
-          }
-          return row; // Prize remains '0'
-      });
-      
-      return finalResults;
+        // Assign prizes to the results table
+        const finalResults = newDistributedResults.map(row => {
+            if (prizes[row.position]) {
+                return { ...row, prize: prizes[row.position].toString() };
+            }
+            return row;
+        });
+        
+        return finalResults;
     });
-}, [totalPrizePoolValue, enrichedParticipants.length, buyInValue]);
+}, [totalPrizePoolValue, enrichedParticipants.length, buyInValue, event?.results]);
 
   // Effect to update starting stack when a blind structure is selected
   React.useEffect(() => {
@@ -782,3 +798,4 @@ export default function EventForm({ event, allPlayers, allSeasons, blindStructur
   );
 }
 
+    
