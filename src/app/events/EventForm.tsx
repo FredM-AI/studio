@@ -259,28 +259,26 @@ export default function EventForm({ event, allPlayers, allSeasons, blindStructur
       let thirdPrize = 0;
       let fourthPrize = 0;
 
-      if (numParticipants < 15) { // Changed from 14 to 15
+      if (numParticipants < 15) {
         if (numParticipants >= 1) firstPrize = Math.round((prizePoolNum * 0.50) / 10) * 10;
         if (numParticipants >= 2) secondPrize = Math.round((prizePoolNum * 0.30) / 10) * 10;
         if (numParticipants >= 3) thirdPrize = Math.round((prizePoolNum * 0.20) / 10) * 10;
       } else {
-        if (buyInNum > 0) {
-          if (prizePoolNum >= buyInNum) {
-            fourthPrize = Math.round(buyInNum / 10) * 10;
-            const remainingPool = prizePoolNum - fourthPrize;
-            if (remainingPool > 0) {
+          const mainPoolForDistribution = prizePoolNum;
+          fourthPrize = Math.round((buyInNum > 0 ? buyInNum : mainPoolForDistribution * 0.1) / 10) * 10;
+          const remainingPool = mainPoolForDistribution - fourthPrize;
+
+          if (remainingPool > 0) {
               firstPrize = Math.round((remainingPool * 0.50) / 10) * 10;
               secondPrize = Math.round((remainingPool * 0.30) / 10) * 10;
               thirdPrize = Math.round((remainingPool * 0.20) / 10) * 10;
-            }
           } else {
-            fourthPrize = prizePoolNum;
+              // Fallback if fourth prize is greater than pool
+              firstPrize = Math.round((mainPoolForDistribution * 0.50) / 10) * 10;
+              secondPrize = Math.round((mainPoolForDistribution * 0.30) / 10) * 10;
+              thirdPrize = Math.round((mainPoolForDistribution * 0.20) / 10) * 10;
+              fourthPrize = 0;
           }
-        } else {
-          if (numParticipants >= 1) firstPrize = Math.round((prizePoolNum * 0.50) / 10) * 10;
-          if (numParticipants >= 2) secondPrize = Math.round((prizePoolNum * 0.30) / 10) * 10;
-          if (numParticipants >= 3) thirdPrize = Math.round((prizePoolNum * 0.20) / 10) * 10;
-        }
       }
 
       const assignPrize = (pos: number, amount: number) => {
